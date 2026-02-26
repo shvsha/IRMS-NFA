@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import '../styles/Login.css'
 
 // assets
-import NFALogo from '../assets/login/NFA-logo.png'
+import NFALogo from '../assets/NFA-logo.png'
 
 export default function Login() {
   // US
@@ -26,8 +26,8 @@ export default function Login() {
     }
   }
 
-  console.log(username)
-  console.log(password)
+  console.log("Username: ", username)
+  console.log("Password: ", password)
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -37,31 +37,33 @@ export default function Login() {
     }
 
     if (username === "admin" && password === "admin123") {
-      alert("Loggin in...")
-      navigate("/dashboard")
+      alert("Logging in as admin...")
+      navigate("/admin/dashboard")
+    } else if (username === "whse" && password === "whse123") {
+      alert("Logging in as warehouse supervisor...")
+      navigate("/whse/dashboard")
     } else {
       alert("Wrong Credentials")
     }
-
-    console.log(username)
-    console.log(password)
   }
 
   return (
-    <form className="login-container" onSubmit={handleLogin}>
-      <img src={NFALogo} alt="" />
-      <p>Integrated Report <br/> Monitoring System</p>
+    <div className='whole-login-body'>
+      <form className="login-container" onSubmit={handleLogin}>
+        <img className='nfa-logo-login' src={NFALogo} alt="" />
+        <p className='system-title-login'>Integrated Report <br/> Monitoring System</p>
 
-        <div className="input-container">
-          <label name="username">Username</label>
-          <input type="text" name="username" onChange={handleCredentials} />
-        </div>
-        <div className="input-container">
-          <label name="password">Password</label>
-          <input type="password" name="password" onChange={handleCredentials}/>
-        </div>
-      <button type="submit">Login</button>
+          <div className="input-container">
+            <label className='label-login' name="username">Username</label>
+            <input className='input-login' type="text" name="username" onChange={handleCredentials} />
+          </div>
+          <div className="input-container">
+            <label className='label-login' name="password">Password</label>
+            <input className='input-login' type="password" name="password" onChange={handleCredentials}/>
+          </div>
+        <button className='login-btn' type="submit">Login</button>
 
-    </form>
+      </form>
+    </div>
   )
 }

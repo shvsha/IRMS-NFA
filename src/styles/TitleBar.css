@@ -1,0 +1,101 @@
+.title-bar-container {
+  display: flex;
+  justify-content: space-between;
+  background-color: #072560;
+  width: 100%;
+  text-align: left;
+  color: white;
+}
+
+.logo-title-container {
+  display: flex;
+  padding: 10px 15px;
+}
+.nfa-logo-titlebar {
+  height: 90px;
+  max-width: 90px;
+}
+
+.title-titlebar {
+  font-size: 25px;
+  font-weight: 600;
+  margin-left: 15px;
+}
+
+.logout-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 30px;
+}
+.logout-btn-titlebar {
+  background-color: transparent;
+  border-radius: 8px;
+  padding: 10px 30px;
+  color: white;
+  border-color: white;
+  border-width: 0.1px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* logout modal */
+.logout-validation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #00000000;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+.logout-validation-modal {
+  background-color: #072560;
+  padding: 30px 25px;
+  border-radius: 10px;
+  max-width: 350px;
+  width: 90%;
+  text-align: center;
+  color: white;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+.logout-validation-modal-overlay.show {
+  background: #00000080;
+  opacity: 1;
+  visibility: visible;
+}
+.logout-validation-modal-overlay.show .logout-validation-modal {
+  transform: scale(1);
+}
+
+.logout-validation-modal p {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.validation-btns-modal {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+.validation-btns-modal button {
+  background-color: #E0E2E4;
+  color: #072560;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.validation-btns-modal button:hover {
+  background-color: rgb(204, 204, 204);
+}

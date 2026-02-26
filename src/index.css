@@ -1,6 +1,5 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: "Poppins", sans-serif;
   font-weight: 400;
 
   color-scheme: light dark;
@@ -14,11 +13,11 @@
 }
 
 body {
+  background-color: #A7B2CF;
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  min-width: 100vh;
   min-height: 100vh;
+
 }
 
 

@@ -1,0 +1,32 @@
+.navbar-container {
+  background-color: #ECF0F3;
+  padding: 15px 10px;
+
+}
+.nav-link {
+  font-weight: 600;
+  color: #0B3B66;
+  padding: 10px 20px;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s ease;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  background: #0B3B66;
+  transition: width 0.3s ease;
+}
+.nav-link:hover {
+  opacity: 0.8;
+}
+.nav-link.active {
+  font-weight: bold;
+}
+.nav-link.active::after {
+  width: 100%;
+}
