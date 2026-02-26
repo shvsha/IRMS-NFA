@@ -36,12 +36,13 @@ export default function Login() {
       return
     }
 
+    // change this later on if the database is connected already
     if (username === "admin" && password === "admin123") {
       alert("Logging in as admin...")
       navigate("/admin/dashboard")
     } else if (username === "whse" && password === "whse123") {
       alert("Logging in as warehouse supervisor...")
-      navigate("/whse/dashboard")
+      navigate("/whse/management")
     } else {
       alert("Wrong Credentials")
     }

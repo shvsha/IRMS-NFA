@@ -6,14 +6,19 @@ import { Routes, Route } from 'react-router-dom'
 import AdminLayout from './layouts/AdminLayout'
 import WhseSpvsorLayout from './layouts/WhseSpvsorLayout'
 
+// general import
+import ReportSummarization from './components/ReportSummarization'
+
 // import for admin nav
 import Dashboard from './components/admin/Dashboard'
 import UserMagement from './components/admin/UserManagement'
 import ReportEvaluation from './components/admin/ReportEvaluation'
-import ReportSummarization from './components/admin/ReportSummarization'
 import ReportHistory from './components/admin/ReportHistory'
 import AuditLogs from './components/admin/AuditLogs'
 
+// import for whse supervisor nav
+import ReportManagement from './components/warehouse supervisor/ReportManagement'
+import ReportStatus from './components/warehouse supervisor/ReportStatus'
 
 function App() {
   return (
@@ -26,14 +31,16 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="users" element={<UserMagement />} />
         <Route path="evaluation" element={<ReportEvaluation/>} />
-        <Route path="sumamrization" element={<ReportSummarization/>}/>
+        <Route path="summarization" element={<ReportSummarization/>}/>
         <Route path="history" element={<ReportHistory/>}/>
         <Route path="audit" element={<AuditLogs/>}/>
       </Route>
 
       {/* warehouse supervisor */}
       <Route path="/whse" element={<WhseSpvsorLayout />}>  
-        {/* for warehouse supervisor */}
+        <Route path="management" element={<ReportManagement/>} />
+        <Route path="status" element={<ReportStatus/>} />
+        <Route path="summarization" element={<ReportSummarization/>} />
       </Route>
     </Routes>
   )

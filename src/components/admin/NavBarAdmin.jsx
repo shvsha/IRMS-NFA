@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 
-import '../../styles/admin/NavBarAdmin.css'
+import '../../styles/Navbar.css'
 
 export default function NavBarAdmin() {
   return (
@@ -14,8 +14,8 @@ export default function NavBarAdmin() {
       <NavLink to="/admin/evaluation" className="nav-link">
         Report Evaluation
       </NavLink>
-      <NavLink to="/admin/sumamrization" className="nav-link">
-        Report Sumamrization
+      <NavLink to="/admin/summarization" className="nav-link">
+        Report Summarization
       </NavLink>
       <NavLink to="/admin/history" className="nav-link">
         History Records
