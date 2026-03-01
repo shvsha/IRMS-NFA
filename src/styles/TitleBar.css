@@ -1,7 +1,7 @@
 .title-bar-container {
   display: flex;
   justify-content: space-between;
-  background-color: #072560;
+  background: linear-gradient(to right, #051F52 0%, #192A65 22%, #4D2653 48%, #812240 73%, #B72132 90%, #ED2024 100%);
   width: 100%;
   text-align: left;
   color: white;

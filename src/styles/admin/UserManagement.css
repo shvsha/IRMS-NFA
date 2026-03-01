@@ -1,0 +1,81 @@
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+.table-wrapper {
+  min-height: 440px;
+  margin-left: 50px;
+  margin-right: 50px;
+  background-color: #FFFFFF;
+  overflow: hidden;
+}
+
+.header-title {
+  color: #0B3B66;
+  font-weight: 600;
+  font-size: 25px;
+}
+.header-search {
+  background-color: #072560;
+  border-radius: 15px;
+  border-width: 0px;
+  padding: 13px 15px;
+  width: 350px;
+  margin-right: 25px;
+  color: white;
+}
+.header-search::placeholder {
+  color: white;
+  font-weight: 500;
+}
+.header-add-employee {
+  color: white;
+  border-radius: 15px;
+  border-width: 0px;
+  background-color: #072560;
+  padding: 13px 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-table{
+  width: 100%;
+  border-collapse: collapse;
+}
+.user-table thead tr {
+  background-color: #E2EBFF;
+  border-bottom: 2px solid #ddd;
+}
+.user-table tbody tr {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #ddd;
+}
+.user-table tr {
+  background-color: #E2EBFF;
+  border-bottom: 1px solid #ddd;
+}
+.user-table th {
+  color: #0B3B66;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: center;
+}
+.user-table td {
+  color: #0B3B66;
+  font-weight: 500;
+  text-align: center;
+  padding: 12px 16px;
+}
+.user-table tbody {
+  background-color: #FFFFFF;
+}
+
+.action-buttons {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}

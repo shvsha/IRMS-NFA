@@ -1,0 +1,162 @@
+.whole-content {
+  background-color: white;
+  margin: 30px;
+  border-radius: 3px;
+}
+
+.total-reports-container {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+  width: 600px;
+  padding-top: 10px;
+  padding-left: 15px;
+  color: #2D317F;
+
+}
+.total-reports-container p {
+  margin: 0;
+  font-weight: bold;
+}
+.total-reports {
+  display: flex;
+  gap: 15px;
+}
+.report-status-container {
+  display: flex;
+  gap: 15px;
+}
+.report-status-container p {
+  padding: 0px 3px;
+}
+.pending-report {
+  background-color: yellow;
+}
+.approved-report {
+  background-color: green;
+}
+.rejected-report {
+  background-color: red;
+}
+
+.filter-report-container-eval {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+  width: 650px;
+  margin-top: 20px;
+  margin-left: 15px;
+  margin-bottom: 15px;
+  color: #2D317F;
+}
+
+.filter-report-eval {
+  border: none;
+  border-radius: 8px;
+  background-color: #E9E9ED;
+  padding: 13px 15px;
+  width: 350px;
+}
+.filter-report-eval::placeholder {
+  color: gray;
+  font-weight: 500;
+}
+
+.dropdown-content-eval {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  min-width: 100%;
+}
+.report-status-filter-dropdown {
+  display: flex;
+  border-width: 0.5px;
+  border-radius: 3px;
+  background-color: transparent;
+  padding: 12px 25px 12px 10px;
+  color: #2D317F;
+  font-weight: 600;
+  width: 150px;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 20px;
+}
+
+.calendar-filter-report-eval {
+  margin-left: 8px;
+  background-color: transparent;
+  border-radius: 3px;
+  border-width: 0.5px;
+  padding: 8.5px 12px;
+  cursor: pointer;
+  color: #2D317F;
+  vertical-align: middle;
+}
+
+.table-wrapper-eval {
+  min-height: 400px;
+  background-color: #FFFFFF;
+  overflow: hidden;
+}
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.reports-table thead tr {
+  font-weight: 600;
+  height: 50px;
+  background-color: #E2EBFF;
+    color: #2D317F;
+}
+.reports-table tbody tr {
+  border-bottom: 1px solid #ddd;
+  height: 50px;
+  color: #2D317F;
+}
+.reports-table tbody td {
+  text-align: center;
+  padding: 10px 15px;
+  font-weight: 500;
+}
+
+.reports-table th:last-child,
+.reports-table td:last-child {
+  width: 280px;
+}
+
+.action-btns-eval {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.view-report-eval, .approve-report-eval, .reject-report-eval {
+  border-radius: 12px;
+  background-color: transparent;
+  border: 1.5px solid #ccc;
+  padding: 6px 12px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.reject-report-eval {
+  color: #c0392b;
+  border-color: #c0392b;
+  border-radius: 12px;
+  padding: 6px 12px;
+}
+.view-report-eval {
+  color: #2c3e7a;
+}
+.approve-report-eval {
+  color: #27ae60;
+}
