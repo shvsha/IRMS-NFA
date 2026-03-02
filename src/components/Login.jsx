@@ -8,7 +8,7 @@ import NFALogo from '../assets/NFA-logo.png'
 
 export default function Login() {
   // US
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
   const navigate = useNavigate();
@@ -17,8 +17,8 @@ export default function Login() {
   const handleCredentials = (e) => {
     const {name, value} = e.target;
 
-    if (name === "username") {
-      setUsername(value);
+    if (name === "email") {
+      setEmail(value);
     }
 
     if (name === "password") {
@@ -26,21 +26,21 @@ export default function Login() {
     }
   }
 
-  console.log("Username: ", username)
+  console.log("Email: ", email)
   console.log("Password: ", password)
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (username === "" || password === "") {
+    if (email === "" || password === "") {
       alert("Incomplete Credentials")
       return
     }
 
     // change this later on if the database is connected already
-    if (username === "admin" && password === "admin123") {
+    if (email === "admin@nfa.gov.ph" && password === "admin123") {
       alert("Logging in as admin...")
       navigate("/admin/dashboard")
-    } else if (username === "whse" && password === "whse123") {
+    } else if (email === "whse@nfa.gov.ph" && password === "whse123") {
       alert("Logging in as warehouse supervisor...")
       navigate("/whse/management")
     } else {
@@ -55,8 +55,8 @@ export default function Login() {
         <p className='system-title-login'>Integrated Report <br/> Monitoring System</p>
 
           <div className="input-container">
-            <label className='label-login' name="username">Username</label>
-            <input className='input-login' type="text" name="username" onChange={handleCredentials} />
+            <label className='label-login' name="email">Email</label>
+            <input className='input-login' type="text" name="email" onChange={handleCredentials} />
           </div>
           <div className="input-container">
             <label className='label-login' name="password">Password</label>
