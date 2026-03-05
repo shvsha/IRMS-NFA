@@ -6,9 +6,9 @@ import { FaSearch } from "react-icons/fa";
 import '../../styles/admin/ReportEvaluation.css'
 
 const sampleReports = [
-  {id: "11692615", transaction: "Milling", submittedby: "Warehouse Supervisor 1", date: "30-Jan-26", status: "Pending"},
-  {id: "11692616", transaction: "Distribution", submittedby: "Warehouse Supervisor 2", date: "31-Jan-26", status: "Approved"},
-  {id: "11692617", transaction: "Milling", submittedby: "Warehouse Supervisor 1", date: "29-Jan-26", status: "Pending"},
+  {id: "11692615", cerealtype: 'Palay', transaction: "Milling", whse: "Warehouse 1", date: "30-Jan-26", status: "Pending"},
+  {id: "11692616", cerealtype: 'Rice', transaction: "Distribution", whse: "Warehouse 2", date: "31-Jan-26", status: "Approved"},
+  {id: "11692617", cerealtype: 'Palay', transaction: "Milling", whse: "Warehouse 1", date: "29-Jan-26", status: "Pending"},
 ]
 
 function FilterDropdown({ selected, options, onSelect, buttonClass }) {
@@ -52,13 +52,19 @@ export default function ReportEvaluation() {
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [search, setSearch] = useState("");
 
+  const handleStatusChange = (val) => { setSelectedStatus(val); setSearch("") }
+  const handleCerealChange = (val) => { setSelectedCerealType(val); setSearch("") }
+  const handleWarehouseChange = (val) => { setSelectedWarehouse(val); setSearch("") }
+
   const filterReports = sampleReports.filter(r => {
     const matchSearch =
       r.transaction.toLowerCase().includes(search.toLowerCase()) ||
       r.id.includes(search) ||
-      r.submittedby.toLowerCase().includes(search.toLowerCase())
+      r.whse.toLowerCase().includes(search.toLowerCase())
     const matchStatus = selectedStatus === "All Status" || r.status === selectedStatus
-    return matchSearch && matchStatus
+    const matchCerealType = selectedCerealType === "All Cereal Type" || r.cerealtype === selectedCerealType
+    const matchWarehouse = selectedWarehouse === "All Warehouses" || r.whse === selectedWarehouse
+    return matchSearch && matchStatus && matchCerealType && matchWarehouse
   });
 
   const getStatusStyle = (status) => {
@@ -111,19 +117,19 @@ export default function ReportEvaluation() {
             <FilterDropdown
               selected={selectedStatus}
               options={["All Status", "Pending", "Approved", "Rejected"]}
-              onSelect={setSelectedStatus}
+              onSelect={handleStatusChange}
               buttonClass="report-status-filter-dropdown"
             />
             <FilterDropdown
               selected={selectedCerealType}
               options={["All Cereal Type", "Rice", "Palay"]}
-              onSelect={setSelectedCerealType}
+              onSelect={handleCerealChange}
               buttonClass="cereal-filter-report-eval"
             />
             <FilterDropdown
               selected={selectedWarehouse}
               options={["All Warehouses", "Warehouse 1", "Warehouse 2"]}
-              onSelect={setSelectedWarehouse}
+              onSelect={handleWarehouseChange}
               buttonClass="whse-filter-report-eval"
             />
           </div>
@@ -135,6 +141,7 @@ export default function ReportEvaluation() {
             <thead>
               <tr>
                 <th>WRS#/WRH#</th>
+                <th>Cereal Type</th>
                 <th>Transaction</th>
                 <th>Submitted By</th>
                 <th>Date</th>
@@ -143,11 +150,12 @@ export default function ReportEvaluation() {
               </tr>
             </thead>
             <tbody>
-              {filterReports.map((reports, i) => (
-                <tr key={i}>
+              {filterReports.map((reports) => (
+                <tr key={reports.id}>
                   <td>{reports.id}</td>
+                  <td>{reports.cerealtype}</td>
                   <td>{reports.transaction}</td>
-                  <td>{reports.submittedby}</td>
+                  <td>{reports.whse}</td>
                   <td>{reports.date}</td>
                   <td>
                     <span style={getStatusStyle(reports.status)}>{reports.status}</span>
