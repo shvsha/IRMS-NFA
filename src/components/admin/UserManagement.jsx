@@ -2,7 +2,7 @@ import '../../styles/admin/UserManagement.css'
 import { useState } from 'react'
 
 // react icon
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaSearch } from "react-icons/fa";
 import { IoArchiveOutline } from "react-icons/io5";
 
 const sampleUsers = [
@@ -26,14 +26,17 @@ export default function UserManagement() {
         <div> 
           <p className='header-title'>User Management</p>
         </div>
-        <div>
-          <input 
-            className='header-search' 
-            type="text" 
-            placeholder='Search Name'
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        <div style={{display: 'flex'}}>
+          <div className='search-input-wrapper'>
+            <input 
+              className='header-search' 
+              type="text" 
+              placeholder='Search Name'
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <FaSearch className='search-icon-right-user' size={20} />
+          </div>
           <button className='header-add-employee'>+ Add Employee</button>
         </div>    
 

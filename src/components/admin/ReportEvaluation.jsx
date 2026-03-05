@@ -1,7 +1,7 @@
-import { FaCalendarAlt } from "react-icons/fa";
 import { GoLinkExternal } from "react-icons/go";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { FaSearch } from "react-icons/fa";
 
 import '../../styles/admin/ReportEvaluation.css'
 
@@ -11,22 +11,55 @@ const sampleReports = [
   {id: "11692617", transaction: "Milling", submittedby: "Warehouse Supervisor 1", date: "29-Jan-26", status: "Pending"},
 ]
 
+function FilterDropdown({ selected, options, onSelect, buttonClass }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
+        <span>{selected}</span>
+        <span className={`dropdown-chevron${open ? ' open' : ''}`}>▼</span>
+      </button>
+      {open && (
+        <ul className="dropdown-content-eval">
+          {options.map((option) => (
+            <li
+              key={option}
+              onClick={() => { onSelect(option); setOpen(false) }}
+              className={selected === option ? 'dropdown-item-active' : ''}
+            >
+              {option}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default function ReportEvaluation() {
-  // us
-  const [filterstatus, setFilterStatus] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState("All Status")
+  const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
+  const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [search, setSearch] = useState("");
-  
-    const filterReports = sampleReports.filter(r =>
-      r.transaction.toLowerCase().includes(search.toLowerCase())
-    );
 
-  const toggleDropDown = () => setFilterStatus(!filterstatus)
-
-  const handleSelect = (option) => {
-    setSelectedStatus(option)
-    setFilterStatus(false)
-  }
+  const filterReports = sampleReports.filter(r => {
+    const matchSearch =
+      r.transaction.toLowerCase().includes(search.toLowerCase()) ||
+      r.id.includes(search) ||
+      r.submittedby.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = selectedStatus === "All Status" || r.status === selectedStatus
+    return matchSearch && matchStatus
+  });
 
   const getStatusStyle = (status) => {
     const base = {
@@ -48,88 +81,87 @@ export default function ReportEvaluation() {
     <>
       <div className="whole-content">
         <div className='total-reports-container'>
-        <div className="total-reports">
-          <label htmlFor="">Total Reports:</label>
-          <p>0</p>
-        </div>
-        <div className="report-status-container">
-          <label htmlFor="">Pending: </label>
-          <p className="pending-report">0</p>
-          <label htmlFor="">Approved: </label>
-          <p className="approved-report">0</p>
-          <label htmlFor="">Rejected: </label>
-          <p className="rejected-report">0</p>
-        </div>
-      </div>
-
-      <div className="filter-report-container-eval">
-        <div>
-          <input 
-            className="filter-report-eval" 
-            type="text" 
-            placeholder='Search'
-            value={search} 
-            onChange={e => setSearch(e.target.value)} />
-        </div>
-        <div>
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <button className="report-status-filter-dropdown" onClick={toggleDropDown}>
-              <span style={{marginLeft: "10px"}}>{selectedStatus}</span>
-              <span>▼</span>
-            </button>
-            {filterstatus && (
-              <ul className="dropdown-content-eval">
-                {["All Status", "Pending", "Approved", "Rejected"].map((option) => (
-                  <li
-                    key={option}
-                    onClick={() => handleSelect(option)}
-                    style={{ padding: "8px 12px", cursor: "pointer" }}
-                  >
-                    {option}
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="total-reports">
+            <label>Total Reports:</label>
+            <p>{sampleReports.length}</p>
           </div>
-          <button className="calendar-filter-report-eval"><FaCalendarAlt size={18} /></button>
+          <div className="report-status-container">
+            <label>Pending: </label>
+            <p className="pending-report">{sampleReports.filter(r => r.status === "Pending").length}</p>
+            <label>Approved: </label>
+            <p className="approved-report">{sampleReports.filter(r => r.status === "Approved").length}</p>
+            <label>Rejected: </label>
+            <p className="rejected-report">{sampleReports.filter(r => r.status === "Rejected").length}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="table-wrapper-eval">
-        <table className="reports-table">
-          <thead>
-            <tr>
-              <th>WRS#/WRH#</th>
-              <th>Transaction</th>
-              <th>Submitted By</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filterReports.map((reports, i) => (
-              <tr key={i}>
-                <td>{reports.id}</td>
-                <td>{reports.transaction}</td>
-                <td>{reports.submittedby}</td>
-                <td>{reports.date}</td>
-                <td>
-                  <span style={getStatusStyle(reports.status)}>{reports.status}</span>
-                </td>
-                <td>
-                  <div className="action-btns-eval">
-                    <button className="view-report-eval"><GoLinkExternal size={15}/>View</button>
-                    <button className="approve-report-eval"><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
-                    <button className="reject-report-eval">X</button>
-                  </div>
-                </td>
+        <div className="filter-report-container-eval">
+          <div className="search-filter-container">
+            <input
+              className="filter-report-eval"
+              type="text"
+              placeholder='Search'
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <FaSearch className="search-icon-right-eval" size={20}/>
+          </div>
+          <div className="status-cereal-whse-filter-container">
+            <FilterDropdown
+              selected={selectedStatus}
+              options={["All Status", "Pending", "Approved", "Rejected"]}
+              onSelect={setSelectedStatus}
+              buttonClass="report-status-filter-dropdown"
+            />
+            <FilterDropdown
+              selected={selectedCerealType}
+              options={["All Cereal Type", "Rice", "Palay"]}
+              onSelect={setSelectedCerealType}
+              buttonClass="cereal-filter-report-eval"
+            />
+            <FilterDropdown
+              selected={selectedWarehouse}
+              options={["All Warehouses", "Warehouse 1", "Warehouse 2"]}
+              onSelect={setSelectedWarehouse}
+              buttonClass="whse-filter-report-eval"
+            />
+          </div>
+        </div>
+
+        <div className="table-wrapper-eval">
+          <table className="reports-table">
+            <thead>
+              <tr>
+                <th>WRS#/WRH#</th>
+                <th>Transaction</th>
+                <th>Submitted By</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-       </div>
+            </thead>
+            <tbody>
+              {filterReports.map((reports, i) => (
+                <tr key={i}>
+                  <td>{reports.id}</td>
+                  <td>{reports.transaction}</td>
+                  <td>{reports.submittedby}</td>
+                  <td>{reports.date}</td>
+                  <td>
+                    <span style={getStatusStyle(reports.status)}>{reports.status}</span>
+                  </td>
+                  <td>
+                    <div className="action-btns-eval">
+                      <button className="view-report-eval"><GoLinkExternal size={15}/>View</button>
+                      <button className="approve-report-eval"><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
+                      <button className="reject-report-eval">X</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   )
