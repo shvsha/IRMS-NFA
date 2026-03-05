@@ -27,7 +27,7 @@ function FilterDropdown({ selected, options, onSelect, buttonClass }) {
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <button className={buttonClass} onClick={() => setOpen(o => !o)}>
         <span>{selected}</span>
-        <span className={`dropdown-chevron${open ? ' open' : ''}`}>▼</span>
+        <span className={`dropdown-chevron-eval${open ? ' open' : ''}`}>▼</span>
       </button>
       {open && (
         <ul className="dropdown-content-eval">
@@ -35,7 +35,7 @@ function FilterDropdown({ selected, options, onSelect, buttonClass }) {
             <li
               key={option}
               onClick={() => { onSelect(option); setOpen(false) }}
-              className={selected === option ? 'dropdown-item-active' : ''}
+              className={selected === option ? 'dropdown-item-active-eval' : ''}
             >
               {option}
             </li>
@@ -106,6 +106,7 @@ export default function ReportEvaluation() {
             />
             <FaSearch className="search-icon-right-eval" size={20}/>
           </div>
+
           <div className="status-cereal-whse-filter-container">
             <FilterDropdown
               selected={selectedStatus}
@@ -126,10 +127,11 @@ export default function ReportEvaluation() {
               buttonClass="whse-filter-report-eval"
             />
           </div>
+          
         </div>
 
         <div className="table-wrapper-eval">
-          <table className="reports-table">
+          <table className="reports-table-eval">
             <thead>
               <tr>
                 <th>WRS#/WRH#</th>

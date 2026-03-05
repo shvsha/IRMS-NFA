@@ -111,19 +111,19 @@
 .dropdown-content-eval li:hover {
   background-color: #f0f0f0;
 }
-.dropdown-content-eval li.dropdown-item-active {
+.dropdown-content-eval li.dropdown-item-active-eval {
   background-color: #EEF0FF;
   color: #2D317F;
   font-weight: 600;
 }
 
-.dropdown-chevron {
+.dropdown-chevron-eval {
   display: inline-block;
   font-size: 11px;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
-.dropdown-chevron.open {
+.dropdown-chevron-eval.open {
   transform: rotate(180deg);
 }
 
@@ -167,29 +167,29 @@
   background-color: #FFFFFF;
   overflow: hidden;
 }
-.reports-table {
+.reports-table-eval {
   width: 100%;
   border-collapse: collapse;
 }
-.reports-table thead tr {
+.reports-table-eval thead tr {
   font-weight: 600;
   height: 50px;
   background-color: #E2EBFF;
   color: #2D317F;
 }
-.reports-table tbody tr {
+.reports-table-eval tbody tr {
   border-bottom: 1px solid #ddd;
   height: 50px;
   color: #2D317F;
 }
-.reports-table tbody td {
+.reports-table-eval tbody td {
   text-align: center;
   padding: 10px 15px;
   font-weight: 500;
 }
 
-.reports-table th:last-child,
-.reports-table td:last-child {
+.reports-table-eval th:last-child,
+.reports-table-eval td:last-child {
   width: 280px;
 }
 
