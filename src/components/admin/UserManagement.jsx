@@ -5,20 +5,45 @@ import { useState } from 'react'
 import { FaEdit, FaSearch } from "react-icons/fa";
 import { IoArchiveOutline } from "react-icons/io5";
 
-const sampleUsers = [
-  { id: '23100123', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'Admin', position: 'QA' },
-  { id: '23100124', name: 'Febore Valenzuela', email: 'febrosevalenzuela@nfa.gov.ph', userLevel: 'User', position: 'Statistician' },
-  { id: '23100125', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'User', position: 'QA' },
-  { id: '23100126', name:  'Louie Valenzuela', email: 'louievalenzuela@nfa.gov.ph', userLevel: 'User', position: "Warehouse Supervisor"}
-];
-
 export default function UserManagement() {
   // us
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [isHiding, setIsHiding] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
-  const filterUser = sampleUsers.filter(u =>
+  // sample user reporsts (remove later when database is present)
+  const [sampleUser, setSampleUser] = useState([
+    { id: '23100123', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'Admin', position: 'QA' },
+    { id: '23100124', name: 'Febore Valenzuela', email: 'febrosevalenzuela@nfa.gov.ph', userLevel: 'User', position: 'Statistician' },
+    { id: '23100125', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'User', position: 'QA' },
+    { id: '23100126', name:  'Louie Valenzuela', email: 'louievalenzuela@nfa.gov.ph', userLevel: 'User', position: "Warehouse Supervisor"}
+  ])
+
+  // custome functions
+  const filterUser = sampleUser.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const closeModal = () => {
+    setIsHiding(true);
+    setTimeout(() => {
+      setShowModal(false);
+      setIsHiding(false);
+    }, 300);
+  };
+
+  const archiveModal = () => {
+    setShowModal(true)
+    return
+  }
+
+  const handleArchive = (id) => {
+    const updatedUsers = sampleUser.filter(
+      (user) => user.id !== id
+    );
+    setSampleUser(updatedUsers)
+  }
 
   return (
     <>
@@ -65,7 +90,10 @@ export default function UserManagement() {
                 <td>
                   <div>
                     <button className='action-buttons'><FaEdit size={20} /></button>
-                    <button className='action-buttons'><IoArchiveOutline size={20} /></button>
+                    <button onClick={() => {
+                      archiveModal();
+                      setSelectedId(user.id);
+                    }} className='action-buttons'><IoArchiveOutline size={20} /></button>
                   </div>
                 </td>
 
@@ -73,6 +101,32 @@ export default function UserManagement() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* archive modal */}
+      <div
+        className={
+          "archive-user-validation-modal-overlay" +
+          (showModal ? " show" : "") +
+          (isHiding ? " hiding" : "")
+        }
+      >
+        <div className='archive-user-modal'>
+          <div className='top-part-modal-archive'></div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
+            <div className='icon-archive-user'><IoArchiveOutline size={50} color='#2D317F'/></div>
+          </div>
+          <p className='archive-user-title'>Archive User</p>
+          <p>Are you sure you want to archive this user? <br/>You can restore it later if needed.</p>
+          <div className='validation-btns-archive'>
+            <button className='cancel-btn-archive' onClick={closeModal}>Cancel</button>
+            <button className='archive-btn-archive' onClick={() => {
+              handleArchive(selectedId);
+              closeModal();
+            }}>Archive</button>
+          </div>
+        </div>
+
       </div>
     
     </>
