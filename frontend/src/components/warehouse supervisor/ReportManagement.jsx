@@ -4,7 +4,7 @@ import { IoClose } from "react-icons/io5";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // added
 
-import "../../styles/warehouse/stockBook.css";
+import "../../styles/warehouse supervisor/stockBook.css";
 
 const stockReports = [
   {

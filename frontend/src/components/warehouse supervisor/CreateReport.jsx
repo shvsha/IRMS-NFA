@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import "../../styles/warehouse/createReport.css";
+import "../../styles/warehouse supervisor/createReport.css";
 
 export default function CreateReport() {
   const { cereal } = useParams();

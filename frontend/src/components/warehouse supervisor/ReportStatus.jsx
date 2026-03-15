@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { GoLinkExternal } from "react-icons/go";
-import "../../styles/warehouse/reportStatus.css";
+import "../../styles/warehouse supervisor/reportStatus.css";
 
 const reportsData = [
   {
