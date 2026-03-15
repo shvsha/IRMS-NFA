@@ -198,15 +198,13 @@ export default function Dashboard() {
 
   // for range
   const [selectedWeek, setSelectedWeek] = useState('Week 1');
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("January");
 
   // popup
   const [showCalendarFilter, setShowCalendarFilter] = useState(false);
 
   // for routers
   const navigate = useNavigate();
-
-
 
   return (
     <div className='whole-container-dashboard'>
@@ -217,32 +215,46 @@ export default function Dashboard() {
       </div>
 
       {showCalendarFilter && (
-        <div className='calendar-filter-popup-dashboard'>
-          <div className='top-part-filter-popup-dashboard'>
-            <p>Date Picker</p>
-          </div>
-          <div>
-            Select range type and date
-          </div>
-          <div>
-            <label htmlFor="">Range</label>
-            <FilterDropdown
-              selected={rangeDate}
-              options={["Weekly", "Monthly"]}
-              onSelect={setRangeDate}
-              buttonClass="date-filter-dashboard"
-            />
-          </div>
-          {rangeDate === 'weekly' && (
-            <div>
-              <label htmlFor="">Week</label>
+        <div style={{ display: "inline-block", position: 'relative'}}>
+          <div className='calendar-filter-popup-dashboard'>
+            <div className='top-part-filter-popup-dashboard'>
+              <p>Date Picker</p>
+            </div>
+            <div className='title-select-range-date-container'>
+              Select range type and date
+            </div>
+            <div className='range-date-container'>
+              <label htmlFor="">Range</label>
               <FilterDropdown
-                selected={selec}
+                selected={rangeDate}
+                options={["Weekly", "Monthly"]}
+                onSelect={setRangeDate}
+                buttonClass="date-filter-dashboard"
               />
             </div>
-          )}
-
-
+            {rangeDate === 'Weekly' && (
+              <div className='range-date-container'>
+                <label htmlFor="">Week</label>
+                <FilterDropdown
+                  selected={selectedWeek}
+                  options={['Week 1', 'Week 2', 'Week 3', 'Week 4']}
+                  onSelect={setSelectedWeek}
+                  buttonClass="date-filter-dashboard"
+                />
+              </div>
+            )}
+            {rangeDate === 'Monthly' && (
+              <div className='range-date-container'>
+                <label htmlFor="">Monthly</label>
+                <FilterDropdown
+                  selected={selectedMonth}
+                  options={['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']}
+                  onSelect={setSelectedMonth}
+                  buttonClass="date-filter-dashboard"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
