@@ -43,16 +43,16 @@ function FilterDropdown({ selected, options, onSelect, buttonClass }) {
 function WeeklyTrendChart({ cerealType }) {
   const baseData = {
     "All Cereal Type": [
-      { warehouse: "Warehouse 1", receipts: 10, issues: 6 },
-      { warehouse: "Warehouse 2", receipts: 7, issues: 8 },
+      { warehouse: "Warehouse 1", receipts: 8, issues: 9 },
+      { warehouse: "Warehouse 2", receipts: 8, issues: 11 },
     ],
     Rice: [
-      { warehouse: "Warehouse 1", receipts: 12, issues: 4 },
-      { warehouse: "Warehouse 2", receipts: 9, issues: 6 },
+      { warehouse: "Warehouse 1", receipts: 4, issues: 5 },
+      { warehouse: "Warehouse 2", receipts: 6, issues: 2 },
     ],
     Palay: [
-      { warehouse: "Warehouse 1", receipts: 8, issues: 7 },
-      { warehouse: "Warehouse 2", receipts: 6, issues: 9 },
+      { warehouse: "Warehouse 1", receipts: 4, issues: 4 },
+      { warehouse: "Warehouse 2", receipts: 2, issues: 9 },
     ],
   };
 
@@ -69,7 +69,6 @@ function WeeklyTrendChart({ cerealType }) {
     <div className="chart-wrapper">
       <div className="bar-chart-with-yaxis">
 
-        {/* Y-axis labels — reversed so highest is at top */}
         <div className="y-axis" style={{ height: CHART_HEIGHT }}>
           {[...ticks].reverse().map(tick => (
             <span key={tick} className="y-tick">{tick}</span>
@@ -171,6 +170,7 @@ function ReportStatusDonut({ approved, pending, rejected }) {
 }
 
 function RecentActivities() {
+  // reflect later on on audit logs
   const activities = [
     { text: "R1004 – New report submitted - WHS1", color: "#BD1C1C" },
     { text: "R1003 – New report submitted - WHS2", color: "#BD1C1C" },
@@ -191,16 +191,60 @@ function RecentActivities() {
 }
 
 export default function Dashboard() {
+  // us
+  // dropdown
   const [cerealType, setCerealType] = useState("All Cereal Type");
+  const [rangeDate, setRangeDate] = useState("Weekly");
+
+  // for range
+  const [selectedWeek, setSelectedWeek] = useState('Week 1');
+  const [selectedMonth, setSelectedMonth] = useState("");
+
+  // popup
+  const [showCalendarFilter, setShowCalendarFilter] = useState(false);
+
+  // for routers
   const navigate = useNavigate();
+
+
 
   return (
     <div className='whole-container-dashboard'>
 
       <div className='welcome-filter-container-dashboard'>
         <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
-        <button><FaRegCalendarAlt size={20} color={'#072560'} /></button>
+        <button onClick={() => setShowCalendarFilter(!showCalendarFilter)}><FaRegCalendarAlt size={20} color={'#072560'} /></button>
       </div>
+
+      {showCalendarFilter && (
+        <div className='calendar-filter-popup-dashboard'>
+          <div className='top-part-filter-popup-dashboard'>
+            <p>Date Picker</p>
+          </div>
+          <div>
+            Select range type and date
+          </div>
+          <div>
+            <label htmlFor="">Range</label>
+            <FilterDropdown
+              selected={rangeDate}
+              options={["Weekly", "Monthly"]}
+              onSelect={setRangeDate}
+              buttonClass="date-filter-dashboard"
+            />
+          </div>
+          {rangeDate === 'weekly' && (
+            <div>
+              <label htmlFor="">Week</label>
+              <FilterDropdown
+                selected={selec}
+              />
+            </div>
+          )}
+
+
+        </div>
+      )}
 
       <div className='summary-cards-dashboard-container'>
         <div className='summar-cards-dashboard'>

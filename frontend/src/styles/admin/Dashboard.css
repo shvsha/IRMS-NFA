@@ -469,7 +469,24 @@
   flex-shrink: 0;
 }
 .legend-dot.receipts  { background: #3D5FC0; }
-.legend-dot.issues    { background: #0D224E; }
+.legend-dot.issues    { background: #0D224E; }dropdown-content-dashboard
 .legend-dot.approved  { background: #3E7A43; }
 .legend-dot.pending   { background: #AE9C0F; }
 .legend-dot.rejected  { background: #B72132; }
+
+/* date filter css */
+.calendar-filter-popup-dashboard {
+  display: inline-block;
+  position: relative;
+  background-color: #F2F3F4;
+  z-index: 9999;
+  /* top: 100%;
+  left: 0;
+
+  margin: 4px 0 0;
+  padding: 6px;
+  border-radius: 5px;
+  width: max-content;
+  min-width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); */
+}
