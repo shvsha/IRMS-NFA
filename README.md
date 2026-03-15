@@ -9,5 +9,5 @@ BACKEND:
 1. Open the terminal for backend/RMSProject and check the requirements.txt file
 2. Run this commnad, pip install -r requirements.txt
 3. This should install all the dependencies you need for the backend
-4. Test it by cd RMSProject and running django manage.py runserver
+4. Test it by running django manage.py runserver
 
