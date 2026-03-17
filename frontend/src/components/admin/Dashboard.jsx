@@ -1,44 +1,20 @@
+// css
 import '../../styles/admin/Dashboard.css'
+
+// filter components
+import WeeklyFilter from '../filters/WeeklyFilter'
+import FilterDropdown from '../filters/FilterDropdown';
+
+// utils/helpers
+import { getWeekRange } from '../../utils/dateUtils'
+
+// react icons
 import { FaRegCalendarAlt, FaPlus } from "react-icons/fa";
 import { TbClipboardCheck, TbChartBar, TbUserSearch } from "react-icons/tb";
-import { useState, useRef, useEffect } from 'react';
 
+// react
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-function FilterDropdown({ selected, options, onSelect, buttonClass }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
-        <span>{selected}</span>
-        <span className={`dropdown-chevron-dashboard${open ? ' open' : ''}`}>▼</span>
-      </button>
-      {open && (
-        <ul className="dropdown-content-dashboard">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={() => { onSelect(option); setOpen(false); }}
-              className={selected === option ? 'dropdown-item-active-dashboard' : ''}
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 function WeeklyTrendChart({ cerealType }) {
   const baseData = {
@@ -191,31 +167,79 @@ function RecentActivities() {
 }
 
 export default function Dashboard() {
-  // us
+  // for routers
+  const navigate = useNavigate();
   // dropdown
   const [cerealType, setCerealType] = useState("All Cereal Type");
   const [rangeDate, setRangeDate] = useState("Weekly");
-
-  // for range
-  const [selectedWeek, setSelectedWeek] = useState('Week 1');
-  const [selectedMonth, setSelectedMonth] = useState("January");
-
   // popup
   const [showCalendarFilter, setShowCalendarFilter] = useState(false);
+  // for range
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState("January");
 
-  // for routers
-  const navigate = useNavigate();
+  // for year and month
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
+  // for date range
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null
+  });
+
+  useEffect(() => {
+    const [sd, ed] = getWeekRange(selectedWeek, viewYear, viewMonth);
+    const pad = (n) => String(n).padStart(2, "0");
+    setDateRange({
+      startDate: `${viewYear}-${pad(viewMonth + 1)}-${pad(sd)}`,
+      endDate:   `${viewYear}-${pad(viewMonth + 1)}-${pad(ed)}`,
+    });
+  }, [selectedWeek, viewYear, viewMonth]);
+  // call the API whenver dateRange updates
+  // useEffect(() => {
+  //   if (!dateRange.startDate || !dateRange.endDate) return;
+  //   fetchDashboardData(dateRange.startDate, dateRange.endDate);
+  // }, [dateRange]);
+
+  // async function fetchDashboardData(startDate, endDate) {
+  //   try {
+  //     const res = await fetch(`/api/dashboard?startDate=${startDate}&endDate=${endDate}`);
+  //     const data = await res.json();
+  //     console.log("Dashboard data:", data); // replace with your state setters
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }
+
+  const handlePrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(y => y - 1);
+    } else {
+      setViewMonth(m => m - 1);
+    }
+  }
+  const handleNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(y => y + 1);
+    } else {
+      setViewMonth(m => m + 1);
+    }
+  }
 
   return (
     <div className='whole-container-dashboard'>
 
-      <div className='welcome-filter-container-dashboard'>
-        <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
-        <button onClick={() => setShowCalendarFilter(!showCalendarFilter)}><FaRegCalendarAlt size={20} color={'#072560'} /></button>
-      </div>
+      <div style={{ position: 'relative' }}>
+        <div className='welcome-filter-container-dashboard'>
+          <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
+          <button onClick={() => setShowCalendarFilter(!showCalendarFilter)}>
+            <FaRegCalendarAlt size={20} color={'#072560'} />
+          </button>
+        </div>
 
-      {showCalendarFilter && (
-        <div style={{ display: "inline-block", position: 'relative'}}>
+        {showCalendarFilter && (
           <div className='calendar-filter-popup-dashboard'>
             <div className='top-part-filter-popup-dashboard'>
               <p>Date Picker</p>
@@ -223,8 +247,8 @@ export default function Dashboard() {
             <div className='title-select-range-date-container'>
               Select range type and date
             </div>
-            <div className='range-date-container'>
-              <label htmlFor="">Range</label>
+            <div className='range-date-container range-container-1'>
+              <label>Range</label>
               <FilterDropdown
                 selected={rangeDate}
                 options={["Weekly", "Monthly"]}
@@ -232,31 +256,45 @@ export default function Dashboard() {
                 buttonClass="date-filter-dashboard"
               />
             </div>
-            {rangeDate === 'Weekly' && (
-              <div className='range-date-container'>
-                <label htmlFor="">Week</label>
+            {rangeDate === "Weekly" && (
+              <div className='range-date-container range-container-2'>
+                <label>Week</label>
                 <FilterDropdown
-                  selected={selectedWeek}
-                  options={['Week 1', 'Week 2', 'Week 3', 'Week 4']}
-                  onSelect={setSelectedWeek}
-                  buttonClass="date-filter-dashboard"
+                  selected={`Week ${selectedWeek}`}
+                  options={["Week 1", "Week 2", "Week 3", "Week 4"]}
+                  onSelect={(val) => setSelectedWeek(Number(val.split(" ")[1]))}
+                  buttonClass={"date-filter-dashboard"}
                 />
               </div>
             )}
-            {rangeDate === 'Monthly' && (
-              <div className='range-date-container'>
-                <label htmlFor="">Monthly</label>
+            {rangeDate === "Monthly" && (
+              <div className='range-date-container range-container-3'>
+                <label>Monthly</label>
                 <FilterDropdown
                   selected={selectedMonth}
-                  options={['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']}
+                  options={['January','February','March','April','May','June','July','August','September','October','November','December']}
                   onSelect={setSelectedMonth}
-                  buttonClass="date-filter-dashboard"
+                  buttonClass={"date-filter-dashboard"}
                 />
+              </div>
+            )}
+            {rangeDate === "Weekly" && (
+              <div className='calendar-grid-popup-dashboard'>
+                <WeeklyFilter
+                  selectedWeek={selectedWeek}
+                  year={viewYear}
+                  month={viewMonth}
+                  onPrevMonth={handlePrevMonth}
+                  onNextMonth={handleNextMonth}
+                  onMonthChange={(m) => setViewMonth(m)}
+                  onYearChange={(y) => setViewYear(y)}
+               />
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
 
       <div className='summary-cards-dashboard-container'>
         <div className='summar-cards-dashboard'>

@@ -13,6 +13,7 @@
   align-items: center;
   margin-bottom: 14px;
   flex-shrink: 0;
+  position: relative;
 }
 .welcome-filter-container-dashboard p {
   font-weight: bold;
@@ -420,45 +421,6 @@
   border-color: #2D317F;
 }
 
-.dropdown-content-dashboard {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 9999;
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 6px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  width: max-content;
-  min-width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-.dropdown-content-dashboard li {
-  padding: 8px 14px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.dropdown-content-dashboard li:hover { background-color: #f0f0f0; }
-.dropdown-item-active-dashboard {
-  background-color: #EEF0FF;
-  color: #2D317F;
-  font-weight: 600;
-}
-.dropdown-chevron-dashboard {
-  display: inline-block;
-  font-size: 10px;
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-}
-.dropdown-chevron-dashboard.open { transform: rotate(180deg); }
-
 /* ── Legend dots ── */
 .legend-dot {
   display: inline-block;
@@ -470,7 +432,7 @@
   flex-shrink: 0;
 }
 .legend-dot.receipts  { background: #3D5FC0; }
-.legend-dot.issues    { background: #0D224E; }dropdown-content-dashboard
+.legend-dot.issues    { background: #0D224E; }
 .legend-dot.approved  { background: #3E7A43; }
 .legend-dot.pending   { background: #AE9C0F; }
 .legend-dot.rejected  { background: #B72132; }
@@ -485,9 +447,22 @@
   top: 100%;
   right: 0;
   margin-top: -10px;
-  height: 300px;
+  height: 250px;
   overflow: visible;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding-bottom: 16px;
+}
+.calendar-grid-popup-dashboard {
+  position: absolute;
+  right: 0;
+  z-index: 9999;
+  background: #fff;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  width: 250px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .top-part-filter-popup-dashboard {
@@ -506,8 +481,7 @@
 }
 .title-select-range-date-container {
   color: #2D317F;
-  padding-bottom: 5px;
-  padding-top: 15px;
+  padding-top: 11px;
   padding-left: 20px;
   padding-right: 15px;
 }
@@ -538,8 +512,13 @@
   font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 10001;
 }
 .date-filter-dashboard:hover {
   background-color: #f5f5f5;
   border-color: #2D317F;
 }
+
+.range-container-1 { position: relative; z-index: 10002;}
+.range-container-2 { position: relative; z-index: 10001;}

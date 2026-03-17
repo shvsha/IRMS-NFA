@@ -1,50 +1,30 @@
-.weekly-filter-wrapper {
+.weekly-filter-container {
   max-width: 380px;
-  padding: 1rem 0;
+  padding: 5px;
+  position: relative;
+  z-index: 1;
+  padding: 7px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-.weekly-filter-field-group {
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.weekly-filter-select-range {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: white;
-  cursor: pointer;
-}
-
 /* calendar */
-.weekly-filter-cal-box {
-  background-color: white;
-  border: 1px solid #e5e8eb;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 8px;
-}
 .weekly-filter-cal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .weekly-filter-month-table {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #111827;
 }
 .weekly-filter-nav-btn {
-  background-color: none;
+  background: none;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   color: #6b7280;
-  padding: 9 6px;
-  line-height: 1;
+  padding: 0, 4px;
 }
 
 .weekly-filter-grid {
@@ -53,9 +33,58 @@
   gap: 2px;
 }
 .weekly-filter-day-of-week {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: #9ca3af;
   text-align: center;
-  padding: 4px, 0;
+  padding: 3px, 0;
+}
+.weekly-filter-day {
+  text-align: center;
+  font-size: 12px;
+  padding: 6px 0;
+  border-radius: 5px;
+  color: #111827;
+}
+.weekly-filter-day.other-month {
+  color: #d1d5db;
+}
+.weekly-filter-day.range-start {
+  background: #2D317F;
+  color: #fff;
+  font-weight: 500;
+  border-radius: 5px 0 0 5px;
+}
+.weekly-filter-day.in-range {
+  background: #ADCEFF;
+  border-radius: 0;
+}
+.weekly-filter-day.range-end {
+  background: #2D317F;
+  color: #fff;
+  font-weight: 500;
+  border-radius: 0 5px 5px 0;
+}
+
+.weekly-filter-month-select,
+.weekly-filter-year-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background-color: #fff;
+  padding: 5px 12px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.weekly-filter-month-select:hover,
+.weekly-filter-year-select:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
 }
