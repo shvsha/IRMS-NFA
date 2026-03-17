@@ -1,0 +1,61 @@
+.weekly-filter-wrapper {
+  max-width: 380px;
+  padding: 1rem 0;
+}
+.weekly-filter-field-group {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.weekly-filter-select-range {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+}
+
+/* calendar */
+.weekly-filter-cal-box {
+  background-color: white;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+.weekly-filter-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.weekly-filter-month-table {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+.weekly-filter-nav-btn {
+  background-color: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 9 6px;
+  line-height: 1;
+}
+
+.weekly-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.weekly-filter-day-of-week {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-align: center;
+  padding: 4px, 0;
+}
