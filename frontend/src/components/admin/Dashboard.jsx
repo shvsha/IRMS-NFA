@@ -3,6 +3,7 @@ import '../../styles/admin/Dashboard.css'
 
 // filter components
 import WeeklyFilter from '../filters/WeeklyFilter'
+import MonthlyFilter from '../filters/MonthlyFilter';
 import FilterDropdown from '../filters/FilterDropdown';
 
 // utils/helpers
@@ -195,6 +196,8 @@ export default function Dashboard() {
       endDate:   `${viewYear}-${pad(viewMonth + 1)}-${pad(ed)}`,
     });
   }, [selectedWeek, viewYear, viewMonth]);
+
+
   // call the API whenver dateRange updates
   // useEffect(() => {
   //   if (!dateRange.startDate || !dateRange.endDate) return;
@@ -226,6 +229,10 @@ export default function Dashboard() {
     } else {
       setViewMonth(m => m + 1);
     }
+  }
+
+  const onMonthChange = (monthNumber) => {
+    setSelectedMonth(monthNumber)
   }
 
   return (
@@ -268,7 +275,7 @@ export default function Dashboard() {
               </div>
             )}
             {rangeDate === "Monthly" && (
-              <div className='range-date-container range-container-3'>
+              <div className='range-date-container range-container-2'>
                 <label>Monthly</label>
                 <FilterDropdown
                   selected={selectedMonth}
@@ -289,6 +296,17 @@ export default function Dashboard() {
                   onMonthChange={(m) => setViewMonth(m)}
                   onYearChange={(y) => setViewYear(y)}
                />
+              </div>
+            )}
+
+            {rangeDate === 'Monthly' && (
+              <div className='calendar-grid-popup-dashboard'>
+                <MonthlyFilter
+                  selectedMonth={selectedMonth}
+                  year={viewYear}
+                  onYearChange={(y) => setViewYear(y)}
+                  onMonthChange={onMonthChange}
+                />
               </div>
             )}
           </div>

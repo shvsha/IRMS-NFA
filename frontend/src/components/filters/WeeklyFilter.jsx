@@ -9,10 +9,6 @@ const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i);
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-function toDateString(year, month, day) {
-  return `${year}-${String(month+1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-
 export default function WeeklyFilter({ selectedWeek, year, month, onPrevMonth, onNextMonth, onMonthChange, onYearChange }) {
 
   const [startDay, endDay] = getWeekRange(selectedWeek, year, month);

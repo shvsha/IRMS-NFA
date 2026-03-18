@@ -1,0 +1,63 @@
+.monthly-filter-container {
+  max-width: 400px;
+  padding: 5px;
+  position: relative;
+  z-index: 1;
+  padding: 7px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 10px;
+}
+.monthly-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.monthly-filter-year-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background-color: #fff;
+  padding: 5px 12px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.monthly-filter-year-select:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.monthly-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 2px;
+}
+.three-month-row {
+  display: flex;
+  gap: 10px;
+  text-align: center;
+  margin-top: 8px;
+}
+.monthly-btn {
+  flex: 1;
+  padding: 10px 10px;
+  background-color: #ADCEFF;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s ease;
+}
+.monthly-btn:hover {
+  opacity: 0.9;
+}
+.monthly-btn.active {
+  background-color: #2D317F;
+  color: white;
+}
