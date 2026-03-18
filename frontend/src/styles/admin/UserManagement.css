@@ -98,7 +98,7 @@
 }
 
 /* modal */
-.archive-user-validation-modal-overlay {
+.user-validation-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -140,7 +140,7 @@
   transform: scale(0.8);
   transition: transform 0.3s ease;
 }
-.archive-user-validation-modal-overlay.show {
+.user-validation-modal-overlay.show {
   background: #00000080;
   opacity: 1;
   visibility: visible;
@@ -148,7 +148,7 @@
 .archive-user-validation-modal-overlay.show .archive-user-modal {
   transform: scale(1);
 }
-.archive-user-validation-modal-overlay.hiding {
+.user-validation-modal-overlay.hiding {
   background: #00000000;
   opacity: 0;
   visibility: visible; 
@@ -184,4 +184,45 @@
 .archive-btn-archive {
   background-color: #2D317F;
   color: #D9D9D9;
+}
+
+/* success modal */
+.success-modal {
+  background-color: #E6EEF6;
+  border-radius: 10px;
+  max-width: 400px;
+  height: 330px;
+  width: 90%;
+  text-align: center;
+  color: #2D317F;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+.top-part-modal-success {
+  height: 30px;
+  background-color: #3E7A43;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.icon-success-user {
+  padding: 20px 0px;
+  background-color: #3E7A43;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  border-radius: 300px;
+  margin-top: 15px;
+}
+.success-done-btn-user {
+  color: white;
+  background-color: #3E7A43;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.success-done-btn-user:hover {
+  opacity: 0.8;
 }

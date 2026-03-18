@@ -1,16 +1,25 @@
 import '../../styles/admin/UserManagement.css'
 import { useState } from 'react'
 
+// employee form component
+import EmployeeForm from './EmployeeForm';
+
 // react icon
 import { FaEdit, FaSearch } from "react-icons/fa";
 import { IoArchiveOutline } from "react-icons/io5";
+import { FaCheck } from "react-icons/fa6";
 
 export default function UserManagement() {
   // us
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+
+  // for employee form (add and edit)
+  const [view, setView] = useState("list");
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
 
   // sample user reporsts (remove later when database is present)
   const [sampleUser, setSampleUser] = useState([
@@ -25,24 +34,50 @@ export default function UserManagement() {
     u.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const closeModal = () => {
+  const handleBack = () => {
+    setView("list");
+    setSelectedEmployee(null);
+  };
+
+  const closeValidationModal = () => {
     setIsHiding(true);
     setTimeout(() => {
-      setShowModal(false);
+      setShowValidationModal(false);
       setIsHiding(false);
     }, 300);
   };
 
-  const archiveModal = () => {
-    setShowModal(true)
+  // archive modal
+  const archiveValidationModal = () => {
+    setShowValidationModal(true)
     return
   }
-
   const handleArchive = (id) => {
     const updatedUsers = sampleUser.filter(
       (user) => user.id !== id
     );
     setSampleUser(updatedUsers)
+  }
+
+  // success modal
+  const successModal = () => {
+    setShowSuccessModal(true)
+    return
+  }
+  const closeSuccessModal = () => {
+    setIsHiding(true);
+    setTimeout(() => {
+      setShowSuccessModal(false);
+      setIsHiding(false);
+    }, 300);
+  };
+
+  // Show employee form instead of the user list when in edit or add mode
+  if (view === "add") {
+    return <EmployeeForm mode="add" onCancel={handleBack} />;
+  }
+  if (view === "edit") {
+    return <EmployeeForm mode="edit" employeeData={selectedEmployee} onCancel={handleBack} />;
   }
 
   return (
@@ -62,7 +97,7 @@ export default function UserManagement() {
             />
             <FaSearch className='search-icon-right-user' size={20} />
           </div>
-          <button className='header-add-employee'>+ Add Employee</button>
+          <button className='header-add-employee' onClick={() => setView("add")}>+ Add Employee</button>
         </div>    
 
       </div>
@@ -89,11 +124,14 @@ export default function UserManagement() {
                 <td>{user.position}</td>
                 <td>
                   <div>
-                    <button className='action-buttons'><FaEdit size={20} /></button>
+                    <button className='action-buttons' onClick={() => {
+                      setSelectedEmployee(user);
+                      setView("edit");
+                    }}><FaEdit color={'#2D317F'} size={20} /></button>
                     <button onClick={() => {
-                      archiveModal();
+                      archiveValidationModal();
                       setSelectedId(user.id);
-                    }} className='action-buttons'><IoArchiveOutline size={20} /></button>
+                    }} className='action-buttons'><IoArchiveOutline color={'#2D317F'} size={20} /></button>
                   </div>
                 </td>
 
@@ -106,8 +144,8 @@ export default function UserManagement() {
       {/* archive modal */}
       <div
         className={
-          "archive-user-validation-modal-overlay" +
-          (showModal ? " show" : "") +
+          "user-validation-modal-overlay" +
+          (showValidationModal ? " show" : "") +
           (isHiding ? " hiding" : "")
         }
       >
@@ -119,14 +157,34 @@ export default function UserManagement() {
           <p className='archive-user-title'>Archive User</p>
           <p>Are you sure you want to archive this user? <br/>You can restore it later if needed.</p>
           <div className='validation-btns-archive'>
-            <button className='cancel-btn-archive' onClick={closeModal}>Cancel</button>
+            <button className='cancel-btn-archive' onClick={closeValidationModal}>Cancel</button>
             <button className='archive-btn-archive' onClick={() => {
               handleArchive(selectedId);
-              closeModal();
+              closeValidationModal();
+              successModal();
             }}>Archive</button>
           </div>
         </div>
 
+      </div>
+
+      {/* success modal */}
+      <div
+        className={
+          "user-validation-modal-overlay" +
+          (showSuccessModal ? " show" : "") +
+          (isHiding ? " hiding" : "")
+        }
+      >
+        <div className='success-modal'>
+          <div className='top-part-modal-success'></div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
+            <div className='icon-success-user'><FaCheck size={50} color='white'/></div>
+          </div>
+          <p style={{color: '#2D317F', fontSize: '25px', fontWeight: 'bold'}}>Success!</p>
+          <p style={{color: '#2D317F', fontSize: '15px', marginTop: '-20px'}}>Employee has been archived</p>
+          <button className='success-done-btn-user' onClick={() => closeSuccessModal()}>Done</button>
+        </div>
       </div>
     
     </>

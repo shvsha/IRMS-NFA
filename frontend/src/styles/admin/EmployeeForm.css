@@ -1,0 +1,123 @@
+.employee-form-whole-container {
+  margin: 30px;
+  color: #2D317F;
+  background-color: #FFFFFF;
+  padding: 15px;
+}
+.employee-form-whole-container h2 {
+  margin: 0;
+}
+
+.employee-credentials-container {
+  display: flex;
+  background-color: #E2EBFF;
+  font-weight: 600;
+  flex-direction: column;
+  padding: 15px 20px;
+  margin-top: 10px;
+}
+.employee-credentials-container p {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 7px 0;
+}
+.employee-form-fields-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.label-input-emp-form {
+  display: flex;
+  gap: 6px;
+  flex-direction: column;
+}
+.label-input-emp-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2D317F;
+}
+
+.label-input-emp-form input,
+.label-input-emp-form select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+  width: 200px;
+}
+
+.dropdown-options-emp-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  width: 230px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  border-width: 1px;
+  border-color: #2D317F;
+  background-color: white;
+  padding: 7px 12px;
+  color: #2D317F;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 10001;
+}
+.dropdown-options-emp-form:hover {
+  background-color: #f5f5f5;
+  border-color: #2D317F;
+}
+
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 230px;
+}
+.password-input-wrapper input {
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: transparent;
+}
+.password-input-wrapper button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 8px;
+  color: #2D317F;
+  display: flex;
+  align-items: center;
+}
+
+.cancel-sub-upd-btn-container {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+.cancel-sub-upd-btn-container button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cancel-btn {
+  background-color: #D9D9D9;
+  color: #5B5B5B;
+}
+.upd-sub-btn {
+  width: 73px;
+  background-color: #2D317F;
+  color: white;
+}
