@@ -15,7 +15,7 @@ const sampleAudit = [
   //add more for testing
 ]
 
-export default function AuditLogsAdmin() {
+export default function AuditLogs() {
   // us
   const [selectedStartDate, setSelectedStartDate] = useState(new Date(2026, 0, 1));
   const [selectedEndDate, setSelectedEndDate] = useState(new Date(2026, 2, 20));

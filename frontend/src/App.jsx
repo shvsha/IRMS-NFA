@@ -14,7 +14,7 @@ import Dashboard from "./components/admin/Dashboard";
 import UserMagement from "./components/admin/UserManagement";
 import ReportEvaluation from "./components/admin/ReportEvaluation";
 import ReportHistory from "./components/admin/ReportHistory";
-import AuditLogs from "./components/admin/AuditLogsAdmin";
+import AuditLogs from "./components/admin/AuditLogs";
 
 // import Generated Receipt Report 
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
