@@ -3,6 +3,8 @@ import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { useState, useRef, useEffect } from 'react'
 import { FaSearch } from "react-icons/fa";
 
+import { useNavigate } from "react-router-dom";
+
 import '../../styles/admin/ReportEvaluation.css'
 
 const sampleReports = [
@@ -51,6 +53,9 @@ export default function ReportEvaluation() {
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [search, setSearch] = useState("");
+
+  // navigate receipt report
+  const navigate = useNavigate();
 
   const handleStatusChange = (val) => { setSelectedStatus(val); setSearch("") }
   const handleCerealChange = (val) => { setSelectedCerealType(val); setSearch("") }
@@ -162,7 +167,7 @@ export default function ReportEvaluation() {
                   </td>
                   <td>
                     <div className="action-btns-eval">
-                      <button className="view-report-eval"><GoLinkExternal size={15}/>View</button>
+                      <button className="view-report-eval" onClick={() => navigate("/admin/evaluation/receipt")}><GoLinkExternal size={15}/>View</button>
                       <button className="approve-report-eval"><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
                       <button className="reject-report-eval">X</button>
                     </div>

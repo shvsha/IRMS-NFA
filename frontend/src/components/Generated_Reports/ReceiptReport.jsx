@@ -1,5 +1,5 @@
-import React from "react";
-import "../../styles/Generated Reports/ReceiptReports.css";
+import React from 'react'
+import "../../styles/Generated_Reports/ReceiptReports.css";
 
 const EMPTY_ROWS = Array(10).fill(null);
 
@@ -9,6 +9,8 @@ const SIGNATURES = [
   { label: "Verified Correct:", name: "LOVELYN M. PICARDAL", role: "Accountant II" },
   { label: "Noted by:", name: "CELERINA T. CAPONES", role: "Branch Manager" },
 ];
+
+
 
 export default function WarehouseReceiptsForm() {
   return (
@@ -96,3 +98,5 @@ export default function WarehouseReceiptsForm() {
     </div>
   );
 }
+
+

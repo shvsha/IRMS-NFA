@@ -1,17 +1,21 @@
-.form-container {
-  margin-bottom: 24px;
-}
-
 .form-wrap {
-  max-width:fit-content;
   font-family: Arial, sans-serif;
   color: #111;
   padding: clamp(8px, 2vw, 20px);
   background: #fff;
   width: 100%;
   box-sizing: border-box;
-  position:relative;
-  overflow-y: auto;
+  overflow-x: auto;
+}
+.form-container {
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  padding-bottom: 20px; 
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .form-title {
@@ -52,10 +56,12 @@
 .meta-left,
 .meta-right {
   font-size: clamp(9px, 1.1vw, 12px);
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .meta-right {
-  text-align: right;
+  text-align: left;
 }
 
 .meta-left p,
@@ -72,10 +78,9 @@
 .receipt-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(7px, 0.9vw, 11px);
+  font-size: clamp(8px, 1vw, 11px);
   margin-bottom: clamp(10px, 2vw, 18px);
   table-layout: fixed;
-  min-width: 600px; /* prevents extreme squishing on very small screens */
 }
 
 .receipt-table th,
@@ -84,40 +89,17 @@
   text-align: center;
   padding: clamp(2px, 0.4vw, 5px) clamp(2px, 0.3vw, 4px);
   word-wrap: break-word;
-  overflow: hidden;
 }
 
 .receipt-table th {
-  background: #f0f0f0;
+  background: #ADCEFF;
   font-weight: bold;
-  font-size: clamp(7px, 0.85vw, 10px);
+  font-size: clamp(7px, 0.9vw, 10px);
   line-height: 1.3;
 }
 
 .receipt-table td {
   height: clamp(18px, 2.5vw, 28px);
-}
-
-.receipt-table th.net-kg,
-.receipt-table td.net-kg {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 110px !important;
-}
-
-.receipt-table th.net-kg .cell-truncate,
-.receipt-table td.net-kg .cell-truncate {
-  display: block;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* wrapper div around the table in JSX */
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
 }
 
 .sig-block {
