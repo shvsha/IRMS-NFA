@@ -7,7 +7,7 @@ const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i);
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 
-export default function DatePickerInput({ value, onChange, placeholder = "MM/DD/YYYY" }) {
+export default function DatePickerInput({ value, onChange, placeholder = "MM/DD/YYYY", className = "" }) {
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState((value ?? new Date()).getMonth());
   const [viewYear, setViewYear]   = useState((value ?? new Date()).getFullYear());
@@ -62,7 +62,7 @@ export default function DatePickerInput({ value, onChange, placeholder = "MM/DD/
   };
 
   return (
-    <div className='daily-filter-wrapper' ref={containerRef}>
+    <div className={`daily-filter-wrapper ${className}`} ref={containerRef}>
       {/* Input trigger */}
       <div
         className={`daily-filter-input${open ? ' daily-filter-input--open' : ''}`}

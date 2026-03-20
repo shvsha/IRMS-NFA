@@ -17,6 +17,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   user-select: none;
   width: 335px;
+  gap: 20px;
 }
 .daily-filter-input:hover {
   border-color: #9ca3af;
@@ -27,7 +28,8 @@
 }
 .daily-filter-input-text {
   font-size: 14px;
-  color: #111827;
+  color: #2D317F;
+  font-weight: none;
 }
 .daily-filter-input-placeholder {
   color: #9ca3af;
@@ -108,7 +110,7 @@
   font-size: 13px;
   padding: 3px 0;
   border-radius: 6px;
-  color: #111827;
+  color: #2D317F;
   cursor: pointer;
   transition: background-color 0.15s;
 }
