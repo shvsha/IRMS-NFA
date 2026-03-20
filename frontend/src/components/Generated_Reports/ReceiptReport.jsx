@@ -1,4 +1,3 @@
-import React from 'react'
 import "../../styles/Generated_Reports/ReceiptReports.css";
 
 const EMPTY_ROWS = Array(10).fill(null);
@@ -9,8 +8,6 @@ const SIGNATURES = [
   { label: "Verified Correct:", name: "LOVELYN M. PICARDAL", role: "Accountant II" },
   { label: "Noted by:", name: "CELERINA T. CAPONES", role: "Branch Manager" },
 ];
-
-
 
 export default function WarehouseReceiptsForm() {
   return (
@@ -56,7 +53,7 @@ export default function WarehouseReceiptsForm() {
               <th rowSpan={2}>Cereal Type / Variety</th>
               <th rowSpan={2}>WSR# / WSI#</th>
               <th rowSpan={2}>Nature of Transaction</th>
-              <th colSpan={2}>Issued To</th>
+              <th colSpan={2}>From Whom Received</th>
               <th rowSpan={2}>Age</th>
               <th rowSpan={2}>Cond.</th>
               <th rowSpan={2}>M/C</th>
@@ -65,7 +62,7 @@ export default function WarehouseReceiptsForm() {
             </tr>
             <tr>
               <th>Name</th>
-              <th>OR/BL/WSR No.</th>
+              <th>PR/BL/</th>
               <th>Bags</th>
               <th>Gross Kg.</th>
               <th className="net-kg"><div className="cell-truncate">Net Kg.</div></th>

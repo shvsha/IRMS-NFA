@@ -1,11 +1,20 @@
+// react icon
 import { GoLinkExternal } from "react-icons/go";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { useState, useRef, useEffect } from 'react'
+import { FaCheck } from "react-icons/fa6";
+import { TbXboxX } from "react-icons/tb";
 import { FaSearch } from "react-icons/fa";
 
+import { useState} from 'react'
+
+// react router
 import { useNavigate } from "react-router-dom";
 
+// css
 import '../../styles/admin/ReportEvaluation.css'
+
+// components
+import FilterDropdown from "../filters/FilterDropdown";
 
 const sampleReports = [
   {id: "11692615", cerealtype: 'Palay', transaction: "Milling", whse: "Warehouse 1", date: "30-Jan-26", status: "Pending"},
@@ -13,42 +22,8 @@ const sampleReports = [
   {id: "11692617", cerealtype: 'Palay', transaction: "Milling", whse: "Warehouse 1", date: "29-Jan-26", status: "Pending"},
 ]
 
-function FilterDropdown({ selected, options, onSelect, buttonClass }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
-        <span>{selected}</span>
-        <span className={`dropdown-chevron-eval${open ? ' open' : ''}`}>▼</span>
-      </button>
-      {open && (
-        <ul className="dropdown-content-eval">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={() => { onSelect(option); setOpen(false) }}
-              className={selected === option ? 'dropdown-item-active-eval' : ''}
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 export default function ReportEvaluation() {
+  // us
   const [selectedStatus, setSelectedStatus] = useState("All Status")
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
@@ -56,6 +31,41 @@ export default function ReportEvaluation() {
 
   // navigate receipt report
   const navigate = useNavigate();
+
+  // modals
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isHiding, setIsHiding] = useState(false);
+
+  // custom functions
+  // reject modal
+  const closeRejectModal = () => {
+    setIsHiding(true);
+    setTimeout(() => {
+      setShowRejectModal(false);
+      setIsHiding(false);
+    }, 300);
+  };
+  const rejectModal = () => {
+    setShowRejectModal(true);
+    return
+  }
+  const handleReject = () => {
+  // use when submitting the reason of reject (connected with report status and notification)
+  }
+
+  //success modal
+  const approveModal = () => {
+    setShowApproveModal(true)
+    return
+  } 
+  const closeApproveModal = () => {
+    setIsHiding(true);
+    setTimeout(() => {
+      setShowApproveModal(false);
+      setIsHiding(false);
+    }, 300);
+  };
 
   const handleStatusChange = (val) => { setSelectedStatus(val); setSearch("") }
   const handleCerealChange = (val) => { setSelectedCerealType(val); setSearch("") }
@@ -168,8 +178,8 @@ export default function ReportEvaluation() {
                   <td>
                     <div className="action-btns-eval">
                       <button className="view-report-eval" onClick={() => navigate("/admin/evaluation/receipt")}><GoLinkExternal size={15}/>View</button>
-                      <button className="approve-report-eval"><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
-                      <button className="reject-report-eval">X</button>
+                      <button className="approve-report-eval" onClick={approveModal}><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
+                      <button className="reject-report-eval" onClick={rejectModal}>X</button>
                     </div>
                   </td>
                 </tr>
@@ -178,6 +188,49 @@ export default function ReportEvaluation() {
           </table>
         </div>
       </div>
+
+      {/* success modal */}
+      <div
+        className={
+          "eval-validation-modal-overlay" +
+          (showApproveModal ? " show" : "") +
+          (isHiding ? " hiding" : "")
+        }
+      >
+        <div className='success-modal-eval'>
+          <div className='top-part-modal-success-eval'></div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
+            <div className='icon-success-eval'><FaCheck size={50} color='white'/></div>
+          </div>
+          <p style={{color: '#2D317F', fontSize: '25px', fontWeight: 'bold'}}>Success!</p>
+          <p style={{color: '#2D317F', fontSize: '15px', marginTop: '-20px'}}><span>Report 11692615</span> has been approved! </p>
+          <button className='success-done-btn-eval' onClick={() => closeApproveModal()}>Done</button>
+        </div>
+      </div>
+
+      {/* reject modal */}
+      <div
+        className={
+          "eval-validation-modal-overlay" +
+          (showRejectModal ? " show" : "") +
+          (isHiding ? " hiding" : "")
+        }
+      >
+        <div className='reject-modal-eval'>
+          <div className='top-part-modal-reject-eval'></div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
+            <div className='icon-reject-eval'><TbXboxX size={70} color='#BB2325'/></div>
+          </div>
+          <p style={{color: '#BB2325', fontSize: '25px', fontWeight: 'bold'}}>Reject Report?</p>
+          <p style={{color: '#2B0505', fontSize: '15px', marginTop: '-20px'}}>Please give the reason why you’ve rejected this report down below:</p>
+          <textarea className="reject-reason-textarea" placeholder="Type your reason here..." />
+          <div className='validation-btns-reject'>
+            <button className='cancel-btn-reject' onClick={closeRejectModal}>Cancel</button>
+            <button className='reject-btn-reject' onClick={closeRejectModal}>Reject</button>
+          </div>
+        </div>
+      </div>
+        
     </>
   )
 }
