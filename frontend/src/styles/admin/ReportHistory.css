@@ -66,6 +66,7 @@
   display: flex;
   gap: 32px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 .filter-title-container-history {
   display: flex;
@@ -111,7 +112,7 @@
 
 /* search filter */
 .search-container-history {
-  justify-content: flex-end;
+  margin-top: 24px;
 }
 .search-filter-container-history {
   background-color: #2D317F;

@@ -1,8 +1,11 @@
 // react icons
-import { useState, useRef, useEffect } from 'react'
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
+
+// react
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 // css
 import '../../styles/admin/ReportHistory.css'
@@ -26,6 +29,9 @@ const sampleReportHistory = [
 ]
 
 export default function ReportHistory() {
+  // for routers
+  const navigate = useNavigate();
+
   // us
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [selectedReportType, setSelectedReportType] = useState("All Reports")
@@ -279,7 +285,8 @@ export default function ReportHistory() {
                       <td>{report.cerealtype}</td>
                       <td>
                         <div className='action-btns-history'>
-                          <button className='view-report-history'><GoLinkExternal size={14}/>View</button>
+                          {/* change this later on */}
+                          <button onClick={() => navigate("/admin/evaluation/receipt")} className='view-report-history'><GoLinkExternal size={14}/>View</button>
                           <button className='export-report-history'><CiExport size={15}/>Export</button>
                         </div>
                       </td>
