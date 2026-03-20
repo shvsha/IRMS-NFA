@@ -1,8 +1,11 @@
 .navbar-container {
   background-color: #ECF0F3;
-  padding: 15px 10px;
-
+  padding: 12px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
 .nav-link {
   font-weight: 600;
   color: #0B3B66;
@@ -29,4 +32,28 @@
 }
 .nav-link.active::after {
   width: 100%;
+}
+
+.notif-bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px; 
+}
+
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 13px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: bold;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }

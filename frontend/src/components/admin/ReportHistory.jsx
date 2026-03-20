@@ -16,7 +16,7 @@ import WeeklyFilter from '../filters/WeeklyFilter';
 import MonthlyFilter from '../filters/MonthlyFilter';
 import FilterDropdown from '../filters/FilterDropdown';
 
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 4
 
 const sampleReportHistory = [
   {date: '30-Jan-26', reportid: 'R-001', reporttype: 'Statement of Issuance', whse: 'Warehouse 1', cerealtype: 'Rice'},

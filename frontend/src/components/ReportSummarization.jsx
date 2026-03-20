@@ -2,49 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
 
+import FilterDropdown from './filters/FilterDropdown'
+
 import '../styles/ReportSummarization.css'
 
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 4
 
 const sampleSummaryReports = [
   {date: '30-Jan-26', whse: 'Warehouse 1', cerealtype: 'Rice', receipts: '5,000 Kg', issues: '2,200 Kg', balance: '2,800 Kg'},
   {date: '28-Jan-26', whse: 'Warehouse 2', cerealtype: 'Palay', receipts: '4,000 Kg', issues: '3,200 Kg', balance: '1,800 Kg'}
 ]
-
-function FilterDropdown({ selected, options, onSelect, buttonClass }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
-        <span>{selected}</span>
-        <span className={`dropdown-chevron-summary${open ? ' open' : ''}`}>▼</span>
-      </button>
-      {open && (
-        <ul className="dropdown-content-summary">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={() => { onSelect(option); setOpen(false) }}
-              className={selected === option ? 'dropdown-item-active-summary' : ''}
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
 
 export default function ReportSummarization() {
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")

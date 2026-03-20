@@ -8,6 +8,7 @@ import WhseSpvsorLayout from "./layouts/WhseSpvsorLayout";
 
 // general import
 import ReportSummarization from "./components/ReportSummarization";
+import Notifications from "./components/Notifications";
 
 // import for admin nav
 import Dashboard from "./components/admin/Dashboard";
@@ -18,6 +19,7 @@ import AuditLogs from "./components/admin/AuditLogs";
 
 // import Generated Receipt Report 
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
+
 // import for whse supervisor nav
 import ReportManagement from "./components/warehouse supervisor/ReportManagement";
 import ReportStatus from "./components/warehouse supervisor/ReportStatus";
@@ -37,6 +39,7 @@ function App() {
         <Route path="summarization" element={<ReportSummarization />} />
         <Route path="history" element={<ReportHistory />} />
         <Route path="audit" element={<AuditLogs />} />
+        <Route path="notif" element={<Notifications role="admin" />} />
 
         {/* Generated Receipt Report Route */}
         <Route path = "evaluation/receipt" element={<ReceiptReport/>}/>
@@ -49,6 +52,7 @@ function App() {
         <Route path="status" element={<ReportStatus />} />
         <Route path="summarization" element={<ReportSummarization />} />
         <Route path="create/:cereal" element={<CreateReport />} />
+        <Route path="notif" element={<Notifications role="supervisor" />} />
       </Route>
     </Routes>
   );
