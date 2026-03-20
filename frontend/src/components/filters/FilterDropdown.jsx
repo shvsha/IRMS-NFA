@@ -15,7 +15,7 @@ export default function FilterDropdown({ selected, options, onSelect, buttonClas
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
+      <button type="button" className={buttonClass} onClick={() => setOpen(o => !o)}>
         <span>{selected}</span>
         <span className={`dropdown-chevron${open ? ' open' : ''}`}>▼</span>
       </button>

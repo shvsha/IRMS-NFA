@@ -1,8 +1,9 @@
 import '../../styles/admin/UserManagement.css'
 import { useState } from 'react'
 
-// employee form component
+// components
 import EmployeeForm from './EmployeeForm';
+import FilterDropdown from '../filters/FilterDropdown';
 
 // react icon
 import { FaEdit, FaSearch } from "react-icons/fa";
@@ -16,6 +17,11 @@ export default function UserManagement() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+
+  // filter
+  const [showSelectedStatus, setShowSelectedStatus] = useState("Active")
+
+  const handleStatusChange = (val) => { setShowSelectedStatus(val); }
 
   // for employee form (add and edit)
   const [view, setView] = useState("list");
@@ -87,6 +93,12 @@ export default function UserManagement() {
           <p className='header-title'>User Management</p>
         </div>
         <div style={{display: 'flex'}}>
+          <FilterDropdown 
+            selected={showSelectedStatus}
+            options={["Active", "Inactive"]}
+            onSelect={handleStatusChange}
+            buttonClass={"status-filter-user"}
+          />
           <div className='search-input-wrapper'>
             <input 
               className='header-search' 

@@ -121,3 +121,132 @@
   background-color: #2D317F;
   color: white;
 }
+
+/* modals */
+.emp-validation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #00000000;
+  z-index: 10005;
+  opacity: 0;
+  visibility: hidden;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+.emp-validation-modal-overlay.show {
+  background: #00000080;
+  opacity: 1;
+  visibility: visible;
+}
+.emp-validation-modal-overlay.hiding {
+  background: #00000000;
+  opacity: 0;
+  visibility: visible; 
+}
+
+.top-part-modal-Cancel {
+  height: 30px;
+  background-color: #BB2325;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.icon-cancel-user {
+  padding: 20px 0px;
+  background-color: #BB2325;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  border-radius: 100px;
+  margin-top: 15px;
+}
+.cancel-modal-emp {
+  background-color: #E6EEF6;
+  border-radius: 10px;
+  max-width: 400px;
+  height: 400px;
+  width: 90%;
+  text-align: center;
+  color: #2D317F;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+.emp-validation-modal-overlay.show .cancel-modal-emp {
+  transform: scale(1);
+}
+.emp-validation-modal-overlay.hiding .cancel-modal-emp {
+  transform: scale(0.8);
+}
+.cancel-emp-title {
+  font-weight: bold;
+  font-size: 27px;
+  margin-bottom: 0px;
+}
+.validation-btns-cancel {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 35px;
+}
+.validation-btns-cancel button {
+  padding: 10px 25px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.close-btn-emp {
+  background-color: #D9D9D9;
+  color: #5B5B5B;
+}
+.yes-btn-emp {
+  background-color: #BB2325;
+  color: white;
+}
+
+/* success modal */
+.success-modal-emp {
+  background-color: #E6EEF6;
+  border-radius: 10px;
+  max-width: 400px;
+  height: 330px;
+  width: 90%;
+  text-align: center;
+  color: #2D317F;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+.top-part-modal-success-emp {
+  height: 30px;
+  background-color: #3E7A43;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.icon-success-emp {
+  padding: 20px 0px;
+  background-color: #3E7A43;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  border-radius: 300px;
+  margin-top: 15px;
+}
+.success-done-btn-emp {
+  color: white;
+  background-color: #3E7A43;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.success-done-btn-user:emp {
+  opacity: 0.8;
+}
