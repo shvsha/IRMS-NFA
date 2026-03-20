@@ -1,0 +1,132 @@
+.daily-filter-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+}
+
+.daily-filter-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px solid #2D317F;
+  border-radius: 3px;
+  padding: 5px 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  user-select: none;
+  width: 335px;
+}
+.daily-filter-input:hover {
+  border-color: #9ca3af;
+}
+.daily-filter-input--open {
+  border-color: #2D317F;
+  box-shadow: 0 0 0 3px rgba(45, 49, 127, 0.12);
+}
+.daily-filter-input-text {
+  font-size: 14px;
+  color: #111827;
+}
+.daily-filter-input-placeholder {
+  color: #9ca3af;
+}
+.daily-filter-icon {
+  color: #2D317F;
+  flex-shrink: 0;
+}
+
+.daily-filter-calendar {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 65px;
+  z-index: 999;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  min-width: 280px;
+}
+
+.daily-filter-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.daily-filter-nav-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.daily-filter-nav-btn:hover {
+  color: #2D317F;
+}
+
+.daily-filter-month-select,
+.daily-filter-year-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  padding: 5px 12px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.daily-filter-month-select:hover,
+.daily-filter-year-select:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* grid */
+.daily-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.daily-filter-day-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-align: center;
+  padding: 4px 0;
+}
+.daily-filter-day {
+  text-align: center;
+  font-size: 13px;
+  padding: 3px 0;
+  border-radius: 6px;
+  color: #111827;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.daily-filter-day:hover {
+  background-color: #f3f4f6;
+}
+.daily-filter-day--selected {
+  background-color: #2D317F;
+  color: #fff;
+  font-weight: 600;
+}
+.daily-filter-day--selected:hover {
+  background-color: #23266b;
+}
+.daily-filter-day--other {
+  color: #d1d5db;
+  cursor: default;
+}
+.daily-filter-day--other:hover {
+  background-color: transparent;
+}

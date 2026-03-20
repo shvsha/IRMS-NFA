@@ -1,8 +1,17 @@
+// react icons
 import { useState, useRef, useEffect } from 'react'
 import { FaRegCalendarAlt, FaSearch } from "react-icons/fa";
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
+
+// css
 import '../../styles/admin/ReportHistory.css'
+
+// components
+import DailyFilter from '../filters/DailyFilter';
+import WeeklyFilter from '../filters/WeeklyFilter';
+import MonthlyFilter from '../filters/MonthlyFilter';
+import FilterDropdown from '../filters/FilterDropdown';
 
 const ITEMS_PER_PAGE = 5
 
@@ -16,41 +25,6 @@ const sampleReportHistory = [
   {date: '28-Jan-26', reportid: 'R-007', reporttype: 'Statement of Issuance', whse: 'Warehouse 2', cerealtype: 'Palay'},
 ]
 
-function FilterDropdown({ selected, options, onSelect, buttonClass }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className={buttonClass} onClick={() => setOpen(o => !o)}>
-        <span>{selected}</span>
-        <span className={`dropdown-chevron-history${open ? ' open' : ''}`}>▼</span>
-      </button>
-      {open && (
-        <ul className="dropdown-content-history">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={() => { onSelect(option); setOpen(false) }}
-              className={selected === option ? 'dropdown-item-active-history' : ''}
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 export default function ReportHistory() {
   // us
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
@@ -60,6 +34,19 @@ export default function ReportHistory() {
   const [search, setSearch] = useState("");
   const handleSearchChange = (e) => { setSearch(e.target.value); setCurrentPage(1); }
   const [selectedRows, setSelectedRows] = useState([]);
+
+  // range filter dropdown
+  const [rangeDate, setRangeDate] = useState("Daily");
+  // popup
+  const [showCalendarFilter, setShowCalendarFilter] = useState(false);
+  // for date
+  const [selectedDate, setSelectdDate] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState("January");
+
+  // for year and month
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
 
   const filteredReports = sampleReportHistory.filter((report) => {
     const matchesWarehouse = selectedWarehouse === "All Warehouses" || report.whse === selectedWarehouse
@@ -94,17 +81,112 @@ export default function ReportHistory() {
     }
   }
 
+  const handlePrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(y => y - 1);
+    } else {
+      setViewMonth(m => m - 1);
+    }
+  }
+  const handleNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(y => y + 1);
+    } else {
+      setViewMonth(m => m + 1);
+    }
+  }
 
+  const onMonthChange = (monthNumber) => {
+    setSelectedMonth(monthNumber)
+  }
 
   return (
     <>
       <div className='whole-container'>
         <div className='filter-container-history'>
           <div className='filter-wrapper-history'>
-            <div className='filter-title-container-history'>
-              <label className='filter-label-history' htmlFor="">Date</label>
-              <button className='filter-date-history'><FaRegCalendarAlt size={18}/></button>
+
+            <div style={{ position: 'relative'}}>
+              <div className='filter-title-container-history'>
+                <label className='filter-label-history' htmlFor="">Date</label>
+                <button onClick={() => setShowCalendarFilter(!showCalendarFilter)} className='filter-date-history'><FaRegCalendarAlt size={18}/></button>
             </div>
+
+              {showCalendarFilter && (
+                <div className='calendar-filter-popup-history'>
+                  <div className='top-part-filter-popup-history'>
+                    <p>Date Picker</p>
+                  </div>
+                  <div className='title-select-range-date-container'>
+                    Select range type and date
+                  </div>
+                  <div className='range-date-container range-container-1'>
+                  <label>Range</label>
+                  <FilterDropdown
+                    selected={rangeDate}
+                    options={["Daily", "Weekly", "Monthly"]}
+                    onSelect={setRangeDate}
+                    buttonClass={"date-filter-history"}
+                  />
+                </div>
+                {rangeDate === "Daily" && (
+                  <div className='range-date-container range-container-2'>
+                    <label>Daily</label>
+                    <DailyFilter value={selectedDate} onChange={setSelectdDate} />
+                  </div>
+                )}
+                {rangeDate === "Weekly" && (
+                  <div className='range-date-container range-container-2'>
+                    <label>Week</label>
+                    <FilterDropdown
+                      selected={`Week ${selectedWeek}`}
+                      options={["Week 1", "Week 2", "Week 3", "Week 4"]}
+                      onSelect={(val) => setSelectedWeek(Number(val.split(" ")[1]))}
+                      buttonClass={"date-filter-dashboard"}
+                    />
+                  </div>
+                )}
+                {rangeDate === "Monthly" && (
+                  <div className='range-date-container range-container-2'>
+                    <label>Monthly</label>
+                    <FilterDropdown
+                      selected={selectedMonth}
+                      options={['January','February','March','April','May','June','July','August','September','October','November','December']}
+                      onSelect={setSelectedMonth}
+                      buttonClass={"date-filter-dashboard"}
+                    />
+                  </div>
+                )}
+                {rangeDate === "Weekly" && (
+                  <div className='calendar-grid-popup-dashboard'>
+                    <WeeklyFilter
+                      selectedWeek={selectedWeek}
+                      year={viewYear}
+                      month={viewMonth}
+                      onPrevMonth={handlePrevMonth}
+                      onNextMonth={handleNextMonth}
+                      onMonthChange={(m) => setViewMonth(m)}
+                      onYearChange={(y) => setViewYear(y)}
+                    />
+                  </div>
+                )}
+
+                {rangeDate === 'Monthly' && (
+                  <div className='calendar-grid-popup-dashboard'>
+                    <MonthlyFilter
+                      selectedMonth={selectedMonth}
+                      year={viewYear}
+                      onYearChange={(y) => setViewYear(y)}
+                      onMonthChange={onMonthChange}
+                    />
+                  </div>
+                )}
+                </div>
+             )}
+            </div>
+
             <div className='filter-title-container-history'>
               <label className='filter-label-history' htmlFor="">Warehouses</label>
               <FilterDropdown

@@ -332,3 +332,83 @@
 .btn-next-history:disabled {
   cursor: not-allowed;
 }
+
+/* filters */
+.filter-title-container-history {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  position: relative;
+}
+.calendar-filter-popup-history {
+  position: absolute;
+  background-color: #F2F3F4;
+  z-index: 9999;
+  border-radius: 5px;
+  width: 400px;
+  top: 100%;
+  left: 0;
+  margin-top: -10px;
+  height: 250px;
+  overflow: visible;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding-bottom: 16px;
+}
+.top-part-filter-popup-history {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #2D317F;
+  height: 50px;
+}
+.top-part-filter-popup-history p {
+  color: white;
+  font-weight: bold;
+  margin: 0;
+  font-size: 16px;
+  padding: 15px;
+}
+.title-select-range-date-container {
+  color: #2D317F;
+  padding-top: 11px;
+  padding-left: 20px;
+  padding-right: 15px;
+}
+.range-date-container {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  padding-right: 20px;
+  color: #2D317F;
+  font-weight: 500;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.date-filter-history {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  border: 1px solid #999;
+  border-radius: 3px;
+  border-width: 1px;
+  border-color: #2D317F;
+  background-color: white;
+  padding: 7px 12px;
+  color: #2D317F;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 10001;
+}
+.date-filter-history:hover {
+  background-color: #f5f5f5;
+  border-color: #2D317F;
+}
+
+.range-container-1 { position: relative; z-index: 10002;}
+.range-container-2 { position: relative; z-index: 10001;}
