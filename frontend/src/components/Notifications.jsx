@@ -85,9 +85,9 @@ function StatusBadge({ status }) {
   )
 }
 function StatusIcon({ status }) {
-  if (status === "Approved") return <FaCircleCheck size={28} className='notif-icon notif-icon--approved'/>
-  if (status === 'Rejected') return <FaCircleXmark size={28} className='notif-icon notif-icon--rejected' />
-  return <FaRegFileAlt size={28} className='notif-icon notif-icon--default' />
+  if (status === "Approved") return <FaCircleCheck size={30} className='notif-icon notif-icon--approved'/>
+  if (status === 'Rejected') return <FaCircleXmark size={30} className='notif-icon notif-icon--rejected' />
+  return <FaRegFileAlt size={30} className='notif-icon notif-icon--default' />
 }
 
 // display this if its admin
