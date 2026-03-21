@@ -28,13 +28,34 @@
   background-color: white;
 }
 
+/* Status Badge */
 .status-badge {
-  margin-left: auto;
-  background: #fff3cd;
-  color: #856404;
-  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
   border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+}
+ 
+/* In Progress */
+.status-in-progress {
+  background-color: #F0E48B;
+  color: #856404;
+}
+ 
+/* Under Review */
+.status-under-review {
+  background-color: #ADCEFF;
+  color: #1e40af;
+}
+ 
+/* Completed */
+.status-completed {
+  background-color: #8BF093;
+  color: #166534;
 }
 
 /* TABLE */
@@ -63,7 +84,7 @@
 }
 
 .report-table td {
-  border: 1px solid #8fa3c1; /* FIXED vertical lines */
+  border: 1px solid #8fa3c1;
   height: 32px;
 }
 
@@ -86,32 +107,55 @@
 }
 
 /* BUTTONS */
-
 .report-buttons {
   margin-top: 15px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
-
 .btn-back {
   padding: 8px 18px;
   border: none;
   background: #d9d9d9;
   border-radius: 6px;
 }
-
-.btn-save {
-  padding: 8px 18px;
-  border: none;
-  background: #f1c40f;
-  border-radius: 6px;
-}
-
 .btn-submit {
   padding: 8px 18px;
   border: none;
   background: #2d317f;
   color: white;
   border-radius: 6px;
+}
+
+/* import export buttons */
+.import-export-container {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+}
+ 
+.imp-exp-btn {
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  border-radius: 8px;
+}
+ 
+.imp-exp-btn:hover {
+  opacity: 0.7;
+}
+ 
+.imp-btn {
+  border: 1px solid #3e7a43;
+  background-color: transparent;
+  padding: 4px 8px;
+}
+ 
+.exp-btn {
+  background-color: #1d8104;
+  color: white;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

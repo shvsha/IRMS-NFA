@@ -4,7 +4,7 @@ import { FiEdit } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
 
 // react
-import { use, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // css

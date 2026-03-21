@@ -1,11 +1,111 @@
+// react
 import { useParams, useNavigate } from "react-router-dom";
+import { useContext, useState } from "react";
+
+// css
 import "../../styles/warehouse supervisor/createReport.css";
 
-export default function CreateReport() {
+// react icons
+import { CiExport, CiImport } from "react-icons/ci";
+
+// Auth Context
+// ⚠️ Replace this import path with wherever your AuthContext actually lives
+// import { AuthContext } from "../../context/AuthContext";
+
+export default function CreateReport({ stockBook }) {
   const { cereal } = useParams();
   const navigate = useNavigate();
 
-  const rows = Array.from({ length: 15 });
+  // auth context
+  // const { user }= useContext(AuthContext);
+  // const supervisorName = user?.name ?? "—";
+  // const warehouseCode = user?.whcode ?? "—";
+
+  // Status of the Stock Book
+  const reportId = stockBook?.StockBook_ID ?? "—";
+  const cerealType = stockBook?.CerealType ?? cereal ?? "—";
+  const status = stockBook?.Status ?? "In Progress";
+
+  // Status badge styles
+  const STATUS_CONFIG = {
+    "In Progress": { label: "In Progress", className: "status-badge status-in-progress"},
+    "Under Review": { label: "Under Review", className: "status-badge status-under-review"},
+    "Completed": { label: "Completed", className: "status-badge status-completed"}
+  };
+  const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG["In Progress"]
+
+  // each fields/row in the table
+    const EMPTY_ROW = {
+    year:            "",
+    month:           "",
+    Particulars:     "",
+    Plate_Number:    "",
+    WSR:             "",
+    WSI:             "",
+    Batch_No:        "",
+    Age:             "",
+    AI_Number:       "",
+    OR_Number:       "",
+    Moisture_Content:"",
+    Classifier:      "",
+    Transaction:     "",
+    Pile_No:         "",
+    R_Bags:          "",
+    R_GKG:           "",
+    R_NKG:           "",
+    R_Ave_Weight:    "",
+    I_Bags:          "",
+    I_GKG:           "",
+    I_NKG:           "",
+    I_Ave_Weight:    "",
+    Fillers:         "",
+    B_Bags:          "",
+    B_GKG:           "",
+    B_NKG:           "",
+    Avg_Weight:      "",
+    Bags_Weight:     "",
+    SOBRA:           "",
+  };
+  const [rows, setRows]= useState(
+    // TODO (backend): when viewing an existing stock book, pre-fill from fetched rows:
+    // stockBook?.rows ?? Array.from({ length: 15 }, () => ({ ...EMPTY_ROW }))
+    Array.from({ length: 15}, () => ({ ...EMPTY_ROW}))
+  );
+
+  // custom functions
+  const handleRowChange = (rowIndex, field, value) => {
+    setRows((prev) => {
+      const updated = [...prev];
+      updated[rowIndex] = { ...updated[rowIndex], [field]: value};
+      return updated;
+    });
+  };
+
+  const handleSubmit = () => {
+    const payload = {
+      // Name: supervisorName,
+      // WHCode: warehouseCode,
+      CerealType: cerealType,
+      Status: "Under Review",
+
+      rows: rows.filter((row) =>
+        Object.values(row).some((v) => v !== "")
+      ),
+    };
+
+    console.log("Stock Book Payload (ready for API):", payload);
+
+    // TODO (backend): wire up your API call here, e.g.:
+    // const res = await axios.post("/api/stockbook", payload);
+    // or:
+    // const res = await fetch("/api/stockbook", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(payload),
+    // });
+    
+    navigate("/whse/management");
+  }
 
   return (
     <div className="create-report-container">
@@ -17,26 +117,37 @@ export default function CreateReport() {
 
         <div className="header-input">
           <strong>Warehouse Supervisor:</strong>
-          <input type="text" />
+          {/* reflect to the user later on */}
+          {/* <span>{supervisorName}</span> */}
         </div>
 
         <div>
-          <strong>Cereal Type:</strong> {cereal}
+          <strong>Cereal Type:</strong> {cerealType}
         </div>
 
         <div className="header-input">
           <strong>Warehouse Code:</strong>
-          <input type="text" />
+          {/* reflect to the user's whse code later on */}
+          {/* <span>{warehouseCode}</span> */}
         </div>
 
-        <div className="status-badge">In Progress</div>
+        <div style={{ display: 'flex', alignItems: "center", gap: '8px'}}>
+          <strong>Status:</strong>
+          <div className={badgeConfig.className}>{badgeConfig.label}</div>
+        </div>
+
+        {/* import and export of stock book */}
+        <div className="import-export-container">
+          <button className="imp-exp-btn imp-btn"><CiImport size={25} color={'#3E7A43'} /></button>
+          <button className="imp-exp-btn exp-btn"><CiExport size={25} color={'white'} />Export</button>
+
+        </div>
       </div>
 
       {/* TABLE */}
       <div className="report-table-scroll">
         <table className="report-table">
           <thead>
-            {/* FIRST ROW */}
             <tr>
               <th colSpan="2">Date</th>
               <th rowSpan="2">Particulars</th>
@@ -61,27 +172,21 @@ export default function CreateReport() {
               <th rowSpan="2">SOBRA</th>
             </tr>
 
-            {/* SECOND ROW */}
             <tr>
-              {/* DATE already handled above */}
               <th>Year</th>
               <th>Month</th>
 
-              {/* WTS# subcolumns */}
               <th>WSR#</th>
               <th>WSI#</th>
 
-              {/* Receipts subcolumns */}
               <th>Bags</th>
               <th>GKg</th>
               <th>NKg</th>
 
-              {/* Issues subcolumns */}
               <th>Bags</th>
               <th>GKg</th>
               <th>NKg</th>
 
-              {/* Balance subcolumns */}
               <th>Bags</th>
               <th>GKg</th>
               <th>NKg</th>
@@ -89,106 +194,108 @@ export default function CreateReport() {
           </thead>
 
           <tbody>
-            {rows.map((_, rowIndex) => (
+            {rows.map((row, rowIndex) => (
               <tr key={rowIndex}>
-                {/* DATE */}
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.year} onChange={(e) => handleRowChange(rowIndex, "year", e.target.value)} />
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.month} onChange={(e) => handleRowChange(rowIndex, "month", e.target.value)} />
                 </td>
                 {/* Main info */}
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Particulars} onChange={(e) => handleRowChange(rowIndex, "Particulars", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Plate_Number} onChange={(e)=> handleRowChange(rowIndex, "Plate_Number", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.WSR} onChange={(e) => handleRowChange(rowIndex, "WSR", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.WSI} onChange={(e) => handleRowChange(rowIndex, "WSI", e.target.value)} />
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Batch_No} onChange={(e) => handleRowChange(rowIndex, "Batch_No", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Age} onChange={(e) => handleRowChange(rowIndex, "Age", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.AI_Number} onChange={(e) => handleRowChange(rowIndex, "AI_Number", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.OR_Number} onChange={(e) => handleRowChange(rowIndex, "OR_Number", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Moisture_Content} onChange={(e) => handleRowChange(rowIndex, "Moisture_Content", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Classifier} onChange={(e) => handleRowChange(rowIndex, "Classifier", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Transaction} onChange={(e) => handleRowChange(rowIndex, "Transaction", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="text" />
+                  <input type="text" value={row.Pile_No} onChange={(e) => handleRowChange(rowIndex, "Pile_No", e.target.value)}/>
                 </td>
-                <td>
-                  <input type="text" />
-                </td>
+
                 {/* Receipts */}
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.R_Bags} onChange={(e) => handleRowChange(rowIndex, "R_Bags", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.R_GKG} onChange={(e) => handleRowChange(rowIndex, "R_GKG", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.R_NKG} onChange={(e) => handleRowChange(rowIndex, "R_NKG", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
-                </td>{" "}
-                {/* Average Weight */}
+                  <input type="text" value={row.R_Ave_Weight} onChange={(e) => handleRowChange(rowIndex, "R_Ave_Weight", e.target.value)}/>
+                </td>
+
                 {/* Issues */}
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.I_Bags} onChange={(e) => handleRowChange(rowIndex, "I_Bags", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.I_GKG} onChange={(e) => handleRowChange(rowIndex, "I_GKG", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.I_NKG} onChange={(e) => handleRowChange(rowIndex, "I_NKG", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
-                </td>{" "}
-                {/* Average Weight */}
+                  <input type="text" value={row.I_Ave_Weight} onChange={(e) => handleRowChange(rowIndex, "I_Ave_Weight", e.target.value)}/>
+                </td>
+
                 {/* Fillers */}
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.Fillers} onChange={(e) => handleRowChange(rowIndex, "Fillers", e.target.value)}/>
                 </td>
+
                 {/* Balance */}
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.B_Bags} onChange={(e) => handleRowChange(rowIndex, "B_Bags", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.B_GKG} onChange={(e) => handleRowChange(rowIndex, "B_GKG", e.target.value)}/>
                 </td>
                 <td>
-                  <input type="number" />
+                  <input type="text" value={row.B_NKG} onChange={(e) => handleRowChange(rowIndex, "B_NKG", e.target.value)}/>
                 </td>
-                <td>
-                  <input type="number" />
-                </td>{" "}
+
                 {/* AVE. WT. per GKg BAL */}
                 <td>
-                  <input type="number" />
-                </td>{" "}
+                  <input type="text" value={row.Avg_Weight} onChange={(e) => handleRowChange(rowIndex, "Avg_Weight", e.target.value)}/>
+                </td>
                 {/* BAGS @50KGs per BAG */}
+                <td>
+                  <input type="text" value={row.Bags_Weight} onChange={(e) => handleRowChange(rowIndex, "Bags_Weight", e.target.value)}/>
+                </td>
                 {/* SOBRA */}
+                <td>
+                  <input type="text" value={row.SOBRA} onChange={(e) => handleRowChange(rowIndex, "SOBRA", e.target.value)}/>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -203,9 +310,7 @@ export default function CreateReport() {
         >
           Back
         </button>
-
-        <button className="btn-save">Save</button>
-        <button className="btn-submit">Submit</button>
+        <button className="btn-submit" onClick={handleSubmit}>Submit</button>
       </div>
     </div>
   );
