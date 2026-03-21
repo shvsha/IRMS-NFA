@@ -21,9 +21,9 @@ import AuditLogs from "./components/admin/AuditLogs";
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
 
 // import for whse supervisor nav
-import ReportManagement from "./components/warehouse supervisor/ReportManagement";
 import ReportStatus from "./components/warehouse supervisor/ReportStatus";
 import CreateReport from "./components/warehouse supervisor/CreateReport";
+import StockBook from "./components/warehouse supervisor/StockBook";
 
 function App() {
   return (
@@ -48,7 +48,7 @@ function App() {
 
       {/* warehouse supervisor */}
       <Route path="/whse" element={<WhseSpvsorLayout />}>
-        <Route path="management" element={<ReportManagement />} />
+        <Route path="management" element={<StockBook />} />
         <Route path="status" element={<ReportStatus />} />
         <Route path="summarization" element={<ReportSummarization />} />
         <Route path="create/:cereal" element={<CreateReport />} />

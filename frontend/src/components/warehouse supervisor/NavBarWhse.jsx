@@ -11,7 +11,7 @@ export default function NavBarWhse() {
     <nav className='navbar-container'>
       <div>
         <NavLink to="/whse/management" className="nav-link">
-          Report Management
+          Stock Book
         </NavLink>
         <NavLink to="/whse/status" className="nav-link">
           Report Status

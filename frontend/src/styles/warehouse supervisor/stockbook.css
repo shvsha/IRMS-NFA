@@ -1,15 +1,11 @@
 .whole-content-stock {
-  background: white;
   margin: 30px;
   border-radius: 4px;
 }
-
-/* TOP CONTROLS */
-
 .stock-controls {
   display: flex;
   justify-content: flex-end;
-  gap: 15px;
+  gap: 30px;
   padding: 15px;
 }
 
@@ -37,40 +33,34 @@
 }
 
 /* TABLE */
-
 .table-wrapper-stock {
   background: white;
+  height: 440px;
 }
-
 .reports-table-stock {
   width: 100%;
   border-collapse: collapse;
 }
-
 .reports-table-stock thead {
   background: #e2ebff;
   color: #2d317f;
 }
-
 .reports-table-stock th,
 .reports-table-stock td {
   text-align: center;
   padding: 12px;
   color: #2d317f;
 }
-
 .reports-table-stock tbody tr {
   border-bottom: 1px solid #ddd;
 }
 
 /* ACTION BUTTONS */
-
 .action-btns-stock {
   display: flex;
   justify-content: center;
   gap: 8px;
 }
-
 .view-btn-stock,
 .edit-btn-stock {
   border: 1px solid #ccc;
@@ -83,7 +73,6 @@
   background: white;
   color: #2d317f;
 }
-
 .view-btn-stock:hover {
   color: white;
 }
@@ -96,7 +85,6 @@
 .edit-btn-stock:disabled:hover {
   background: #f3f3f3;
 }
-
 .delete-btn-stock {
   border: 1px solid red;
   color: red;
@@ -105,49 +93,67 @@
   background: white;
   cursor: pointer;
 }
-
 .delete-btn-stock:hover {
   background: red;
   color: white;
 }
 
-/* MODAL */
 
+/* MODAL */
 .modal-overlay-stock {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #00000000;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+.modal-overlay-stock.show {
+  background: #00000080;
+  opacity: 1;
+  visibility: visible;
+}
+.modal-overlay-stock.hiding {
+  background: #00000000;
+  opacity: 0;
+  visibility: visible;
 }
 
 .modal-box-stock {
   background: white;
-  padding: 25px;
-  border-radius: 8px;
-  width: 320px;
-  text-align: center;
+  border-radius: 10px;
+  width: 350px;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
 }
+.modal-overlay-stock.show .modal-box-stock {
+  transform: scale(1);
+}
+
 .modal-box-stock h3 {
   color: #2d317f;
+  margin: 0;
+  margin-bottom: 8px;
 }
-
 .modal-buttons-stock {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 15px;
   margin-top: 20px;
 }
-
 .modal-cancel {
   border: 1px solid #ccc;
   padding: 6px 14px;
   border-radius: 8px;
+  cursor: pointer;
 }
-
 .modal-delete {
   background: red;
   color: white;
@@ -163,12 +169,52 @@
   border-radius: 8px;
   cursor: pointer;
 }
-
 .modal-create:hover {
   background: #1f2360;
 }
-
 .modal-create:disabled {
   background: #bbb;
   cursor: not-allowed;
+}
+
+/* modal add new report */
+.top-part-add-report {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  background-color: #2D317F;
+  height: 30px;
+}
+.body-part-add-report {
+  padding: 20px;
+}
+.type-filter-create {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* fitler dropdown */
+.cereal-filter-stockbook {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  border: 1px solid #999;
+  border-radius: 3px;
+  border-width: 1px;
+  border-color: #2D317F;
+  background-color: white;
+  padding: 10px 12px;
+  color: #2D317F;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+}
+.cereal-filter-stockbook:hover {
+  background-color: #f5f5f5 ;
+  border-color: #2D317F;
 }

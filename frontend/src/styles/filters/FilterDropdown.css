@@ -39,3 +39,7 @@
   color: #2D317F;
   font-weight: 600;
 }
+
+.body-part-add-report > div {
+  width: 100%;
+}

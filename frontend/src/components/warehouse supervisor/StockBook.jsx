@@ -1,11 +1,19 @@
+// cc
 import { GoLinkExternal } from "react-icons/go";
 import { FiEdit } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // added
 
+// react
+import { use, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// css
 import "../../styles/warehouse supervisor/stockBook.css";
 
+// component
+import FilterDropdown from '../filters/FilterDropdown'
+
+// sample reports
 const stockReports = [
   {
     cereal: "Palay",
@@ -34,19 +42,39 @@ const stockReports = [
 ];
 
 export default function StockBook() {
-  const [cerealFilter, setCerealFilter] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  /* NEW STATES */
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedCereal, setSelectedCereal] = useState("");
-
   const navigate = useNavigate();
 
+  // us
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCereal, setSelectedCereal] = useState("All Cereal Type");
+
+  // for creating a new stock book
+  const [selectedType, setSelectedType] = useState("");
+  const [isHiding, setIsHiding] = useState(false);
+  const [isShowing, setIsShowing] = useState(false);
+
+  const openAddModal = () => {
+    setShowAddModal(true);
+    setTimeout(() => setIsShowing(true), 10);
+  };
+
+  const closeAddModal = () => {
+    setIsShowing(false);
+    setIsHiding(true);
+    setTimeout(() => {
+      setShowAddModal(false);
+      setIsHiding(false);
+      setSelectedType("");
+    }, 300);
+  };
+
+  const handleCerealChange = (val) => { setSelectedCereal(val); }
+  const handleTypeChange = (val) => { setSelectedType(val); }
+
   const filteredReports =
-    cerealFilter === ""
+    selectedCereal === "All Cereal Type"
       ? stockReports
-      : stockReports.filter((r) => r.cereal === cerealFilter);
+      : stockReports.filter((r) => r.cereal === selectedCereal);
 
   const getStatusStyle = (status) => {
     const base = {
@@ -71,34 +99,29 @@ export default function StockBook() {
     return base;
   };
 
-  /* CREATE REPORT REDIRECT */
+  // redirect to stock book management if u didnt create any stock book yet
   const handleCreateReport = () => {
-    if (!selectedCereal) {
+    if (!selectedType) {
       alert("Please select a cereal type");
       return;
     }
 
-    navigate(`/whse/create/${selectedCereal}`);
+    navigate(`/whse/create/${selectedType}`);
   };
 
   return (
     <div className="whole-content-stock">
-      {/* Top Controls */}
       <div className="stock-controls">
-        <select
-          className="cereal-filter-stock"
-          value={cerealFilter}
-          onChange={(e) => setCerealFilter(e.target.value)}
-        >
-          <option value="">Cereal Type</option>
-          <option value="Palay">Palay</option>
-          <option value="Rice">Rice</option>
-        </select>
+        <FilterDropdown
+          selected={selectedCereal}
+          options={['All Cereal Type', 'Palay', 'Rice']}
+          onSelect={handleCerealChange}
+          buttonClass={'cereal-filter-stockbook'}
+        />
 
-        {/* UPDATED BUTTON */}
         <button
           className="add-report-btn"
-          onClick={() => setShowAddModal(true)}
+          onClick={openAddModal}
         >
           + Add Report
         </button>
@@ -149,7 +172,6 @@ export default function StockBook() {
 
                     <button
                       className="delete-btn-stock"
-                      onClick={() => setShowDeleteModal(true)}
                     >
                       <IoClose size={18} />
                     </button>
@@ -161,66 +183,48 @@ export default function StockBook() {
         </table>
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="modal-overlay-stock">
-          <div className="modal-box-stock">
-            <h3>Delete Report</h3>
-
-            <p>Are you sure you want to delete this report?</p>
-
-            <div className="modal-buttons-stock">
-              <button
-                className="modal-cancel"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </button>
-
-              <button className="modal-delete">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ADD REPORT MODAL */}
-      {showAddModal && (
-        <div className="modal-overlay-stock">
+        <div className={
+          "modal-overlay-stock" +
+          (isShowing ? " show" : "") +
+          (isHiding ? " hiding" : "")
+        }>
           <div className="modal-box-stock">
-            <h3>Select Cereal Type</h3>
+            <div className="top-part-add-report"></div>
 
-            <select
-              className="cereal-filter-stock"
-              value={selectedCereal}
-              onChange={(e) => setSelectedCereal(e.target.value)}
-            >
-              <option value="">Select Cereal</option>
-              <option value="Palay">Palay</option>
-              <option value="Rice">Rice</option>
-            </select>
+            <div className="body-part-add-report">
+              <h3>Cereal Type</h3>
 
-            <div className="modal-buttons-stock">
-              <button
-                className="modal-cancel"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setSelectedCereal("");
-                }}
-              >
-                Cancel
-              </button>
+              <FilterDropdown
+                selected={selectedType}
+                options={["Palay", "Rice"]}
+                onSelect={handleTypeChange}
+                buttonClass={'cereal-filter-stockbook type-filter-create'}
+              />
 
-              <button
-                className="modal-create"
-                disabled={!selectedCereal}
-                onClick={handleCreateReport}
-              >
-                Create
-              </button>
+
+              <div className="modal-buttons-stock">
+                <button
+                  className="modal-cancel"
+                  onClick={closeAddModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="modal-create"
+                  disabled={!selectedType}
+                  onClick={handleCreateReport}
+                >
+                  Create
+                </button>
+              </div>
             </div>
+
+
           </div>
         </div>
-      )}
     </div>
   );
 }
