@@ -19,6 +19,7 @@ import AuditLogs from "./components/admin/AuditLogs";
 
 // import Generated Receipt Report 
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
+import SummaryReport from "./components/Generated_Reports/SummaryReport";
 
 // import for whse supervisor nav
 import ReportManagement from "./components/warehouse supervisor/ReportManagement";
@@ -43,6 +44,8 @@ function App() {
 
         {/* Generated Receipt Report Route */}
         <Route path = "evaluation/receipt" element={<ReceiptReport/>}/>
+        <Route path = "summarization/summary" element={<SummaryReport/>}/>
+        
 
       </Route>
 
@@ -53,6 +56,8 @@ function App() {
         <Route path="summarization" element={<ReportSummarization />} />
         <Route path="create/:cereal" element={<CreateReport />} />
         <Route path="notif" element={<Notifications role="supervisor" />} />
+
+        <Route path = "summarization/summary" element={<SummaryReport/>}/>
       </Route>
     </Routes>
   );
