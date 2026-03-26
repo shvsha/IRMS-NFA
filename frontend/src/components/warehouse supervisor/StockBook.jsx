@@ -2,6 +2,8 @@
 import { GoLinkExternal } from "react-icons/go";
 import { FiEdit } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
+import { TbProgress, TbFileSearch  } from "react-icons/tb";
+import { FaRegCircleCheck } from "react-icons/fa6";
 
 // react
 import { useState } from "react";
@@ -85,10 +87,13 @@ export default function StockBook() {
       display: "inline-flex",
       alignItems: "center",
       gap: "6px",
+      width: '115px',
+      paddingLeft: '20px',
+
     };
 
     if (status === "In Progress")
-      return { ...base, background: "#FFF3CD", color: "#856404" };
+      return { ...base,  background: "#FFF3CD", color: "#856404" };
 
     if (status === "Completed")
       return { ...base, background: "#D4EDDA", color: "#155724" };
@@ -97,6 +102,12 @@ export default function StockBook() {
       return { ...base, background: "#D6E4FF", color: "#1D3A8A" };
 
     return base;
+  };
+  const getStatusIcon = (status) => {
+    if (status === "In Progress")  return <TbProgress size={16} />;
+    if (status === "Completed")    return <FaRegCircleCheck size={16} />;
+    if (status === "Under Review") return <TbFileSearch size={16} />;
+    return null;
   };
 
   // redirect to stock book management if u didnt create any stock book yet
@@ -107,6 +118,12 @@ export default function StockBook() {
     }
 
     navigate(`/whse/create/${selectedType}`);
+  };
+
+  // In CreateReport, use: const location = useLocation(); const stockBook = location.state?.stockBook;
+  // TODO (backend): replace `record` with the fetched DB record when ready
+  const handleViewReport = (record) => {
+    navigate(`/whse/view/${record.id}`, { state: { stockBook: record } });
   };
 
   return (
@@ -152,12 +169,15 @@ export default function StockBook() {
                 <td>{r.date}</td>
 
                 <td>
-                  <span style={getStatusStyle(r.status)}>{r.status}</span>
+                  <span style={getStatusStyle(r.status)}>
+                    {getStatusIcon(r.status)}
+                    {r.status}
+                  </span>
                 </td>
 
                 <td>
                   <div className="action-btns-stock">
-                    <button className="view-btn-stock">
+                    <button className="view-btn-stock" onClick={() => handleViewReport(r)}>
                       <GoLinkExternal size={14} />
                       View
                     </button>
@@ -170,11 +190,13 @@ export default function StockBook() {
                       Edit
                     </button>
 
-                    <button
-                      className="delete-btn-stock"
-                    >
-                      <IoClose size={18} />
-                    </button>
+                    {r.status !== "In Progress" && (
+                      <button
+                        className="delete-btn-stock"
+                      >
+                        <IoClose size={18} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

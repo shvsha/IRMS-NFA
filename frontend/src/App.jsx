@@ -9,13 +9,13 @@ import WhseSpvsorLayout from "./layouts/WhseSpvsorLayout";
 // general import
 import ReportSummarization from "./components/ReportSummarization";
 import Notifications from "./components/Notifications";
+import AuditLogs from "./components/AuditLogs";
 
 // import for admin nav
 import Dashboard from "./components/admin/Dashboard";
 import UserMagement from "./components/admin/UserManagement";
 import ReportEvaluation from "./components/admin/ReportEvaluation";
 import ReportHistory from "./components/admin/ReportHistory";
-import AuditLogs from "./components/admin/AuditLogs";
 
 // import Generated Receipt Report 
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
@@ -51,8 +51,14 @@ function App() {
         <Route path="management" element={<StockBook />} />
         <Route path="status" element={<ReportStatus />} />
         <Route path="summarization" element={<ReportSummarization />} />
+
+        {/* for stock book */}
         <Route path="create/:cereal" element={<CreateReport />} />
+        <Route path="view/:id" element={<CreateReport />} />
+        <Route path="edit/:id" element={<CreateReport />} />
+
         <Route path="notif" element={<Notifications role="supervisor" />} />
+        <Route path="audit" element={<AuditLogs />} />
       </Route>
     </Routes>
   );

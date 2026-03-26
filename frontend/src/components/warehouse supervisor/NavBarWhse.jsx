@@ -19,6 +19,9 @@ export default function NavBarWhse() {
         <NavLink to="/whse/summarization" className="nav-link">
           Report Summarization
         </NavLink>
+        <NavLink to="/whse/audit" className="nav-link">
+          Audit Logs
+        </NavLink>
       </div>
 
       <div>

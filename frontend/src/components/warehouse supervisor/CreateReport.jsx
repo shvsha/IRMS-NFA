@@ -1,5 +1,5 @@
 // react
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useState } from "react";
 
 // css
@@ -9,17 +9,28 @@ import "../../styles/warehouse supervisor/createReport.css";
 import { CiExport, CiImport } from "react-icons/ci";
 
 // Auth Context
-// ⚠️ Replace this import path with wherever your AuthContext actually lives
+// Replace this import path with wherever your AuthContext actually lives
 // import { AuthContext } from "../../context/AuthContext";
 
-export default function CreateReport({ stockBook }) {
+
+export default function CreateReport() {
   const { cereal } = useParams();
   const navigate = useNavigate();
+  const location   = useLocation();
 
   // auth context
   // const { user }= useContext(AuthContext);
   // const supervisorName = user?.name ?? "—";
   // const warehouseCode = user?.whcode ?? "—";
+
+  // stock book record
+  // TODO (backend): swap location.state?.stockBook with a real fetch by ID
+  const stockBook = location.state?.stockBook ?? null;
+  const mode = location.state?.mode ?? "create";
+
+  const isViewMode = mode === "view";
+  const isEditMode = mode === 'edit';
+  const isCreateMode = mode === "create";
 
   // Status of the Stock Book
   const reportId = stockBook?.StockBook_ID ?? "—";
@@ -74,6 +85,7 @@ export default function CreateReport({ stockBook }) {
 
   // custom functions
   const handleRowChange = (rowIndex, field, value) => {
+    if (isViewMode) return;
     setRows((prev) => {
       const updated = [...prev];
       updated[rowIndex] = { ...updated[rowIndex], [field]: value};
@@ -81,7 +93,7 @@ export default function CreateReport({ stockBook }) {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmitCreate = () => {
     const payload = {
       // Name: supervisorName,
       // WHCode: warehouseCode,
@@ -106,13 +118,30 @@ export default function CreateReport({ stockBook }) {
     
     navigate("/whse/management");
   }
+  const handleSubmitEdit = () => {
+    const payload = {
+      StockBook_ID: reportId,
+      // Name: supervisorName,
+      // WHCode: warehouseCode,
+      CerealType: cerealType,
+      Status: status,
+      rows: rows.filter((row) => Object.values(row).some((v) => v !== "")),
+    };
+
+    console.log("Edit Payload (ready for API):", payload);
+
+    // TODO (backend):
+    // await axios.put(`/api/stockbook/${reportId}`, payload);
+ 
+    navigate("/whse/management");
+  }
 
   return (
     <div className="create-report-container">
       {/* HEADER */}
       <div className="report-header">
         <div>
-          <strong>Report ID:</strong> R-001
+          <strong>Report ID:</strong> {reportId}
         </div>
 
         <div className="header-input">
@@ -304,13 +333,36 @@ export default function CreateReport({ stockBook }) {
 
       {/* BUTTONS */}
       <div className="report-buttons">
-        <button
-          className="btn-back"
-          onClick={() => navigate("/whse/management")}
-        >
-          Back
-        </button>
-        <button className="btn-submit" onClick={handleSubmit}>Submit</button>
+
+        {isCreateMode && (
+          <>
+            <button
+              className="btn-back"
+              onClick={() => navigate("/whse/management")}
+            >Back</button>
+            <button className="btn-submit" onClick={handleSubmitCreate}>
+              Submit
+            </button>
+          </>
+        )}
+
+        {isEditMode && (
+          <>
+            <button
+              className="btn-back"
+              onClick={() => navigate("/whse/management")}
+            >Cancel</button>
+            <button className="btn-submit" onClick={handleSubmitEdit}>
+              Submit
+            </button>
+          </>
+        )}
+
+        {isViewMode && (
+          <button className="btn-back" onClick={() => navigate("/whse/management")}>
+            Back
+          </button>
+        )}
       </div>
     </div>
   );

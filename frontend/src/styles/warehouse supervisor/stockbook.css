@@ -72,8 +72,10 @@
   cursor: pointer;
   background: white;
   color: #2d317f;
+  transition: 0.3s ease;
 }
-.view-btn-stock:hover {
+.view-btn-stock:hover, .edit-btn-stock:hover {
+  background-color: #2d317f ;
   color: white;
 }
 .edit-btn-stock:disabled {
@@ -92,12 +94,12 @@
   padding: 5px 8px;
   background: white;
   cursor: pointer;
+  transition: 0.5s ease;
 }
 .delete-btn-stock:hover {
-  background: red;
+  background-color: red;
   color: white;
 }
-
 
 /* MODAL */
 .modal-overlay-stock {

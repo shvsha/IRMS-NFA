@@ -1,8 +1,8 @@
 // components
-import DailyFilter from '../filters/DailyFilter'
+import DailyFilter from './filters/DailyFilter'
 
 // css
-import '../../styles/admin/AuditLogs.css'
+import '../styles/AuditLogs.css'
 
 // react
 import { useState } from 'react'
@@ -13,6 +13,10 @@ const sampleAudit = [
   {recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", role: "Admin 2", action: "Evaluted Report", module: "Report Evaluation", recordid: "00102", date: "30-Jan-26", time: "5:00 PM" },
   {recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", role: "Admin 2", action: "Evaluted Report", module: "Report Evaluation", recordid: "00102", date: "30-Jan-26", time: "5:00 PM" }
   //add more for testing
+]
+
+const sampleAuditWhse = [
+  
 ]
 
 export default function AuditLogs() {
