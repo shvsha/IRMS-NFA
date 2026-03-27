@@ -148,12 +148,12 @@ export default function Dashboard() {
               
               {/* Header */}
               <div className="h-8.5 bg-[#2D317F] rounded-t-lg flex items-center px-4 relative">
-                <p className="text-white font-medium text-sm">Date</p>
+                <p className="text-white font-medium text-base">Date</p>
               </div>
               
               {/* Content */}
               <div className="px-5 py-1 pb-8">
-                <p className="text-[#2D317F] font-medium mb-1 text-lg">Select range type and date</p>
+                <p className="text-[#2D317F] font-medium mb-1 text-sm">Select range type and date</p>
                 
                 <FieldGroup>
                   {/* Range Dropdown */}
@@ -270,7 +270,7 @@ export default function Dashboard() {
         </div>
 
         <div className='flex w-full gap-2'>
-          <Card className='rounded-md pt-0 flex-1 h-auto'>
+          <Card className='rounded-md pt-0 flex-1 h-auto bg-[#E1EBFF]'>
             <CardHeader className='p-0'><div className='bg-[#2D317F] h-3 p-0'></div></CardHeader>
             <CardContent>
               <p className='text-[#2D317F]'>Total Reports</p>
@@ -278,7 +278,7 @@ export default function Dashboard() {
             </CardContent>
 
           </Card>
-          <Card className='rounded-md pt-0 flex-1 h-auto'>
+          <Card className='rounded-md pt-0 flex-1 h-auto bg-[#E1EBFF]'>
             <CardHeader className='p-0'><div className='bg-[#418447] h-3 p-0'></div></CardHeader>
             <CardContent>
               <p className='text-[#418447]'>Approved</p>
@@ -286,7 +286,7 @@ export default function Dashboard() {
             </CardContent>
 
           </Card>
-          <Card className='rounded-md pt-0 flex-1 h-auto'>
+          <Card className='rounded-md pt-0 flex-1 h-auto bg-[#E1EBFF]'>
             <CardHeader className='p-0'><div className='bg-[#AE9C0F] h-3 p-0'></div></CardHeader>
             <CardContent>
               <p className='text-[#AE9C0F]'>Pending Review</p>
@@ -294,7 +294,7 @@ export default function Dashboard() {
             </CardContent>
 
           </Card>
-          <Card className='rounded-md pt-0 flex-1 h-auto'>
+          <Card className='rounded-md pt-0 flex-1 h-auto bg-[#E1EBFF]'>
             <CardHeader className='p-0'><div className='bg-[#BB2325] h-3 p-0'></div></CardHeader>
             <CardContent>
               <p className='text-[#BB2325]'>Rejected</p>
