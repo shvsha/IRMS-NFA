@@ -5,33 +5,63 @@ import '../../styles/admin/Dashboard.css'
 import { WeeklyFilter } from '../filters/WeeklyFilter'
 import { MonthlyFilter } from '../filters/MonthlyFilter'
 
-
 // react icons
 import { FaRegCalendarAlt } from "react-icons/fa";
+import { Plus, ClipboardCheck, BarChart2, UserCheck } from "lucide-react";
 
 // react
 import { useState } from 'react';
+import * as React from "react"
 import { useNavigate } from 'react-router-dom';
 
 // shadcn components
-import {
-  Popover,
-  PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger, } from "@/components/ui/popover"
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+// charts
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart,  Pie, Cell, Tooltip
+} from "recharts"
+import { ChartContainer, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 
+// These data are just for demo purposes, replace with API data
+const barData = [
+  { warehouse: "Warehouse 1", receipts: 10.5, issues: 7},
+  { warehouse: "Warehouse 2", receipts: 6.5, issues: 8},
+]
+const barChartConfig = {
+  receipts: {
+    label: "Statements of Receipts",
+    color: "#2859C5",
+  },
+  issues: {
+    label: "Statements of Issues",
+    color: "#0B3B66"
+  }
+}
+const pieData = [
+  { name: "Approved", value: 149, color: "#3E7A43" },
+  { name: "Pending", value: 5, color: "#AE9C0F" },
+  { name: "Rejected", value: 67, color: "#BB2325" },
+];
+
+const pieChartConfig = {
+  Approved: { label: "Approved", color: "#3E7A43" },
+  Pending:  { label: "Pending",  color: "#AE9C0F" },
+  Rejected: { label: "Rejected", color: "#BB2325" },
+};
+
+// audit logs later on
+const activities = [
+  { id: 1, message: "R1004 - New report submitted - WHS1", color: "bg-red-500" },
+  { id: 2, message: "R1003 - New report submitted - WHS2", color: "bg-red-500" },
+  { id: 3, message: "R1002 approved by admin", color: "bg-green-500" },
+  { id: 4, message: "R-001 - Statement of Receipt exported to excel", color: "bg-[#1a2f6f]" },
+];
+
+const total = pieData.reduce((sum, d) => sum + d.value, 0);
+ 
 export default function Dashboard() {
   // for routers
   const navigate = useNavigate();
@@ -44,15 +74,16 @@ export default function Dashboard() {
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState("January");
 
-  // for date range
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null
-  });
-
+  // calendar filter
   const [weeklyYear, setWeeklyYear] = useState(new Date().getFullYear());
   const [weeklyMonth, setWeeklyMonth] = useState(new Date().getMonth());
   const [monthlyYear, setMonthlyYear] = useState(new Date().getFullYear());
+
+  const [activeIndex, setActiveIndex] = useState(null);
+  
+  // Refs for positioning
+  const weekDropdownRef = React.useRef(null)
+  const monthDropdownRef = React.useRef(null)
 
   // call the API whenver dateRange updates
   // useEffect(() => {
@@ -96,7 +127,7 @@ export default function Dashboard() {
   return (
     <div className='whole-container-dashboard'>
 
-      <div style={{ position: 'relative' }}>
+      <div className='relative'>
         <div className='welcome-filter-container-dashboard'>
           <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
 
@@ -110,24 +141,26 @@ export default function Dashboard() {
             <PopoverContent 
               align="end" 
               sideOffset={12}
-              className="p-0 bg-[#E6EEF6] w-80 rounded-lg shadow-lg border-0 overflow-visible"
+              className="p-0 bg-[#E6EEF6] w-80 rounded-lg shadow-lg border-0 overflow-visible z-40"
             >
               {/* Arrow pointing to trigger */}
               <div className="absolute -top-2 right-4 w-4 h-4 bg-[#2D317F] rotate-45" />
               
               {/* Header */}
-              <div className="h-11 bg-[#2D317F] rounded-t-lg flex items-center px-4 relative">
-                <p className="text-white font-semibold text-base">Date</p>
+              <div className="h-8.5 bg-[#2D317F] rounded-t-lg flex items-center px-4 relative">
+                <p className="text-white font-medium text-sm">Date</p>
               </div>
               
               {/* Content */}
               <div className="px-5 py-1 pb-8">
-                <p className="text-[#2D317F] font-medium mb-4 text-lg">Select range type and date</p>
+                <p className="text-[#2D317F] font-medium mb-1 text-lg">Select range type and date</p>
                 
                 <FieldGroup>
                   {/* Range Dropdown */}
                   <Field>
-                    <FieldLabel className="text-[#2D317F] font-medium">Range</FieldLabel>
+                    <FieldLabel className="text-[#2D317F] font-medium">
+                      Range
+                    </FieldLabel>
                     <Select 
                       value={rangeDate} 
                       onValueChange={(v) => {
@@ -139,8 +172,8 @@ export default function Dashboard() {
                         <SelectValue placeholder="Select range" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Weekly">Weekly</SelectItem>
-                        <SelectItem value="Monthly">Monthly</SelectItem>
+                        <SelectItem className='p-2' value="Weekly">Weekly</SelectItem>
+                        <SelectItem className='p-2' value="Monthly">Monthly</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -148,54 +181,69 @@ export default function Dashboard() {
                   {/* Week/Month Selection */}
                   {rangeDate === "Weekly" && (
                     <Field>
-                      <FieldLabel className="text-[#2D317F] font-medium">Week</FieldLabel>
-                      <Select value={selectedWeek} onValueChange={setSelectedWeek} onOpenChange={(open) => {
-                        if (open) setShowCalendarFilter(true)
-                      }}>
-                        <SelectTrigger className="w-full bg-white border-gray-300">
-                          <SelectValue placeholder="Select week" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Week 1</SelectItem>
-                          <SelectItem value="2">Week 2</SelectItem>
-                          <SelectItem value="3">Week 3</SelectItem>
-                          <SelectItem value="4">Week 4</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FieldLabel className="text-[#2D317F] font-medium">
+                        Week
+                      </FieldLabel>
+                      <div ref={weekDropdownRef} className="relative">
+                        <button
+                          type="button"
+                          onClick={handleDropdownAreaClick}
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none"
+                        >
+                          <span>Week {selectedWeek}</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4 opacity-50"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
                     </Field>
                   )}
-
                   {rangeDate === "Monthly" && (
                     <Field>
-                      <FieldLabel className="text-[#2D317F] font-medium">Month</FieldLabel>
-                      <Select value={selectedMonth} onValueChange={setSelectedMonth} onOpenChange={(open) => {
-                        if (open) setShowCalendarFilter(true)
-                      }}>
-                        <SelectTrigger className="w-full bg-white border-gray-300">
-                          <SelectValue placeholder="Select month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="January">January</SelectItem>
-                          <SelectItem value="February">February</SelectItem>
-                          <SelectItem value="March">March</SelectItem>
-                          <SelectItem value="April">April</SelectItem>
-                          <SelectItem value="May">May</SelectItem>
-                          <SelectItem value="June">June</SelectItem>
-                          <SelectItem value="July">July</SelectItem>
-                          <SelectItem value="August">August</SelectItem>
-                          <SelectItem value="September">September</SelectItem>
-                          <SelectItem value="October">October</SelectItem>
-                          <SelectItem value="November">November</SelectItem>
-                          <SelectItem value="December">December</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FieldLabel className="text-[#2D317F] font-medium">
+                        Month
+                      </FieldLabel>
+                      <div ref={monthDropdownRef} className="relative">
+                        <button
+                          type="button"
+                          onClick={handleDropdownAreaClick}
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none"
+                        >
+                          <span>{selectedMonth}</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4 opacity-50"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
                     </Field>
                   )}
                 </FieldGroup>
               </div>
 
               {showCalendarFilter && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50">
+                <div className="absolute left-1/2 -right-175 top-30 -translate-x-1/2  mt-2 z-50">
                   {rangeDate === "Weekly" ? (
                     <WeeklyFilter
                       selectedWeek={selectedWeek}
@@ -220,74 +268,211 @@ export default function Dashboard() {
             </PopoverContent>
           </Popover>
         </div>
-{/* 
 
-      <div className='summary-cards-dashboard-container'>
-        <div className='summar-cards-dashboard'>
-          <div style={{ backgroundColor: '#2D317F' }}></div>
-          <div className='label-dashboard label-value-total-reports'>Total Reports</div>
-          <div className='value-dashbaord label-value-total-reports'><span>159</span></div>
-        </div>
-        <div className='summar-cards-dashboard'>
-          <div style={{ backgroundColor: '#3E7A43' }}></div>
-          <div className='label-dashboard label-value-approved'>Approved</div>
-          <div className='value-dashbaord label-value-approved'><span>148</span></div>
-        </div>
-        <div className='summar-cards-dashboard'>
-          <div style={{ backgroundColor: '#AE9C0F' }}></div>
-          <div className='label-dashboard label-value-pending'>Pending Review</div>
-          <div className='value-dashbaord label-value-pending'><span>12</span></div>
-        </div>
-        <div className='summar-cards-dashboard'>
-          <div style={{ backgroundColor: '#B72132' }}></div>
-          <div className='label-dashboard label-value-rejected'>Rejected</div>
-          <div className='value-dashbaord label-value-rejected'><span>67</span></div>
-        </div>
-      </div>
+        <div className='flex w-full gap-2'>
+          <Card className='rounded-md pt-0 flex-1 h-auto'>
+            <CardHeader className='p-0'><div className='bg-[#2D317F] h-3 p-0'></div></CardHeader>
+            <CardContent>
+              <p className='text-[#2D317F]'>Total Reports</p>
+              <div className='ml-15 mt-3 text-5xl text-[#2D317F] font-medium'>158</div>
+            </CardContent>
 
-      <div className='below-container-dashboard'>
+          </Card>
+          <Card className='rounded-md pt-0 flex-1 h-auto'>
+            <CardHeader className='p-0'><div className='bg-[#418447] h-3 p-0'></div></CardHeader>
+            <CardContent>
+              <p className='text-[#418447]'>Approved</p>
+              <div className='ml-15 mt-3 text-5xl text-[#418447] font-medium'>148</div>
+            </CardContent>
 
-        <div className='bar-graph-container'>
-          <div className='bar-graph-filter-container'>
-            <span>Weekly Trend</span>
-            <FilterDropdown
-              selected={cerealType}
-              options={["All Cereal Type", "Rice", "Palay"]}
-              onSelect={setCerealType}
-              buttonClass="cereal-filter-dashboard"
-            />
-          </div>
-          <div className='bar-graph'>
-            <WeeklyTrendChart cerealType={cerealType} />
-          </div>
+          </Card>
+          <Card className='rounded-md pt-0 flex-1 h-auto'>
+            <CardHeader className='p-0'><div className='bg-[#AE9C0F] h-3 p-0'></div></CardHeader>
+            <CardContent>
+              <p className='text-[#AE9C0F]'>Pending Review</p>
+              <div className='ml-15 mt-3 text-5xl text-[#AE9C0F] font-medium'>12</div>
+            </CardContent>
+
+          </Card>
+          <Card className='rounded-md pt-0 flex-1 h-auto'>
+            <CardHeader className='p-0'><div className='bg-[#BB2325] h-3 p-0'></div></CardHeader>
+            <CardContent>
+              <p className='text-[#BB2325]'>Rejected</p>
+              <div className='ml-15 mt-3 text-5xl text-[#BB2325] font-medium'>67</div>
+            </CardContent>
+
+          </Card>
         </div>
 
-        <div className='pie-graph-container'>
-          <div className='pie-graph-filter-container'>
-            <span style={{ fontWeight: '700' }}>Report Status</span>
-            <span style={{ fontSize: 13 }}>This week</span>
-          </div>
-          <div className='pie-graph'>
-            <ReportStatusDonut approved={149} pending={5} rejected={67} />
-          </div>
-        </div>
+        <div className='flex gap-2.5 flex-1 mt-2'>
+          {/* bar graph */}
+          <div className='bg-[#E1EBFF] rounded-md flex-1 p-4 w-full h-auto pb-1'>
+            {/* header */}
+            <div className='flex justify-between items--center shrink overflow relative border-b border-b-[#ADCEFF] pb-3'>
+              <p className='font-bold text-[#2D317F] p-1 '>Weekly Trend</p>
+              <Select value={cerealType} onValueChange={(v) => setCerealType(v)}>
+                <SelectTrigger className='border bg-transparent border-[#0B3B66] p-3 text-[#0B3B66]'>{cerealType}</SelectTrigger>
+                <SelectContent>
+                  <SelectItem className='p-2 text-[#0B3B66]' value="All Cereal Type">All Cereal Type</SelectItem>
+                  <SelectItem className='p-2 text-[#0B3B66]' value="Palay">Palay</SelectItem>
+                  <SelectItem className='p-2 text-[#0B3B66]' value="Rice">Rice</SelectItem>
+                </SelectContent>
+              </Select>
 
-        <div className='recent-quick-act-container'>
-          <div className='recent-act-container'>
-            <div className='section-title'><p>Recent Activities</p></div>
-            <RecentActivities />
+            </div>
+            
+          <div className="min-w-[650px] w-full">
+            <ChartContainer config={barChartConfig} className="h-65 w-full mt-2">
+              <BarChart 
+                data={barData} 
+                barCategoryGap="40%" 
+                barGap={6}
+                margin={{ top: 10, right: 20, left: -10, bottom: 20 }}
+              >
+                <CartesianGrid vertical={false} stroke="#0B3B66" strokeDasharray="0" strokeWidth={0.1} />
+                <XAxis
+                  dataKey="warehouse"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#1A2F6F", fontSize: 13 }}
+                />
+                <YAxis
+                  domain={[1, 11]}
+                  ticks={[1, 3, 5, 7, 9, 11]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6b7280", fontSize: 12 }}
+                  width={30}
+                />
+                <Bar barSize={40} dataKey="receipts" fill="var(--color-receipts)" radius={[4, 4, 0, 0]} />
+                <Bar barSize={40} dataKey="issues" fill="var(--color-issues)" radius={[4, 4, 0, 0]} />
+                <ChartLegend 
+                  verticalAlign="bottom"
+                  content={<ChartLegendContent className="pt-2" />} 
+                />
+              </BarChart>
+            </ChartContainer>
           </div>
-          <div className='quick-act-container'>
-            <div className='section-title'><p>Quick Actions</p></div>
-            <div className='quick-actions-grid'>
-              <button onClick={() => navigate('/admin/users')} className='quick-action-btn'><FaPlus /><span>Add User</span></button>
-              <button onClick={() => navigate('/admin/evaluation')} className='quick-action-btn'><TbClipboardCheck /><span>Evaluation</span></button>
-              <button onClick={() => navigate('/admin/summarization')} className='quick-action-btn'><TbChartBar /><span>Summary</span></button>
-              <button onClick={() => navigate('/admin/audit')} className='quick-action-btn'><TbUserSearch /><span>Audit Logs</span></button>
+
+          </div>
+          {/* pie graph */}
+          <div className='bg-[#E1EBFF] rounded-md p-4 w-full h-auto flex flex-col '>
+            {/* header */}
+            <div className='flex justify-between items-center mb-2 border-b border-b-[#ADCEFF] pb-3'>
+              <span className='text-[#2D317F] font-bold '>Report Status</span>
+              <span className='text-[#2D317F] '>This Week</span>
+            </div>
+
+            {/* donut chart */}
+            <div className="relative h-[150px] w-full">
+              <ChartContainer config={pieChartConfig} className="h-full w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={70} 
+                      paddingAngle={2}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                      stroke="none"
+                      onMouseEnter={(_, index) => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(null)}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={entry.color}
+                          opacity={activeIndex === null || activeIndex === index ? 1 : 0.45}
+                          style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 10,
+                        border: "none",
+                        background: "#fff",
+                        boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+                        fontSize: 13,
+                      }}
+                      formatter={(value, name) => [value, name]}
+                    />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-extrabold text-[#1a2f6f] leading-none">{total}</span>
+                  <span className="text-xs text-[#6b86a8] mt-1">Total</span>
+                </div>
+              </div>
+              {/* LEGEND */}
+            <div className="flex flex-col gap-3 mt-3">
+              {pieData.map((item, index) => (
+                <div
+                  key={item.name}
+                  className="flex items-center gap-2 cursor-pointer transition-opacity duration-200"
+                  style={{ opacity: activeIndex === null || activeIndex === index ? 1 : 0.45 }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                >
+                  <span
+                    className="w-[14px] h-[14px] rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="flex-1 text-sm font-medium text-[#1a2f6f]">{item.name}</span>
+                  <span className="text-sm font-bold" style={{ color: item.color }}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+            
+
+          </div>
+
+          {/* audit quic act */}
+          <div className='w-full'>
+            <div className='bg-[#E1EBFF] p-2 mb-2 rounded-md px-4 py-2'>
+              <div className='text-[#2859C5] font-medium mb-2 border-b border-b-[#ADCEFF] pb-3 p-1'>
+                Recent Activities
+              </div>
+              <div className='max-h-[100px] overflow-y-auto flex flex-col divide-y divide-[#b8cfe8]'>
+                {activities.map((activity) => (
+                  <div key={activity.id} className='flex items-start gap-3 py-3 first:pt-0 last:pb-0'>
+                    <span className={`mt-[3px] w-2.5 h-2.5 rounded-full shrink-0 ${activity.color}`} />
+                    <span className="text-xs text-[#1a2f6f] leading-snug">{activity.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className='bg-[#E1EBFF] p-3 py-4 rounded-md h-auto'>
+              <div className='text-[#2859C5] font-medium mb-3 border-b border-b-[#ADCEFF] pb-3 p-1'>
+                Quick Actions
+              </div>
+
+              <div className='grid grid-cols-2 gap-2'>
+                <Button onClick={() => navigate('/admin/users')} className="w-full py-4 bg-[#8FBFFA] border border-[#8FBFFA] text-[#2D317F]">
+                  <Plus className="w-4 h-4" />Add User
+                </Button>
+                <Button onClick={() => navigate('/admin/evaluation')} className="w-full py-4 bg-[#8FBFFA] border border-[#8FBFFA] text-[#2D317F]">
+                  <ClipboardCheck className="w-4 h-4" />Evaluation
+                </Button>
+                <Button onClick={() => navigate('/admin/summarization')} className="w-full py-4 bg-[#8FBFFA] border border-[#8FBFFA] text-[#2D317F]">
+                  <BarChart2 className="w-4 h-4" />Summary
+                </Button>
+                <Button onClick={() => navigate('/admin/audit')} className="w-full py-4 bg-[#8FBFFA] border border-[#8FBFFA] text-[#2D317F]">
+                  <UserCheck className="w-4 h-4" />Audit Logs
+                </Button>
+              </div>
             </div>
           </div>
-        </div>*/}
-
+        </div>
+        
       </div> 
     </div>
   );

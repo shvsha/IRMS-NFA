@@ -130,7 +130,7 @@ export function WeeklyFilter({
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 ">
         {/* Day labels */}
         {DAYS.map((d) => (
           <div
