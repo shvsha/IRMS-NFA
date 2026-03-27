@@ -8,7 +8,7 @@ import '../../styles/Navbar.css'
 
 export default function NavBarAdmin() {
   return (
-    <nav className='navbar-container'>
+    <nav className='bg-[#ECF0F3] flex justify-between items-center px-2.5 h-15'>
       <div>
         <NavLink to="/admin/dashboard" className="nav-link">
           Dashboard
@@ -31,8 +31,8 @@ export default function NavBarAdmin() {
       </div>
 
       <div>
-        <NavLink to="/admin/notif" className="nav-link ">
-          <FaBell size={25} />
+        <NavLink to="/admin/notif" className="py-0 relative inline-flex mr-5">
+          <FaBell size={23} color="#0B3B66" />
           {unreadCount > 0 && (
             <span className='notif-badge'>
               {unreadCount > 99 ? '99+' : unreadCount}

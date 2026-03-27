@@ -2,170 +2,35 @@
 import '../../styles/admin/Dashboard.css'
 
 // filter components
-import WeeklyFilter from '../filters/WeeklyFilter'
-import MonthlyFilter from '../filters/MonthlyFilter';
-import FilterDropdown from '../filters/FilterDropdown';
+import { WeeklyFilter } from '../filters/WeeklyFilter'
+import { MonthlyFilter } from '../filters/MonthlyFilter'
 
-// utils/helpers
-import { getWeekRange } from '../../utils/dateUtils'
 
 // react icons
-import { FaRegCalendarAlt, FaPlus } from "react-icons/fa";
-import { TbClipboardCheck, TbChartBar, TbUserSearch } from "react-icons/tb";
+import { FaRegCalendarAlt } from "react-icons/fa";
 
 // react
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function WeeklyTrendChart({ cerealType }) {
-  const baseData = {
-    "All Cereal Type": [
-      { warehouse: "Warehouse 1", receipts: 8, issues: 9 },
-      { warehouse: "Warehouse 2", receipts: 8, issues: 11 },
-    ],
-    Rice: [
-      { warehouse: "Warehouse 1", receipts: 4, issues: 5 },
-      { warehouse: "Warehouse 2", receipts: 6, issues: 2 },
-    ],
-    Palay: [
-      { warehouse: "Warehouse 1", receipts: 4, issues: 4 },
-      { warehouse: "Warehouse 2", receipts: 2, issues: 9 },
-    ],
-  };
-
-  const data = baseData[cerealType] || baseData["All Cereal Type"];
-  const maxValue = Math.max(...data.flatMap(d => [d.receipts, d.issues]), 1);
-  const CHART_HEIGHT = 200;
-
-  const ticks = [];
-  for (let i = 1; i <= maxValue + 1; i++) {
-    ticks.push(i);
-  }
-
-  return (
-    <div className="chart-wrapper">
-      <div className="bar-chart-with-yaxis">
-
-        <div className="y-axis" style={{ height: CHART_HEIGHT }}>
-          {[...ticks].reverse().map(tick => (
-            <span key={tick} className="y-tick">{tick}</span>
-          ))}
-        </div>
-
-        <div className="bar-chart-inner">
-          <div className="bar-chart" style={{ height: CHART_HEIGHT }}>
-            {data.map(({ warehouse, receipts, issues }) => (
-              <div key={warehouse} className="bar-group">
-                <div className="bar-stack" style={{ height: CHART_HEIGHT }}>
-                  <div
-                    className="bar receipts"
-                    style={{ height: `${(receipts / (maxValue + 1)) * 100}%` }}
-                    title={`Receipts: ${receipts}`}
-                  />
-                  <div
-                    className="bar issues"
-                    style={{ height: `${(issues / (maxValue + 1)) * 100}%` }}
-                    title={`Issues: ${issues}`}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="x-axis-line" />
-
-          <div className="x-axis-labels">
-            {data.map(({ warehouse }) => (
-              <div key={warehouse} className="x-axis-label">{warehouse}</div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bar-legend">
-        <div><span className="legend-dot receipts" /> Statement of Receipts</div>
-        <div><span className="legend-dot issues" /> Statement of Issues</div>
-      </div>
-    </div>
-  );
-}
-
-function ReportStatusDonut({ approved, pending, rejected }) {
-  const total = approved + pending + rejected;
-  const radius = 58;
-  const cx = 80;
-  const cy = 80;
-  const circumference = 2 * Math.PI * radius;
-
-  const approvedLen = (approved / total) * circumference;
-  const pendingLen  = (pending  / total) * circumference;
-  const rejectedLen = (rejected / total) * circumference;
-
-  const approvedOffset = 0;
-  const pendingOffset  = -(approvedLen);
-  const rejectedOffset = -(approvedLen + pendingLen);
-
-  return (
-    <div className="donut-wrapper">
-      <div style={{ position: 'relative', width: 160, height: 160 }}>
-        <svg width={160} height={160} viewBox="0 0 160 160">
-          <circle cx={cx} cy={cy} r={radius} fill="transparent" stroke="#E2EBFF" strokeWidth="20" />
-          <circle
-            cx={cx} cy={cy} r={radius}
-            fill="transparent" stroke="#3E7A43" strokeWidth="20"
-            strokeDasharray={`${approvedLen} ${circumference}`}
-            strokeDashoffset={approvedOffset}
-            transform={`rotate(-90 ${cx} ${cy})`}
-          />
-          <circle
-            cx={cx} cy={cy} r={radius}
-            fill="transparent" stroke="#AE9C0F" strokeWidth="20"
-            strokeDasharray={`${pendingLen} ${circumference}`}
-            strokeDashoffset={pendingOffset}
-            transform={`rotate(-90 ${cx} ${cy})`}
-          />
-          <circle
-            cx={cx} cy={cy} r={radius}
-            fill="transparent" stroke="#B72132" strokeWidth="20"
-            strokeDasharray={`${rejectedLen} ${circumference}`}
-            strokeDashoffset={rejectedOffset}
-            transform={`rotate(-90 ${cx} ${cy})`}
-          />
-        </svg>
-        <div className="donut-center">
-          <span>Report</span>
-          <span>Status</span>
-        </div>
-      </div>
-      <div className="donut-legend">
-        <div><span className="legend-dot approved" /> Approved<span className="legend-value">{approved}</span></div>
-        <div><span className="legend-dot pending" /> Pending<span className="legend-value">{pending}</span></div>
-        <div><span className="legend-dot rejected" /> Rejected<span className="legend-value">{rejected}</span></div>
-      </div>
-    </div>
-  );
-}
-
-function RecentActivities() {
-  // reflect later on on audit logs
-  const activities = [
-    { text: "R1004 – New report submitted - WHS1", color: "#BD1C1C" },
-    { text: "R1003 – New report submitted - WHS2", color: "#BD1C1C" },
-    { text: "R1002 approved by admin",             color: "#2E7D32" },
-    { text: "R-001 – Statement of Receipt exported to excel", color: "#2859C5" },
-  ];
-
-  return (
-    <div className="recent-activities-list">
-      {activities.map((activity, idx) => (
-        <div key={idx} className="recent-activity-item">
-          <span className="activity-dot" style={{ background: activity.color }} />
-          <span>{activity.text}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+// shadcn components
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function Dashboard() {
   // for routers
@@ -179,24 +44,15 @@ export default function Dashboard() {
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState("January");
 
-  // for year and month
-  const [viewYear, setViewYear] = useState(new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   // for date range
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null
   });
 
-  useEffect(() => {
-    const [sd, ed] = getWeekRange(selectedWeek, viewYear, viewMonth);
-    const pad = (n) => String(n).padStart(2, "0");
-    setDateRange({
-      startDate: `${viewYear}-${pad(viewMonth + 1)}-${pad(sd)}`,
-      endDate:   `${viewYear}-${pad(viewMonth + 1)}-${pad(ed)}`,
-    });
-  }, [selectedWeek, viewYear, viewMonth]);
-
+  const [weeklyYear, setWeeklyYear] = useState(new Date().getFullYear());
+  const [weeklyMonth, setWeeklyMonth] = useState(new Date().getMonth());
+  const [monthlyYear, setMonthlyYear] = useState(new Date().getFullYear());
 
   // call the API whenver dateRange updates
   // useEffect(() => {
@@ -215,24 +71,26 @@ export default function Dashboard() {
   // }
 
   const handlePrevMonth = () => {
-    if (viewMonth === 0) {
-      setViewMonth(11);
-      setViewYear(y => y - 1);
+    if (weeklyMonth === 0) {
+      setWeeklyMonth(11);
+      setWeeklyYear(y => y - 1);
     } else {
-      setViewMonth(m => m - 1);
+      setWeeklyMonth(m => m - 1);
     }
   }
   const handleNextMonth = () => {
-    if (viewMonth === 11) {
-      setViewMonth(0);
-      setViewYear(y => y + 1);
+    if (weeklyMonth === 11) {
+      setWeeklyMonth(0);
+      setWeeklyYear(y => y + 1);
     } else {
-      setViewMonth(m => m + 1);
+      setWeeklyMonth(m => m + 1);
     }
   }
-
-  const onMonthChange = (monthNumber) => {
-    setSelectedMonth(monthNumber)
+  const handleDropdownAreaClick = () => {
+    setShowCalendarFilter(prev => !prev)
+  }
+  const handleWeekSelect = (week) => {
+    setSelectedWeek(week)
   }
 
   return (
@@ -241,78 +99,128 @@ export default function Dashboard() {
       <div style={{ position: 'relative' }}>
         <div className='welcome-filter-container-dashboard'>
           <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
-          <button onClick={() => setShowCalendarFilter(!showCalendarFilter)}>
-            <FaRegCalendarAlt size={20} color={'#072560'} />
-          </button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-[#072560] border border-[#2D317F] rounded-md">
+                <FaRegCalendarAlt className="h-5 w-5" />
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent 
+              align="end" 
+              sideOffset={12}
+              className="p-0 bg-[#E6EEF6] w-80 rounded-lg shadow-lg border-0 overflow-visible"
+            >
+              {/* Arrow pointing to trigger */}
+              <div className="absolute -top-2 right-4 w-4 h-4 bg-[#2D317F] rotate-45" />
+              
+              {/* Header */}
+              <div className="h-11 bg-[#2D317F] rounded-t-lg flex items-center px-4 relative">
+                <p className="text-white font-semibold text-base">Date</p>
+              </div>
+              
+              {/* Content */}
+              <div className="px-5 py-1 pb-8">
+                <p className="text-[#2D317F] font-medium mb-4 text-lg">Select range type and date</p>
+                
+                <FieldGroup>
+                  {/* Range Dropdown */}
+                  <Field>
+                    <FieldLabel className="text-[#2D317F] font-medium">Range</FieldLabel>
+                    <Select 
+                      value={rangeDate} 
+                      onValueChange={(v) => {
+                        setRangeDate(v)
+                        setShowCalendarFilter(false)
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-white border-gray-300">
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Weekly">Weekly</SelectItem>
+                        <SelectItem value="Monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  {/* Week/Month Selection */}
+                  {rangeDate === "Weekly" && (
+                    <Field>
+                      <FieldLabel className="text-[#2D317F] font-medium">Week</FieldLabel>
+                      <Select value={selectedWeek} onValueChange={setSelectedWeek} onOpenChange={(open) => {
+                        if (open) setShowCalendarFilter(true)
+                      }}>
+                        <SelectTrigger className="w-full bg-white border-gray-300">
+                          <SelectValue placeholder="Select week" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Week 1</SelectItem>
+                          <SelectItem value="2">Week 2</SelectItem>
+                          <SelectItem value="3">Week 3</SelectItem>
+                          <SelectItem value="4">Week 4</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
+
+                  {rangeDate === "Monthly" && (
+                    <Field>
+                      <FieldLabel className="text-[#2D317F] font-medium">Month</FieldLabel>
+                      <Select value={selectedMonth} onValueChange={setSelectedMonth} onOpenChange={(open) => {
+                        if (open) setShowCalendarFilter(true)
+                      }}>
+                        <SelectTrigger className="w-full bg-white border-gray-300">
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="January">January</SelectItem>
+                          <SelectItem value="February">February</SelectItem>
+                          <SelectItem value="March">March</SelectItem>
+                          <SelectItem value="April">April</SelectItem>
+                          <SelectItem value="May">May</SelectItem>
+                          <SelectItem value="June">June</SelectItem>
+                          <SelectItem value="July">July</SelectItem>
+                          <SelectItem value="August">August</SelectItem>
+                          <SelectItem value="September">September</SelectItem>
+                          <SelectItem value="October">October</SelectItem>
+                          <SelectItem value="November">November</SelectItem>
+                          <SelectItem value="December">December</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
+                </FieldGroup>
+              </div>
+
+              {showCalendarFilter && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50">
+                  {rangeDate === "Weekly" ? (
+                    <WeeklyFilter
+                      selectedWeek={selectedWeek}
+                      year={weeklyYear}
+                      month={weeklyMonth}
+                      onPrevMonth={handlePrevMonth}
+                      onNextMonth={handleNextMonth}
+                      onMonthChange={setWeeklyMonth}
+                      onYearChange={setWeeklyYear}
+                      onWeekSelect={handleWeekSelect}
+                    />
+                  ) : (
+                    <MonthlyFilter
+                      selectedMonth={selectedMonth}
+                      year={monthlyYear}
+                      onYearChange={setMonthlyYear}
+                      onMonthChange={setSelectedMonth}
+                    />
+                  )}
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
-
-        {showCalendarFilter && (
-          <div className='calendar-filter-popup-dashboard'>
-            <div className='top-part-filter-popup-dashboard'>
-              <p>Date Picker</p>
-            </div>
-            <div className='title-select-range-date-container'>
-              Select range type and date
-            </div>
-            <div className='range-date-container range-container-1'>
-              <label>Range</label>
-              <FilterDropdown
-                selected={rangeDate}
-                options={["Weekly", "Monthly"]}
-                onSelect={setRangeDate}
-                buttonClass="date-filter-dashboard"
-              />
-            </div>
-            {rangeDate === "Weekly" && (
-              <div className='range-date-container range-container-2'>
-                <label>Week</label>
-                <FilterDropdown
-                  selected={`Week ${selectedWeek}`}
-                  options={["Week 1", "Week 2", "Week 3", "Week 4"]}
-                  onSelect={(val) => setSelectedWeek(Number(val.split(" ")[1]))}
-                  buttonClass={"date-filter-dashboard"}
-                />
-              </div>
-            )}
-            {rangeDate === "Monthly" && (
-              <div className='range-date-container range-container-2'>
-                <label>Monthly</label>
-                <FilterDropdown
-                  selected={selectedMonth}
-                  options={['January','February','March','April','May','June','July','August','September','October','November','December']}
-                  onSelect={setSelectedMonth}
-                  buttonClass={"date-filter-dashboard"}
-                />
-              </div>
-            )}
-            {rangeDate === "Weekly" && (
-              <div className='calendar-grid-popup-dashboard'>
-                <WeeklyFilter
-                  selectedWeek={selectedWeek}
-                  year={viewYear}
-                  month={viewMonth}
-                  onPrevMonth={handlePrevMonth}
-                  onNextMonth={handleNextMonth}
-                  onMonthChange={(m) => setViewMonth(m)}
-                  onYearChange={(y) => setViewYear(y)}
-               />
-              </div>
-            )}
-
-            {rangeDate === 'Monthly' && (
-              <div className='calendar-grid-popup-dashboard'>
-                <MonthlyFilter
-                  selectedMonth={selectedMonth}
-                  year={viewYear}
-                  onYearChange={(y) => setViewYear(y)}
-                  onMonthChange={onMonthChange}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-      </div>
+{/* 
 
       <div className='summary-cards-dashboard-container'>
         <div className='summar-cards-dashboard'>
@@ -378,9 +286,9 @@ export default function Dashboard() {
               <button onClick={() => navigate('/admin/audit')} className='quick-action-btn'><TbUserSearch /><span>Audit Logs</span></button>
             </div>
           </div>
-        </div>
+        </div>*/}
 
-      </div>
+      </div> 
     </div>
   );
 }

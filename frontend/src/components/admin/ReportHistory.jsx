@@ -11,10 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/admin/ReportHistory.css'
 
 // components
-import DailyFilter from '../filters/DailyFilter';
-import WeeklyFilter from '../filters/WeeklyFilter';
-import MonthlyFilter from '../filters/MonthlyFilter';
-import FilterDropdown from '../filters/FilterDropdown';
+// import DailyFilter from '../filters/DailyFilter';
+// import WeeklyFilter from '../filters/WeeklyFilter';
+// import MonthlyFilter from '../filters/MonthlyFilter';
+// import FilterDropdown from '../filters/FilterDropdown';
 
 const ITEMS_PER_PAGE = 4
 
