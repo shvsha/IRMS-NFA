@@ -1,17 +1,10 @@
 // react
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../api/axios'
 
 // shadcn components
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field"
@@ -41,26 +34,45 @@ export default function Login() {
     }
   }
 
-  console.log("Username: ", username)
-  console.log("Password: ", password)
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (username === "" || password === "") {
       alert("Incomplete Credentials")
       return
     }
 
-    // change this later on if the database is connected already
-    if (username === "admin" && password === "admin123") {
-      alert("Logging in as admin...") 
-      navigate("/admin/dashboard")
-    } else if (username === "whse" && password === "whse123") {
-      alert("Logging in as warehouse supervisor...")
-      navigate("/whse/management")
-    } else {
-      alert("Wrong Credentials")
+    try {
+      const response = await api.post('/api/auth/login/', {
+        username,
+        password,
+      });
+
+      // save tokens and info of the user
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      // navigate based on user level
+      const userLevel = response.data.user.user_level;
+      if (userLevel === "Admin") {
+        alert("Logging in as admin...") 
+        navigate("/admin/dashboard")
+      } else if (userLevel === "Warehouse Supervisor") {
+        alert("Logging in as warehouse supervisor...")
+        navigate("/whse/management")
+      } else {
+        alert('Unknown user level.');
+      }
+    } catch (err) {
+      const error = err.response?.data;
+      if (error) {
+        const msg = Object.values(error)[0];
+        alert(Array.isArray(msg) ? msg[0] : msg);
+      } else {
+        alert('Login failed. Please try again.');
+      }
     }
+
   }
 
   return (

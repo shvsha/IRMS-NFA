@@ -34,9 +34,6 @@ backend/__pycache__/
 *.py[cod]
 *$py.class
 
-# Django database
-backend/db.sqlite3
-
 # Django media uploads
 backend/media/
 

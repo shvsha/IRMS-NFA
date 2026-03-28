@@ -7,6 +7,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 // react
 import { useState } from "react"
+import api from '../../api/axios'
+
+// icons
 import { FaExclamation } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa6";
 import { Eye, EyeOff } from "lucide-react"
@@ -24,15 +27,15 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   // fields
   const [formData, setFormData] = useState({
-    firstName: isEdit ? employeeData?.firstName : "",
-    middleInitial: isEdit ? employeeData?.middleInitial : "",
-    lastName: isEdit ? employeeData?.lastName : "",
+    fname: isEdit ? employeeData?.fname : "",
+    mI: isEdit ? employeeData?.mI : "",
+    lname: isEdit ? employeeData?.lname : "",
     email: isEdit ? employeeData.email: "",
-    userLevel: isEdit ? employeeData.userLevel: "Admin",
-    department: isEdit ? employeeData?.department : "Quality Assurance",
+    user_level: isEdit ? employeeData.user_level : "Admin",
+    dept: isEdit ? employeeData?.dept : "Quality Assurance",
     position: isEdit ? employeeData?.position : "Quality Assurance Officer",
-    warehouseCode: isEdit ? employeeData?.warehouseCode : "010501A",
-    officeId: isEdit ? employeeData?.officeId : "",
+    WHCode: isEdit ? employeeData?.WHCode : "010501A",
+    Office_id: isEdit ? employeeData?.Office_id : "",
     username: isEdit ? employeeData?.username : "",
     password: "",
     confirmPassword: "",
@@ -40,23 +43,23 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   // dropdown for form
   const [selectedUserLevel, setSelectedUserLevel] = useState(
-    isEdit ? employeeData?.userLevel : "Admin"
+    isEdit ? employeeData?.user_level : "Admin"
   )
   const [selectedDepartment, setSelectedDepartment] = useState(
-    isEdit ? employeeData?.department : "Quality Assurance"
+    isEdit ? employeeData?.dept : "Quality Assurance"
   )
   const [selectedPosition, setSelectedPosition] = useState(
     isEdit ? employeeData?.position : "Quality Assurance Officer"
   )
   const [selectedWhseCode, setSelectedWhseCode] = useState(
-    isEdit ? employeeData?.warehouseCode : "010501A"
+    isEdit ? employeeData?.WHCode : "010501A"
   )
 
   const handleDeptChange = (val) => { 
     setSelectedDepartment(val);
     setFormData( prev => ({
       ...prev,
-      department: val
+      dept: val
     }));
   }
   const handlePosChange = (val) => { 
@@ -70,14 +73,14 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     setSelectedWhseCode(val); 
     setFormData( prev => ({
       ...prev,
-      warehouseCode: val
+      WHCode: val
     }));
   }
   const handleUserLevelChange = (val) => { 
     setSelectedUserLevel(val);
     setFormData( prev => ({
       ...prev,
-      userLevel: val
+      user_level: val
     }));
   }
 
@@ -85,13 +88,13 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     setFormData({ ...formData, [e.target.name]: e.target.value});
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     console.log(formData)
 
     // validation for the required fields
-    const requiredFields = ['firstName', 'middleInitial', 'lastName', 'email', 'department', 'position', 'warehouseCode', 'officeId', 'username'];
+    const requiredFields = ['fname', 'mI', 'lname', 'email', 'dept', 'position', 'WHCode', 'Office_id', 'username'];
     for (const field of requiredFields) {
       if (!formData[field]?.trim()) {
         alert(`Please fill in all required fields.`);
@@ -111,13 +114,22 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
       }
     }
 
-    if (isEdit) {
-      // update employee
-    } else {
-      // create new employee
+    try {
+      if (isEdit) {
+        await api.put(`/api/users/${employeeData.user_id}/`, formData);
+      } else {
+        await api.post('api/users/', formData);
+      }
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errors = error.response?.data;
+      if (errors) {
+        const firstError = Object.values(errors)[0];
+        alert(Array.isArray(firstError) ? firstError[0] : firstError);
+      } else {
+        alert("Something went wrong. Please try again.")
+      }
     }
-
-    setShowSuccessModal(true);
   }
 
 
@@ -139,8 +151,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <Input
                   className=" rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
                   id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="fname"
+                  value={formData.fname}
                   onChange={handleChange}
                   type="text"
                 />
@@ -151,8 +163,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <Input
                   className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
                   id="middleInitial"
-                  name="middleInitial"
-                  value={formData.middleInitial}
+                  name="mI"
+                  value={formData.mI}
                   onChange={handleChange}
                   type="text"
                 />
@@ -163,8 +175,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <Input
                   className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
                   id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
+                  name="lname"
+                  value={formData.lname}
                   onChange={handleChange}
                   type="text"
                 />
@@ -262,8 +274,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <Input
                   className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
                   id="officeId"
-                  name="officeId"
-                  value={formData.officeId}
+                  name="Office_id"
+                  value={formData.Office_id}
                   onChange={handleChange}
                   type="text"
                 />

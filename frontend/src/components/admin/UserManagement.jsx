@@ -1,5 +1,6 @@
 import '../../styles/admin/UserManagement.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import api from '../../api/axios'
 
 // components
 import EmployeeForm from './EmployeeForm';
@@ -8,12 +9,12 @@ import EmployeeForm from './EmployeeForm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
-// react icon
+// icons
 import { FaEdit, FaSearch } from "react-icons/fa";
-import { FaC, FaPlus } from "react-icons/fa6";
+import { FaPlus } from "react-icons/fa6";
 import { IoArchiveOutline } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 
@@ -21,40 +22,46 @@ export default function UserManagement() {
   // us
   const [search, setSearch] = useState("");
   const [userStatus, setUserStatus] = useState("All Users")
-  const [users, setUsers] = useState([
-  { warehouseId: 'WH-001', officeId: 'OF-001', name: 'Ronnel C. Jucutan', email: 'ronnel@nfa.gov.ph', userLevel: 'Admin', position: 'QA', status: 'Active' },
-  { warehouseId: 'WH-002', officeId: 'OF-002', name: 'Febore Valenzuela', email: 'febore@nfa.gov.ph', userLevel: 'User', position: 'Statistician', status: 'Inactive' },
-  { warehouseId: 'WH-003', officeId: 'OF-003', name: 'Louie Valenzuela', email: 'louie@nfa.gov.ph', userLevel: 'User', position: 'Warehouse Supervisor', status: 'Active' },
-])
 
-  //for modals
-const [archiveOpen, setArchiveOpen] = useState(false)
-const [archiveStep, setArchiveStep] = useState("confirm") // "confirm" | "success"
+  const [users, setUsers] = useState([])
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  //for archive
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [archiveStep, setArchiveStep] = useState("confirm")
+  const [archiveUserId, setArchiveUserId] = useState(null)
 
   // for employee form (add and edit)
   const [view, setView] = useState("list");
   const [selectedEmployee, setSelectedEmployee] = useState(null)
 
-  // sample user reporsts (remove later when database is present)
-  const [sampleUser, setSampleUser] = useState([
-    { id: '23100123', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'Admin', position: 'QA' },
-    { id: '23100124', name: 'Febore Valenzuela', email: 'febrosevalenzuela@nfa.gov.ph', userLevel: 'User', position: 'Statistician' },
-    { id: '23100125', name: 'Ronnel C. Jucutan', email: 'ronneljucutan@nfa.gov.ph', userLevel: 'User', position: 'QA' },
-    { id: '23100126', name:  'Louie Valenzuela', email: 'louievalenzuela@nfa.gov.ph', userLevel: 'User', position: "Warehouse Supervisor"}
-  ])
+  useEffect(() => {
+    api.get('/api/users/')
+      .then(res => setUsers(res.data))
+      .catch(err => console.error("Failed to fetch users", err))
+  }, [refreshKey])
 
   // custome functions
   const filterUser = users
     .filter(u => userStatus === "All Users" ? true : u.status === userStatus)
-    .filter(u => u.name.toLowerCase().includes(search.toLowerCase()))
+    .filter(u => `${u.fname} ${u.lname}`.toLowerCase().includes(search.toLowerCase()))
 
   const handleBack = () => {
     setView("list");
     setSelectedEmployee(null);
+    setRefreshKey(k => k + 1);
   };
 
-  const handleArchive = () => {
-    
+  const handleArchive = async (userId) => {
+    try {
+      await api.patch(`api/users/${userId}/`);
+      setUsers(prev =>
+        prev.map(u => u.user_id === userId ? {...u, status: "Inactive"} : u)
+      );
+      setArchiveStep("success");
+    } catch (error) {
+      alert('Failed to archive user.');
+    }
   }
 
   // Show employee form instead of the user list when in edit or add mode
@@ -116,13 +123,13 @@ const [archiveStep, setArchiveStep] = useState("confirm") // "confirm" | "succes
           <TableBody>
             {filterUser.map((user, index) => (
               <TableRow
-                key={user.warehouseId}
+                key={user.user_id}
               >
-                <TableCell className='text-center'>{user.warehouseId}</TableCell>
-                <TableCell className='text-center'>{user.officeId}</TableCell>
-                <TableCell className='text-center'>{user.name}</TableCell>
+                <TableCell className='text-center'>{user.WHCode}</TableCell>
+                <TableCell className='text-center'>{user.Office_id}</TableCell>
+                <TableCell className='text-center'>{user.fname} {user.mI} {user.lname}</TableCell>
                 <TableCell className='text-center'>{user.email}</TableCell>
-                <TableCell className='text-center'>{user.userLevel}</TableCell>
+                <TableCell className='text-center'>{user.user_level}</TableCell>
                 <TableCell className='text-center'>{user.position}</TableCell>
                 <TableCell className='text-center'>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold w-24 inline-block text-center ${
@@ -151,7 +158,11 @@ const [archiveStep, setArchiveStep] = useState("confirm") // "confirm" | "succes
                   }}>
                     <AlertDialogTrigger asChild>
                       <Button
-                        onClick={() => { setArchiveOpen(true); setArchiveStep("confirm") }}
+                        onClick={() => {
+                          setArchiveUserId(user.user_id)
+                          setArchiveOpen(true)
+                          setArchiveStep("confirm")
+                        }}
                         variant='ghost'
                         className='bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5'
                       >
@@ -179,7 +190,7 @@ const [archiveStep, setArchiveStep] = useState("confirm") // "confirm" | "succes
                           <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
                           <button
                             onClick={() => {
-                              handleArchive(user.warehouseId)
+                              handleArchive(archiveUserId)
                               setArchiveStep("success")
                             }}
                             className='bg-[#2D317F] text-white px-5 py-2 rounded-lg text-sm font-medium'

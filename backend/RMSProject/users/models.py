@@ -1,23 +1,32 @@
 from django.db import models
 
-# Create your models here.
 class User (models.Model):
+    USER_LEVEL_CHOICES = [
+        ('Admin', 'Admin'),
+        ('Warehouse Supervisor', 'Warehouse Supervisor'),
+    ]
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+    ]
+
     user_id = models.AutoField(primary_key= True)
-    fname =  models.CharField(max_length=50)
-    mI =  models.CharField(max_length=1)
-    lname =  models.CharField(max_length=50)
-    position = models.CharField(max_length=50)
-    email = models.CharField(max_length=50)
+    fname =  models.CharField(max_length=100)
+    mI =  models.CharField(max_length=5, blank=True)
+    lname =  models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    user_level = models.CharField(max_length=50, choices=USER_LEVEL_CHOICES)
 
-    # for auth
-    username = models.CharField(max_length=50)
-    password = models.CharField(max_length=50)
+    dept = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    WHCode = models.CharField(max_length=20)
+    Office_id = models.CharField(max_length=50)
 
-    WHCode = models.CharField(max_length=15)
-    Office_id = models.CharField(max_length=15)
-    dept = models.CharField(max_length=50)
-    status = models.CharField(max_length=50)
-    user_level = models.CharField(max_length=50)
+    # for auth (credentials)
+    username = models.CharField(max_length=100, unique=True)
+    password = models.CharField(max_length=255)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Active')
+
 
     def __str__(self):
-        return self.lname
+        return f"{self.fname} {self.lname}"
