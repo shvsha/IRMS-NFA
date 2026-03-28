@@ -25,6 +25,7 @@ dist-ssr
 *.sw?
 
 # Django / Python
+
 backend/myenv/
 backend/env/
 backend/.venv/
