@@ -1,26 +1,26 @@
+// shadcn
+import { Field, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+
 // react
 import { useState } from "react"
 import { FaExclamation } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa6";
+import { Eye, EyeOff } from "lucide-react"
+
 // css
 import '../../styles/admin/EmployeeForm.css'
-
-//components
-import FilterDropdown from "../filters/FilterDropdown"
-
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function EmployeeForm({ mode = 'add', employeeData = null, onCancel }) {
   const isEdit = mode === 'edit';
 
-  // modals
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showSuccessModal, setShowSuccesModal] = useState(false);
-
   // us
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isHiding, setIsHiding] = useState(false);
 
   // fields
   const [formData, setFormData] = useState({
@@ -28,17 +28,29 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     middleInitial: isEdit ? employeeData?.middleInitial : "",
     lastName: isEdit ? employeeData?.lastName : "",
     email: isEdit ? employeeData.email: "",
-    department: isEdit ? employeeData?.department : "",
-    position: isEdit ? employeeData?.position : "",
-    warehouseCode: isEdit ? employeeData?.warehouseCode : "",
+    userLevel: isEdit ? employeeData.userLevel: "Admin",
+    department: isEdit ? employeeData?.department : "Quality Assurance",
+    position: isEdit ? employeeData?.position : "Quality Assurance Officer",
+    warehouseCode: isEdit ? employeeData?.warehouseCode : "010501A",
     officeId: isEdit ? employeeData?.officeId : "",
     username: isEdit ? employeeData?.username : "",
     password: "",
     confirmPassword: "",
   })
-  const [selectedDepartment, setSelectedDepartment] = useState("Quality Assurance")
-  const [selectedPosition, setSelectedPosition] = useState("Admin")
-  const [selectedWhseCode, setSelectedWhseCode] = useState("010502A")
+
+  // dropdown for form
+  const [selectedUserLevel, setSelectedUserLevel] = useState(
+    isEdit ? employeeData?.userLevel : "Admin"
+  )
+  const [selectedDepartment, setSelectedDepartment] = useState(
+    isEdit ? employeeData?.department : "Quality Assurance"
+  )
+  const [selectedPosition, setSelectedPosition] = useState(
+    isEdit ? employeeData?.position : "Quality Assurance Officer"
+  )
+  const [selectedWhseCode, setSelectedWhseCode] = useState(
+    isEdit ? employeeData?.warehouseCode : "010501A"
+  )
 
   const handleDeptChange = (val) => { 
     setSelectedDepartment(val);
@@ -61,6 +73,13 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
       warehouseCode: val
     }));
   }
+  const handleUserLevelChange = (val) => { 
+    setSelectedUserLevel(val);
+    setFormData( prev => ({
+      ...prev,
+      userLevel: val
+    }));
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value});
@@ -72,7 +91,7 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     console.log(formData)
 
     // validation for the required fields
-    const requiredFields = ['firstName', 'middleInitial', 'lastName', 'email', 'department', 'position', 'warehouseCode', 'officeId'];
+    const requiredFields = ['firstName', 'middleInitial', 'lastName', 'email', 'department', 'position', 'warehouseCode', 'officeId', 'username'];
     for (const field of requiredFields) {
       if (!formData[field]?.trim()) {
         alert(`Please fill in all required fields.`);
@@ -98,185 +117,287 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
       // create new employee
     }
 
-    successModal();
+    setShowSuccessModal(true);
   }
 
-  // modal functions
-  // success modal
-  const successModal = () => {
-    setShowSuccesModal(true)
-    return
-  }
 
-  // const closeSuccessModal = () => {
-  //   setIsHiding(true);
-  //   setTimeout(() => {
-  //     setShowSuccesModal(false);
-  //     setIsHiding(false);
-  //   }, 300);
-  // };
-
-  // cancel modal
-  const cancelModal = () => {
-    setShowCancelModal(true)
-    return
-  }
-  const closeCancelModal = () => {
-    setIsHiding(true);
-    setTimeout(() => {
-      setShowCancelModal(false);
-      setIsHiding(false);
-    }, 300);
-  };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <div className="employee-form-whole-container">
-          <h2>{isEdit ? "Edit Employee" : "Add New Employee"}</h2>
+        <div className="m-7.5 text-[#2D317F] bg-white p-6 pb-4">
+          <h2 className="m-0 font-bold text-2xl  ">{isEdit ? "Edit Employee" : "Add New Employee"}</h2>
 
-          <div className="employee-credentials-container">
-            <p>Name</p>
-            <div className="employee-form-fields-row">
-              <div className="label-input-emp-form">
-                <label htmlFor="">First Name</label>
-                <input name="firstName" value={formData.firstName} onChange={handleChange} type="text" />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Middle Initial</label>
-                <input name="middleInitial" value={formData.middleInitial} onChange={handleChange} type="text" />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Last Name</label>
-                <input name="lastName" value={formData.lastName} onChange={handleChange} type="text" />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Email</label>
-                <input name="email" value={formData.email} onChange={handleChange} type="text" />
-              </div>
-            </div>
-          </div>
-          <div className="employee-credentials-container">
-            <p>Department Information</p>
-            <div className="employee-form-fields-row">
-              <div className="label-input-emp-form">
-                <label htmlFor="">Department</label>
-                <FilterDropdown
-                  selected={selectedDepartment}
-                  options={["Quality Assurance", "Buffer Stock Management"]}
-                  onSelect={handleDeptChange}
-                  buttonClass={'dropdown-options-emp-form'}
+          {/* name information  */}
+          <div className="flex bg-[#E2EBFF] font-bold flex-col py-3.5 px-5 mt-2">
+            <p className="text-1xl font-bold mb-2">Name</p>
+
+            <div className="flex flex-row gap-5 flex-wrap">
+              {/* first name */}
+              <Field className="flex gap-2 flex-col w-fit">
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">First Name</FieldLabel>
+                <Input
+                  className=" rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  type="text"
                 />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Position</label>
-                <FilterDropdown
-                  selected={selectedPosition}
-                  options={["Admin", "QA", "Statistician"]}
-                  onSelect={handlePosChange}
-                  buttonClass={'dropdown-options-emp-form'}
+              </Field>
+              {/* middle initial */}
+              <Field className="flex gap-2 flex-col w-fit">
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="middleInitial">Middle Initial</FieldLabel>
+                <Input
+                  className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="middleInitial"
+                  name="middleInitial"
+                  value={formData.middleInitial}
+                  onChange={handleChange}
+                  type="text"
                 />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Warehouse Code</label>
-                <FilterDropdown
-                  selected={selectedWhseCode}
-                  options={["010502A", "010502B"]}
-                  onSelect={handleWhseCodeChange}
-                  buttonClass={'dropdown-options-emp-form'}
+              </Field>
+              {/* last name */}
+              <Field className="flex gap-2 flex-col w-fit">
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="lastName">Last Name</FieldLabel>
+                <Input
+                  className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  type="text"
                 />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Office ID</label>
-                <input name="officeId" value={formData.officeId} onChange={handleChange} type="text" />
-              </div>
-            </div>
-          </div>
-          <div className="employee-credentials-container">
-            <p>Login Credentials</p>
-            <div className="employee-form-fields-row">
-              <div className="label-input-emp-form">
-                <label htmlFor="">Username</label>
-                <input name="username" value={formData.username} onChange={handleChange} type="text" />
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Password</label>
-                <div className="password-input-wrapper">
-                  <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPassword(prev => !prev)}
-                  >
-                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <div className="label-input-emp-form">
-                <label htmlFor="">Confirm Password</label>
-                <div className="password-input-wrapper">
-                  <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}/>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowConfirmPassword(prev => !prev)}
-                  >
-                    {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-                  </button>
-                </div>
-              </div>
+              </Field>
+              {/* email */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="email">Email</FieldLabel>
+                <Input
+                  className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  type="email"
+                />
+              </Field>
+              {/* user level */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F] " htmlFor="userlevel">User Level</FieldLabel>
+
+                <Select 
+                  value={selectedUserLevel} 
+                  onValueChange={handleUserLevelChange}
+                >
+                  <SelectTrigger className="!font-normal !w-50 bg-white rounded">
+                    <SelectValue placeholder="Select User Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem className='p-2' value="Admin">Admin</SelectItem>
+                    <SelectItem className='p-2' value="Warehouse Supervisor">Warehouse Supervisor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </div>
 
-          <div className="cancel-sub-upd-btn-container">
-            <button className="cancel-btn" type="button" onClick={cancelModal}>Cancel</button>
-            <button className="upd-sub-btn" type="submit">{isEdit ? "Update" : "Save"}</button>
+          {/* department info */}
+          <div className="flex bg-[#E2EBFF] font-bold flex-col py-3.5 px-5 mt-2" >
+            <p className="text-1xl font-bold mb-2">Department Information</p>
+            {/* department */}
+            <div className="flex flex-row gap-5 flex-wrap">
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F] " htmlFor="department">Department</FieldLabel>
+
+                <Select 
+                  value={selectedDepartment} 
+                  onValueChange={handleDeptChange}
+                >
+                  <SelectTrigger className="!font-normal !w-60 bg-white rounded">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem className='p-2' value="Quality Assurance">Quality Assurance</SelectItem>
+                    <SelectItem className='p-2' value="Buffer Stock Management">Buffer Stock Management</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              {/* position */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F] " htmlFor="department">Position</FieldLabel>
+
+                <Select 
+                  value={selectedPosition} 
+                  onValueChange={handlePosChange}
+                >
+                  <SelectTrigger className="!font-normal !w-60 bg-white rounded">
+                    <SelectValue placeholder="Select Position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem className='p-2' value="Quality Assurance Officer">Quality Assurance Officer</SelectItem>
+                    <SelectItem className='p-2' value="Statistician">Statistician</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              {/* whse code */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F] " htmlFor="department">Warehouse Code</FieldLabel>
+
+                <Select 
+                  value={selectedWhseCode} 
+                  onValueChange={handleWhseCodeChange}
+                >
+                  <SelectTrigger className="!font-normal !w-60 bg-white rounded">
+                    <SelectValue placeholder="Select Warehouse Code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem className='p-2' value="010501A">010501A</SelectItem>
+                    <SelectItem className='p-2' value="010502A">010502A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              {/* office id */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="officeId">Office ID</FieldLabel>
+                <Input
+                  className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="officeId"
+                  name="officeId"
+                  value={formData.officeId}
+                  onChange={handleChange}
+                  type="text"
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* login credentials */}
+          <div className="flex bg-[#E2EBFF] font-bold flex-col py-3.5 px-5 mt-2">
+            <p className="text-1xl font-bold mb-2">Login Credentials</p>
+
+            <div className="flex flex-row gap-5 flex-wrap">
+            {/* username */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="username">Username</FieldLabel>
+                <Input
+                  className="py-1 px-3 rounded border-[#ccc] text-xs bg-white w-24 !font-normal"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  type="text"
+                />
+              </Field>
+              {/* password */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="password">Password</FieldLabel>
+                <div className="relative">
+                  <Input
+                    className="py-1 px-3 rounded border-[#ccc] text-xs bg-white !w-50 !font-normal"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    type={showPassword ? "text" : "password"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D317F] cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </Field>
+              {/* confirm password */}
+              <Field className="flex gap-2 flex-col w-fit" >
+                <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                <div className="relative"> 
+                  <Input
+                    className="py-1 px-3 rounded border-[#ccc] text-xs bg-white !w-50 !font-normal"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    type={showConfirmPassword ? "text" : "password"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D317F] cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </Field>
+            </div>
+          </div>
+
+
+
+          <div className="mt-2.5 flex justify-end gap-4">
+            {/* cancel btn */}
+            <AlertDialog>
+              <AlertDialogTrigger className='flex items-center justify-center pr-7.5 '  asChild>
+                <Button className="w-20 px-4 py-3 bg-[#D9D9D9] text-[#5B5B5B]" type='button'>Cancel</Button>
+              </AlertDialogTrigger>
+
+              <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0'>
+                <div className='h-7 bg-[#BB2325] rounded-t-lg'></div>
+                <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+                  <div className="rounded-full px-5 py-5 bg-[#BB2325]"><FaExclamation color={'white'} size={60} /></div>
+                  <AlertDialogTitle className='!font-bold text-[#2D317F] text-2xl mx-2'>{isEdit ? "Cancel Editing?" : "Cancel Adding?"}</AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm px-2 !-mb-5" >
+                    {isEdit ? 
+                      <>
+                        Your data won’t be saved! Are you sure you want to quit editing?
+                      </> : (
+                      <>
+                        Your data won't be saved! Are you sure you want to quit adding new employee?
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0'>
+                  <AlertDialogCancel className='w-23 px-5 py-4.5'>Cancel</AlertDialogCancel>
+                  <AlertDialogAction className='w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5' onClick={onCancel}>Yes</AlertDialogAction>
+                </AlertDialogFooter>
+
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* save/update btn */}
+            <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+              <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0'>
+                <div className='h-7 bg-[#3E7A43] rounded-t-lg'></div>
+                <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+                  <div className="rounded-full px-5 py-5 bg-[#3E7A43]"><FaCheck color={'white'} size={60} /></div>
+                  <AlertDialogTitle className='!font-bold text-[#2D317F] text-2xl mx-2'>Success!</AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm px-2 !-mb-5" >
+                    {isEdit ? 
+                      <>
+                        Your changes have been saved
+                      </> : (
+                      <>
+                        New employee has been added
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0'>
+                  <AlertDialogAction className='w-23 !bg-[#3E7A43] text-white hover:bg-[#1f5b24] px-5 py-4.5 !-mt-3' onClick={onCancel}>Done</AlertDialogAction>
+                </AlertDialogFooter>
+
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button className="w-20 px-4 py-3 bg-[#2D317F] text-white"type="submit">{isEdit ? "Update" : "Save"}</Button>
           </div>
         </div>
       </form>
 
       
-      {/* cancel modal */}
-      <div
-        className={
-          "emp-validation-modal-overlay" +
-          (showCancelModal ? " show" : "") +
-          (isHiding ? " hiding" : "")
-        }
-      >
-        <div className='cancel-modal-emp'>
-          <div className='top-part-modal-Cancel'></div>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
-            <div className='icon-cancel-user'><FaExclamation  size={50} color='white'/></div>
-          </div>
-          <p className='cancel-emp-title'>Cancel {isEdit ? "Editing" : "Adding"}?</p>
-          <p>Your data won’t be saved! Are you sure you <br/>want to quit {isEdit ? "editing" : "adding"} the employee?</p>
-          <div className='validation-btns-cancel'>
-            <button className='close-btn-emp' onClick={closeCancelModal}>Close</button>
-            <button className='yes-btn-emp' onClick={() => {
-              onCancel();
-            }}>Yes</button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* success modal */}
-      <div
-        className={
-          "emp-validation-modal-overlay" +
-          (showSuccessModal ? " show" : "") +
-          (isHiding ? " hiding" : "")
-        }
-      >
-        <div className='success-modal-emp'>
-          <div className='top-part-modal-success-emp'></div>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '25px'}}>
-            <div className='icon-success-emp'><FaCheck size={50} color='white'/></div>
-          </div>
-          <p style={{color: '#2D317F', fontSize: '25px', fontWeight: 'bold'}}>Success!</p>
-          <p style={{color: '#2D317F', fontSize: '15px', marginTop: '-20px'}}>{isEdit ? "Updated the employee." : "New employee has been added."}</p>    
-          <button className='success-done-btn-emp' onClick={() => onCancel()}>Done</button>
-        </div>
-      </div>
         
     </>
   )
