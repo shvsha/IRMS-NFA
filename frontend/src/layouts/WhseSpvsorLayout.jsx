@@ -4,10 +4,13 @@ import NavBarWhse from "../components/warehouse supervisor/NavBarWhse";
 
 export default function WhseSpvsorLayout() {
   return (
-    <>
-      <TitleBar />
+    <div className="flex flex-col h-screen pb-6.5">
+      <TitleBar/>
       <NavBarWhse/>
-      <Outlet />
-    </>
+      <div className="flex-1 overflow-hidden">
+        <Outlet />
+      </div>
+    </div>
   );
 }
+

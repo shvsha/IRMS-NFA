@@ -66,7 +66,7 @@ function App() {
 
         <Route path="notif" element={<Notifications role="supervisor" />} />
         <Route path="audit" element={<AuditLogs />} />
-        <Route path = "summarization/summary" element={<SummaryReport/>}/>
+        <Route path="summarization/summary" element={<SummaryReport/>}/>
       </Route>
     </Routes>
   );

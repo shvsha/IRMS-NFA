@@ -4,10 +4,12 @@ import TitleBar from "../components/TitleBar";
 
 export default function AdminLayout() {
   return (
-    <>
+    <div className="flex flex-col h-screen pb-6.5">
       <TitleBar/>
       <NavBarAdmin/>
-      <Outlet />
-    </>
+      <div className="flex-1 overflow-hidden">
+        <Outlet />
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,7 @@
 import "../../styles/Generated_Reports/IssuesReport.css"
 
+import { useNavigate } from "react-router-dom";
+
 const EMPTY_ROWS = Array(10).fill(null);
 
 const SIGNATURES = [
@@ -10,9 +12,33 @@ const SIGNATURES = [
 ];
 
 export default function WarehouseIssuesForm() {
+    const navigate = useNavigate(); 
+
     return(
-        <div className="form-container">
-            <div className="form-wrap">
+         <div className="overflow-y-auto form-container" style={{ maxHeight: "calc(100vh - 90px - 60px)" }}>
+            <div className="form-wrap relative">
+                <button
+                    onClick={() => navigate(-1)}
+                    style={{
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        background: "white",
+                        border: "1px solid #e00",
+                        color: "#e00",
+                        fontWeight: "bold",
+                        width: "22px",
+                        height: "22px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                ✕
+                </button>
                 <div className="form-title">National Food Authority</div>
                 <div className="form-subtitle">Statement of Daily Warehouse Issue</div>
                 <div className="form-date">
