@@ -177,7 +177,9 @@ export default function ReportEvaluation() {
                   </td>
                   <td>
                     <div className="action-btns-eval">
-                      <button className="view-report-eval" onClick={() => navigate("/admin/evaluation/receipt")}><GoLinkExternal size={15}/>View</button>
+                      {/* make it for receipt and issue */}
+                      <button className="view-report-eval" onClick={() => navigate("/admin/evaluation/issue")}><GoLinkExternal size={15}/>View</button>
+
                       <button className="approve-report-eval" onClick={approveModal}><IoMdCheckmarkCircleOutline size={20} color={"green"}/>Approve</button>
                       <button className="reject-report-eval" onClick={rejectModal}>X</button>
                     </div>

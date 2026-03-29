@@ -19,6 +19,8 @@ import ReportHistory from "./components/admin/ReportHistory";
 
 // import Generated Receipt Report 
 import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
+//import generated Issue Report
+import IssuesReport from "./components/Generated_Reports/IssuesReport";
 
 // import for whse supervisor nav
 import ReportStatus from "./components/warehouse supervisor/ReportStatus";
@@ -43,6 +45,8 @@ function App() {
 
         {/* Generated Receipt Report Route */}
         <Route path = "evaluation/receipt" element={<ReceiptReport/>}/>
+        {/* Generated Issue Report Route */}
+        <Route path = "evaluation/issue" element={<IssuesReport/>}/>
 
       </Route>
 
