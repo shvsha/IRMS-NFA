@@ -1,6 +1,7 @@
 import "./App.css";
 import Login from "./components/Login";
 import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // layouts
 import AdminLayout from "./layouts/AdminLayout";
@@ -34,7 +35,11 @@ function App() {
       <Route path="/" element={<Login />} />
 
       {/* admin */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={
+        <ProtectedRoute>
+         <AdminLayout />
+        </ProtectedRoute>
+        }>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="users" element={<UserMagement />} />
         <Route path="evaluation" element={<ReportEvaluation />} />
@@ -51,7 +56,11 @@ function App() {
       </Route>
 
       {/* warehouse supervisor */}
-      <Route path="/whse" element={<WhseSpvsorLayout />}>
+      <Route path="/whse" element={
+        <ProtectedRoute>
+          <WhseSpvsorLayout />
+        </ProtectedRoute>
+        }>
         <Route path="management" element={<StockBook />} />
         <Route path="status" element={<ReportStatus />} />
         <Route path="summarization" element={<ReportSummarization />} />

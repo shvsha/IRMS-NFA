@@ -156,7 +156,7 @@ export default function UserManagement() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className='mx-0 mb-4 -mt-3 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
-              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
+              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]' onClick={() => setArchiveOpen(false)}>Cancel</AlertDialogCancel>
               <button
                 onClick={() => {
                   handleArchive(archiveUserId)
@@ -224,7 +224,7 @@ export default function UserManagement() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className='mx-0 mb-4 -mt-3 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
-              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
+              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]' onClick={() => setReactivateArchiveOpen(false)}>Cancel</AlertDialogCancel>
               <button
                 onClick={() => {
                   handleReactivate(reactivateUserId)
