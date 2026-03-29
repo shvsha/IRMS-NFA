@@ -46,6 +46,7 @@ class UserDetailView(APIView):
         user = self.get_object(pk)
         if not user:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        user.status = 'Inactive'
+        new_status = request.data.get('status', 'Inactive')
+        user.status = new_status
         user.save()
-        return Response({"message": "User archived successfully."})
+        return Response({"message": f"User status updated to {new_status}."})

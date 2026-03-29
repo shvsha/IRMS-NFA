@@ -17,11 +17,12 @@ import { FaEdit, FaSearch } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
 import { IoArchiveOutline } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
+import { MdUnarchive } from "react-icons/md";
 
 export default function UserManagement() {
   // us
   const [search, setSearch] = useState("");
-  const [userStatus, setUserStatus] = useState("All Users")
+  const [userStatus, setUserStatus] = useState("Active")
 
   const [users, setUsers] = useState([])
   const [refreshKey, setRefreshKey] = useState(0)
@@ -30,6 +31,11 @@ export default function UserManagement() {
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveStep, setArchiveStep] = useState("confirm")
   const [archiveUserId, setArchiveUserId] = useState(null)
+
+  // for reactive
+  const [reactivateArchiveOpen, setReactivateArchiveOpen] = useState(false)
+  const [reactivateArchiveStep, setReactivateArchiveStep] = useState("confirm")
+  const [reactivateUserId, setReactivateUserId] = useState(null)
 
   // for employee form (add and edit)
   const [view, setView] = useState("list");
@@ -52,9 +58,10 @@ export default function UserManagement() {
     setRefreshKey(k => k + 1);
   };
 
+  // deactive user
   const handleArchive = async (userId) => {
     try {
-      await api.patch(`api/users/${userId}/`);
+      await api.patch(`/api/users/${userId}/`);
       setUsers(prev =>
         prev.map(u => u.user_id === userId ? {...u, status: "Inactive"} : u)
       );
@@ -63,6 +70,19 @@ export default function UserManagement() {
       alert('Failed to archive user.');
     }
   }
+  // activate user
+  const handleReactivate = async (userId) => {
+    try {
+      await api.patch(`/api/users/${userId}/`, { status: 'Active'});
+      setUsers(prev =>
+        prev.map(u => u.user_id === userId ? {...u, status: "Active"} : u)
+      );
+      setReactivateArchiveStep("success");
+    } catch (error) {
+      alert('Failed to reactivate user.');
+    }
+  }
+  
 
   // Show employee form instead of the user list when in edit or add mode
   if (view === "add") {
@@ -80,12 +100,16 @@ export default function UserManagement() {
         <div className='flex items-center gap-8'>
           <Select value={userStatus} onValueChange={(v) => {
             setUserStatus(v)
+            setArchiveOpen(false)
+            setArchiveStep("confirm")
+            setReactivateArchiveOpen(false)
+            setReactivateArchiveStep("confirm")
           }}>
             <SelectTrigger className="w-45 bg-white border border-gray-300 rounded-md">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem className='p-2' value="All Users">All Users</SelectItem>
+
               <SelectItem className='p-2' value="Active">Active</SelectItem>
               <SelectItem className='p-2' value="Inactive">Inactive</SelectItem>
             </SelectContent>
@@ -106,6 +130,143 @@ export default function UserManagement() {
         </div>
 
       </div>
+
+      {/* archive */}
+      <AlertDialog 
+        open={archiveOpen} 
+        step={archiveStep}
+        onConfirm={() => handleArchive(archiveUserId)}
+        onClose={() => { setArchiveOpen(false); setTimeout(() => setArchiveStep("confirm"), 200) }}
+        >
+
+        <AlertDialogContent className='pt-0 px-0 pb-0 overflow-hidden !shadow-none !ring-0'>
+          <div className={`transition-all duration-300 ease-in-out ${
+            archiveStep === "confirm"
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 -translate-y-4 pointer-events-none absolute inset-0"
+          }`}>
+            <div className='h-7 bg-[#2D317F]'></div>
+            <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+              <div className='bg-[#ADCEFF] rounded-full p-6'>
+                <IoArchiveOutline size={60} color='#2D317F' />
+              </div>
+              <AlertDialogTitle className='font-bold text-[#2D317F] text-3xl'>Archive User</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to archive this user?<br />You can restore it later if needed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className='mx-0 mb-4 -mt-3 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
+              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
+              <button
+                onClick={() => {
+                  handleArchive(archiveUserId)
+                }}
+                className='bg-[#2D317F] text-white px-5 py-2 rounded-lg text-sm font-medium'
+              >
+                Archive
+              </button>
+            </AlertDialogFooter>
+          </div>
+
+          {/* Success Step */}
+          <div className={`transition-all duration-200 ease-in-out ${
+            archiveStep === "success"
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
+          }`}>
+            <div className='h-7 bg-[#3E7A43]'></div>
+            <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+              <div className='bg-[#3E7A43] rounded-full p-4.5'>
+                <FaCheck size={60} color='white' />
+              </div>
+              <AlertDialogTitle className='font-bold text-[#3E7A43] text-3xl'>Success!</AlertDialogTitle>
+              <AlertDialogDescription className='mb-3'>
+                User has been archived.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className='mx-0 mb-7 -mt-5 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
+              <button
+                onClick={() => {
+                  setArchiveOpen(false)
+                  setTimeout(() => setArchiveStep("confirm"), 200)
+                }}
+                className='bg-[#3E7A43] text-white px-5 py-2.5 rounded-md text-sm font-medium -mb-3'
+              >
+                Done
+              </button>
+            </AlertDialogFooter>
+          </div>
+
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* reactivate */}
+      <AlertDialog 
+        open={reactivateArchiveOpen}
+        step={reactivateArchiveStep}
+        onConfirm={() => handleReactivate(reactivateUserId)}
+        onClose={() => { setReactivateArchiveOpen(false); setTimeout(() => setReactivateArchiveStep("confirm"), 200) }}         
+        >
+        <AlertDialogContent className='pt-0 px-0 pb-0 overflow-hidden !shadow-none !ring-0'>
+          <div className={`transition-all duration-300 ease-in-out ${
+            reactivateArchiveStep === "confirm"
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 -translate-y-4 pointer-events-none absolute inset-0"
+          }`}>
+            <div className='h-7 bg-[#2D317F]'></div>
+            <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+              <div className='bg-[#ADCEFF] rounded-full p-6'>
+                <MdUnarchive size={60} color='#2D317F' />
+              </div>
+              <AlertDialogTitle className='font-bold text-[#2D317F] text-3xl'>Reactivate User</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to reactivate this user?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className='mx-0 mb-4 -mt-3 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
+              <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
+              <button
+                onClick={() => {
+                  handleReactivate(reactivateUserId)
+                }}
+                className='bg-[#2D317F] text-white px-5 py-2 rounded-lg text-sm font-medium'
+              >
+                Reactivate
+              </button>
+            </AlertDialogFooter>
+          </div>
+
+          {/* Success Step */}
+          <div className={`transition-all duration-200 ease-in-out ${
+            reactivateArchiveStep === "success"
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
+          }`}>
+            <div className='h-7 bg-[#3E7A43]'></div>
+            <AlertDialogHeader className='p-5 text-center items-center pb-4'>
+              <div className='bg-[#3E7A43] rounded-full p-4.5'>
+                <FaCheck size={60} color='white' />
+              </div>
+              <AlertDialogTitle className='font-bold text-[#3E7A43] text-3xl'>Success!</AlertDialogTitle>
+              <AlertDialogDescription className='mb-3'>
+                User has been reactivated.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className='mx-0 mb-7 -mt-5 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
+              <button
+                onClick={() => {
+                  setReactivateArchiveOpen(false)
+                  setTimeout(() => setReactivateArchiveStep("confirm"), 200)
+                }}
+                className='bg-[#3E7A43] text-white px-5 py-2.5 rounded-md text-sm font-medium -mb-3'
+              >
+                Done
+              </button>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+                    
       <div className='table-wrapper'>
         <Table>
           <TableHeader className='text-center'>
@@ -150,87 +311,38 @@ export default function UserManagement() {
                   </Button>
 
                   {/* archive user */}
-                  <AlertDialog open={archiveOpen} onOpenChange={(open) => {
-                    if (!open) {
-                      setArchiveOpen(false)
-                      setTimeout(() => setArchiveStep("confirm"), 200)
-                    }
-                  }}>
-                    <AlertDialogTrigger asChild>
+                  {user.status === 'Active' ? (
+                    <Button
+                      onClick={() => {
+                        setArchiveUserId(user.user_id)
+                        setArchiveOpen(true)
+                        setArchiveStep("confirm")
+                        // to avoid conflict
+                        setReactivateArchiveOpen(false)
+                        setReactivateArchiveStep("confirm")
+                      }}
+                      variant='ghost'
+                      className='bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5'
+                    >
+                      <IoArchiveOutline color={"#2D317F"} />
+                    </Button>
+                    ) : (
                       <Button
                         onClick={() => {
-                          setArchiveUserId(user.user_id)
-                          setArchiveOpen(true)
+                          setReactivateUserId(user.user_id)
+                          setReactivateArchiveOpen(true)
+                          setReactivateArchiveStep("confirm")
+                          // to avoid conflict with modals
+                          setArchiveOpen(false)
                           setArchiveStep("confirm")
                         }}
                         variant='ghost'
                         className='bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5'
                       >
-                        <IoArchiveOutline color={"#2D317F"} />
+                        <MdUnarchive color={'#072560'}/>
                       </Button>
-                    </AlertDialogTrigger>
-
-                    <AlertDialogContent className='pt-0 px-0 pb-0 overflow-hidden !shadow-none !ring-0'>
-                      <div className={`transition-all duration-300 ease-in-out ${
-                        archiveStep === "confirm"
-                          ? "opacity-100 translate-y-0 pointer-events-auto"
-                          : "opacity-0 -translate-y-4 pointer-events-none absolute inset-0"
-                      }`}>
-                        <div className='h-7 bg-[#2D317F]'></div>
-                        <AlertDialogHeader className='p-5 text-center items-center pb-4'>
-                          <div className='bg-[#ADCEFF] rounded-full p-6'>
-                            <IoArchiveOutline size={60} color='#2D317F' />
-                          </div>
-                          <AlertDialogTitle className='font-bold text-[#2D317F] text-3xl'>Archive User</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to archive this user?<br />You can restore it later if needed.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className='mx-0 mb-4 -mt-3 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
-                          <AlertDialogCancel className='px-5 py-4.5 rounded font-medium !bg-[#D9D9D9] !text-[#5B5B5B]'>Cancel</AlertDialogCancel>
-                          <button
-                            onClick={() => {
-                              handleArchive(archiveUserId)
-                              setArchiveStep("success")
-                            }}
-                            className='bg-[#2D317F] text-white px-5 py-2 rounded-lg text-sm font-medium'
-                          >
-                            Archive
-                          </button>
-                        </AlertDialogFooter>
-                      </div>
-
-                      {/* Success Step */}
-                      <div className={`transition-all duration-200 ease-in-out ${
-                        archiveStep === "success"
-                          ? "opacity-100 translate-y-0 pointer-events-auto"
-                          : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
-                      }`}>
-                        <div className='h-7 bg-[#3E7A43]'></div>
-                        <AlertDialogHeader className='p-5 text-center items-center pb-4'>
-                          <div className='bg-[#3E7A43] rounded-full p-4.5'>
-                            <FaCheck size={60} color='white' />
-                          </div>
-                          <AlertDialogTitle className='font-bold text-[#3E7A43] text-3xl'>Success!</AlertDialogTitle>
-                          <AlertDialogDescription className='mb-3'>
-                            Employee has been archived.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className='mx-0 mb-7 -mt-5 bg-transparent flex flex-row !justify-center gap-3 border-0 items-center'>
-                          <button
-                            onClick={() => {
-                              setArchiveOpen(false)
-                              setTimeout(() => setArchiveStep("confirm"), 200)
-                            }}
-                            className='bg-[#3E7A43] text-white px-5 py-2.5 rounded-md text-sm font-medium -mb-3'
-                          >
-                            Done
-                          </button>
-                        </AlertDialogFooter>
-                      </div>
-
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    )
+                  }
                 </TableCell>
 
               </TableRow>
