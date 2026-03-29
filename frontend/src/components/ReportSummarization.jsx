@@ -4,6 +4,8 @@ import { CiExport } from "react-icons/ci";
 
 import FilterDropdown from './filters/FilterDropdown'
 
+import { useNavigate } from 'react-router-dom';
+
 import '../styles/ReportSummarization.css'
 
 const ITEMS_PER_PAGE = 4
@@ -17,6 +19,8 @@ export default function ReportSummarization() {
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [currentPage, setCurrentPage] = useState(1)
+
+  const navigate = useNavigate();
 
   const filteredReports = sampleSummaryReports.filter((report) => {
     const matchesCerealType = selectedCerealType === "All Cereal Type" || report.cerealtype === selectedCerealType
@@ -98,7 +102,7 @@ export default function ReportSummarization() {
                     <td>{report.balance}</td>
                     <td>
                       <div className='action-btns-summary'>
-                        <button className='view-report-summary'><GoLinkExternal size={14} />View</button>
+                        <button className='view-report-summary' onClick={()=>navigate("/admin/summarization/summary")}><GoLinkExternal size={14} />View</button>
                         <button className='export-report-summary'><CiExport size={15} />Export</button>
                       </div>
                     </td>
