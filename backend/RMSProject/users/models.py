@@ -4,7 +4,7 @@ from django.db import models
 class User (models.Model):
     user_id = models.AutoField(primary_key= True)
     fname =  models.CharField(max_length=50)
-    mI =  models.CharField(max_length=1)
+    mI =  models.CharField(max_length=1, blank=True, null=True)
     lname =  models.CharField(max_length=50)
     position = models.CharField(max_length=50)
     email = models.CharField(max_length=50)
@@ -19,5 +19,10 @@ class User (models.Model):
     status = models.CharField(max_length=50)
     user_level = models.CharField(max_length=50)
 
+    @property 
+    def full_name(self):
+        if self.mI:
+            return f"{self.fname} {self.mI} {self.lname}"
+        return f"{self.fname} {self.lname}"
     def __str__(self):
-        return self.lname
+        return self.full_name
