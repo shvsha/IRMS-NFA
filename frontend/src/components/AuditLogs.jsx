@@ -1,80 +1,192 @@
 // components
 import { DailyFilter } from './filters/DailyFilter'
 
-// css
-import '../styles/AuditLogs.css'
+// icons
+import { FaRegCalendarAlt } from "react-icons/fa";
 
 // react
 import { useState } from 'react'
 
+// shadcn
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
+const ITEMS_PER_PAGE = 7
+
 const sampleAudit = [
-  {recordid: "23100123", officeid: "1000212", name: "Louie Valenzuela", role: "Warehouse Supervisor 1", action: "Submitted Report", module: "Report Management", recordid: "00101", date: "30-Jan-26", time: "5:00 PM" },
-  {recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", role: "Admin 2", action: "Evaluted Report", module: "Report Evaluation", recordid: "00102", date: "30-Jan-26", time: "5:00 PM" },
-  {recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", role: "Admin 2", action: "Evaluted Report", module: "Report Evaluation", recordid: "00102", date: "30-Jan-26", time: "5:00 PM" },
-  {recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", role: "Admin 2", action: "Evaluted Report", module: "Report Evaluation", recordid: "00102", date: "30-Jan-26", time: "5:00 PM" }
-  //add more for testing
+  { recordid: "23100123", officeid: "1000212", name: "Louie Valenzuela", action: "Submitted Report", module: "Report Management", date: "30-Jan-26", time: "5:00 PM" },
+  { recordid: "23100124", officeid: "1000213", name: "Febrose Valenzuela", action: "Evaluted Report", module: "Report Evaluation", date: "30-Jan-26", time: "5:00 PM" },
+  { recordid: "23100125", officeid: "1000214", name: "John Dela Cruz", action: "Deleted Record", module: "Report Management", date: "29-Jan-26", time: "3:00 PM" },
+  { recordid: "23100126", officeid: "1000215", name: "Maria Santos", action: "Submitted Report", module: "Report Management", date: "29-Jan-26", time: "2:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
+  { recordid: "23100127", officeid: "1000216", name: "Pedro Reyes", action: "Evaluated Report", module: "Report Evaluation", date: "28-Jan-26", time: "1:00 PM" },
 ]
 
-const sampleAuditWhse = [
-  
-]
+const HEADERS = ["Record ID", "Office ID", "Name", "Action", "Module", "Date", "Time"]
 
 export default function AuditLogs() {
-  // us
   const [selectedStartDate, setSelectedStartDate] = useState(new Date(2026, 0, 1));
   const [selectedEndDate, setSelectedEndDate] = useState(new Date(2026, 2, 20));
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // validation
+  const formatDate = (date) => {
+    if (!date) return "MM/DD/YYYY";
+    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+  };
+
   const handleEndDateChange = (date) => {
-    if (selectedStartDate && date < selectedStartDate ) {
-      alert("Your end date cant be lower that your start date.")
+    if (selectedStartDate && date < selectedStartDate) {
+      alert("Your end date cant be lower that your start date.");
       return;
     }
     setSelectedEndDate(date);
+    setShowEndCalendar(false);
   }
+
+  const totalPages = Math.ceil(sampleAudit.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAudit = sampleAudit.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <>
-      <div className='filter-container-audit'>
-        <div className='filter-date-wrapper'> 
-          <label htmlFor="">Start Date</label>
-          <DailyFilter value={selectedStartDate} onChange={setSelectedStartDate} className="daily-filter--full"/>
-        </div>
-        <div className='filter-date-container'>
-          <label htmlFor="">End Date</label>
-          <DailyFilter value={selectedEndDate} onChange={handleEndDateChange} className="daily-filter--full"/>
-        </div>
-      </div>
-      <div className='whole-container-audit'>
-        <div>
-          <table className='audit-table'>
-            <thead>
-              <tr>
-                <th>Record ID</th>
-                <th>Office ID</th>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Action</th>
-                <th>Module</th>
-                <th>Date</th>
-                <th>Time</th>
-              </tr>
-            </thead>
+      {/* Filter Container */}
+      <div className="flex flex-row items-start gap-8 bg-white mx-[30px] mt-[30px] p-4 flex-wrap">
 
-            <tbody>
-              {sampleAudit.map((audit, i) => (
-                <tr key={i}>
-                  <td>{audit.recordid}</td>
-                  <td>{audit.officeid}</td>
-                  <td>{audit.name}</td>
-                  <td>{audit.role}</td>
-                  <td>{audit.action}</td>
-                  <td>{audit.module}</td>
-                  <td>{audit.date}</td>
-                  <td>{audit.time}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Start Date */}
+        <div className="flex flex-col gap-1.5 text-[#2D317F] text-[13px] font-semibold">
+          <label>Start Date</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => { setShowStartCalendar(p => !p); setShowEndCalendar(false); }}
+              className="flex h-9 w-50 items-center justify-between gap-3 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            >
+              <span>{formatDate(selectedStartDate)}</span>
+              <FaRegCalendarAlt className="text-[#2D317F]" />
+            </button>
+            {showStartCalendar && (
+              <div className="absolute top-full left-0 z-50 mt-1">
+                <DailyFilter
+                  value={selectedStartDate}
+                  onChange={(date) => { setSelectedStartDate(date); setShowStartCalendar(false); }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* End Date */}
+        <div className="flex flex-col gap-1.5 text-[#2D317F] text-[13px] font-semibold">
+          <label>End Date</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => { setShowEndCalendar(p => !p); setShowStartCalendar(false); }}
+              className="flex h-9 w-50 items-center justify-between gap-3 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            >
+              <span>{formatDate(selectedEndDate)}</span>
+              <FaRegCalendarAlt className="text-[#2D317F]" />
+            </button>
+            {showEndCalendar && (
+              <div className="absolute top-full left-0 z-50 mt-1">
+                <DailyFilter
+                  value={selectedEndDate}
+                  onChange={handleEndDateChange}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Table Container */}
+      <div className="mx-[30px] mt-3 flex flex-col bg-white shadow-sm">
+        <div className="w-full overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF]">
+                {HEADERS.map(header => (
+                  <TableHead key={header} className="h-12 text-left text-[13px] font-bold text-[#2D317F] px-4">
+                    {header}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {paginatedAudit.length === 0 ? (
+                <>
+                  <TableRow>
+                    <TableCell colSpan={HEADERS.length} className="py-10 text-center text-[#9CA3AF]">
+                      No records found.
+                    </TableCell>
+                  </TableRow>
+                  {Array.from({ length: ITEMS_PER_PAGE - 1 }).map((_, i) => (
+                    <TableRow key={`filler-${i}`} className="h-11 border-b border-[#E9EEF6] hover:bg-transparent">
+                      <TableCell colSpan={HEADERS.length} />
+                    </TableRow>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {paginatedAudit.map((audit, i) => (
+                    <TableRow key={i} className="h-9 border-b border-[#E9EEF6]">
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.recordid}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.officeid}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.name}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.action}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.module}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.date}</TableCell>
+                      <TableCell className="px-4 text-[13px] h-10.5 font-medium text-[#2D317F]">{audit.time}</TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* Filler rows */}
+                  {Array.from({ length: ITEMS_PER_PAGE - paginatedAudit.length }).map((_, i) => (
+                    <TableRow key={`filler-${i}`} className="h-10.5 border-b border-[#E9EEF6] hover:bg-transparent">
+                      <TableCell colSpan={HEADERS.length} />
+                    </TableRow>
+                  ))}
+                </>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="mt-auto flex items-center justify-between border-t border-[#E9EEF6] px-4 py-[10px]">
+          <span className="text-[13px] font-medium text-[#6B7280]">
+            {totalPages > 0 ? `${currentPage} of ${totalPages}` : '—'}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1 || totalPages === 0}
+              className="rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px] text-[13px] font-semibold text-white opacity-75 transition-colors hover:border-[#222669] hover:bg-[#222669] disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px] text-[13px] font-semibold text-white transition-colors hover:border-[#222669] hover:bg-[#222669] disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </>
