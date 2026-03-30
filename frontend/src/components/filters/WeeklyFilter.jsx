@@ -4,13 +4,7 @@ import * as React from "react"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i)
 const MONTHS = [
@@ -19,7 +13,7 @@ const MONTHS = [
 ]
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
-// Predefined week ranges
+// Predefined week ranges (NFA Week)
 const WEEK_RANGES = {
   1: [1, 7],
   2: [8, 15],
@@ -74,7 +68,7 @@ export function WeeklyFilter({
         className
       )}
     >
-      {/* Header with navigation and dropdowns */}
+      {/* header */}
       <div className="flex items-center justify-between mb-3">
         <Button
           variant="ghost"

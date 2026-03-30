@@ -123,7 +123,7 @@ export default function ReportEvaluation() {
             <Input
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search report"
-              className="border-0 bg-transparent w-[330px] text-white font-medium text-base"
+              className="border-0 bg-transparent w-[330px] text-white font-medium text-base placeholder:text-white"
             />
             <FaSearch className="text-white shrink" size={20}/>
           </div>

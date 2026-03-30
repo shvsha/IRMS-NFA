@@ -1,5 +1,5 @@
 // components
-import DailyFilter from './filters/DailyFilter'
+import { DailyFilter } from './filters/DailyFilter'
 
 // css
 import '../styles/AuditLogs.css'

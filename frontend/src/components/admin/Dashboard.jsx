@@ -143,7 +143,7 @@ export default function Dashboard() {
               sideOffset={12}
               className="p-0 bg-[#E6EEF6] w-80 rounded-lg shadow-lg border-0 overflow-visible z-40"
             >
-              {/* Arrow pointing to trigger */}
+              {/* Arrow */}
               <div className="absolute -top-2 right-4 w-4 h-4 bg-[#2D317F] rotate-45" />
               
               {/* Header */}

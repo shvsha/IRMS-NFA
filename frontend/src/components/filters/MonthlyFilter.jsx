@@ -2,13 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i)
 const MONTHS = [
@@ -40,7 +34,7 @@ export function MonthlyFilter({
         className
       )}
     >
-      {/* Header with month display and year dropdown */}
+      {/*header*/}
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-medium text-foreground">
           {selectedMonth}
@@ -62,7 +56,7 @@ export function MonthlyFilter({
         </Select>
       </div>
 
-      {/* Month grid - 3 columns, 4 rows */}
+      {/* Month grid*/}
       <div className="flex flex-col gap-2">
         {MONTH_ROWS.map((row, rowIndex) => (
           <div key={rowIndex} className="grid grid-cols-3 gap-2">

@@ -110,8 +110,8 @@ export default function UserManagement() {
             </SelectTrigger>
             <SelectContent>
 
-              <SelectItem className='p-2' value="Active">Active</SelectItem>
-              <SelectItem className='p-2' value="Inactive">Inactive</SelectItem>
+              <SelectItem className='p-2 text-[#2D317F]' value="Active">Active</SelectItem>
+              <SelectItem className='p-2 text-[#2D317F]' value="Inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
 
@@ -119,7 +119,7 @@ export default function UserManagement() {
             <Input
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Name"
-              className="bg-transparent border-0 rounded-xl text-white placeholder:text-white/60 focus-visible:ring-0 focus-visible:border-white h-8 w-[430px]"
+              className="bg-transparent border-0 rounded-xl text-white placeholder:text-white focus-visible:ring-0 focus-visible:border-white h-8 w-[430px] "
             />
             <FaSearch color='white' size={18} className='shrink-0' />
           </div>

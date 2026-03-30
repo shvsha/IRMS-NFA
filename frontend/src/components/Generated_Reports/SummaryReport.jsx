@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../../styles/Generated_Reports/SummaryReport.css";
+import { useNavigate } from "react-router-dom";
 
 const initialRows = Array(8).fill(null).map((_, i) => ({
   id: i,
@@ -21,6 +21,7 @@ const SIGNATURES = [
 ];
 
 export default function NFAWarehouseReceipt() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState(initialRows);
   const [header, setHeader] = useState({
     region: "1",
@@ -45,11 +46,9 @@ export default function NFAWarehouseReceipt() {
     const bK = parseFloat(row.beginNetKg) || 0;
     const rK = parseFloat(row.receiptNetKg) || 0;
     const iK = parseFloat(row.issueNetKg) || 0;
-    const endBags = bB + rB - iB;
-    const endNetKg = bK + rK - iK;
     return {
-      endBags: endBags !== 0 ? endBags : "",
-      endNetKg: endNetKg !== 0 ? endNetKg.toFixed(2) : "",
+      endBags: bB + rB - iB || "",
+      endNetKg: bK + rK - iK ? (bK + rK - iK).toFixed(2) : "",
     };
   };
 
@@ -71,120 +70,177 @@ export default function NFAWarehouseReceipt() {
       issueBags: 0, issueNetKg: 0, endBags: 0, endNetKg: 0 }
   );
 
+  const formattedDate = new Date(header.date + "T00:00:00")
+    .toLocaleDateString("en-US", { month: "long", day: "2-digit", year: "numeric" })
+    .toUpperCase();
+
+  const thClass = "border border-black text-center bg-[#ADCEFF] font-bold text-[10.5px] py-1 px-[5px]";
+  const tdClass = "border border-black text-center text-[11px] bg-white px-[5px]";
+  const metaInputBase = "border-none outline-none font-[inherit] text-[12px] bg-transparent inline";
+
   return (
-    <div className="nfa-wrapper">
+      <div
+        className="w-full overflow-y-auto p-5 pb-15"
+        style={{ maxHeight: "calc(100vh - 90px - 60px)" }}
+      >
+      <div className="relative bg-white w-full box-border p-[clamp(8px,2vw,20px)]"
+        style={{ minWidth: 0 }}
+      >
 
-      {/* Title */}
-      <div className="nfa-title-block">
-        <div className="nfa-title">NATIONAL FOOD AUTHORITY</div>
-        <div className="nfa-subtitle">Statement of Daily Warehouse Receipt, Issues, and Balances</div>
-        <div className="nfa-date-row">
-          Date{" "}
-          <span className="nfa-date-input">
-            {new Date(header.date + "T00:00:00").toLocaleDateString("en-US", {month: "long", day: "2-digit", year: "numeric"}).toUpperCase()}
-          </span>
-        </div>
-      </div>
+        {/* Close Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-2 right-2 bg-white border border-red-600 text-red-600 font-bold w-[22px] h-[22px] cursor-pointer text-[14px] leading-none flex items-center justify-center z-10"
+        >
+          ✕
+        </button>
 
-      {/* Meta */}
-      <div className="nfa-meta">
-        <div className="nfa-meta-left">
-          <div>
-            Region<span style={{ marginLeft: 14 }}>: </span>
-            <input className="nfa-meta-input" style={{ width: 120 }} value={header.region}
-              onChange={(e) => updateHeader("region", e.target.value)} />
+        {/* Title Block */}
+        <div className="text-center mb-1.5 text-black">
+          <div className="font-bold text-[14px] tracking-wide uppercase">
+            National Food Authority
           </div>
-          <div>
-            Province<span style={{ marginLeft: 8 }}>: </span>
-            <input className="nfa-meta-input underline" style={{ width: 160 }} value={header.province}
-              onChange={(e) => updateHeader("province", e.target.value)} />
+          <div className="font-bold text-[13px] mt-0.5">
+            Statement of Daily Warehouse Receipt, Issues, and Balances
           </div>
-          <div>
-            Accountable Officer<span style={{ marginLeft: 4 }}>: </span>
-            <input className="nfa-meta-input bold-underline" style={{ width: 200 }} value={header.accountableOfficer}
-              onChange={(e) => updateHeader("accountableOfficer", e.target.value)} />
+          <div className="text-[12px] mt-[3px]">
+            Date:{" "}
+            <span className="font-bold underline text-[12px] cursor-pointer">
+              {formattedDate}
+            </span>
           </div>
         </div>
-        <div className="nfa-meta-right">
-          <div>
-            Warehouse Name<span style={{ marginLeft: 8 }}>: </span>
-            <input className="nfa-meta-input bold" style={{ width: 160 }} value={header.warehouseName}
-              onChange={(e) => updateHeader("warehouseName", e.target.value)} />
+
+        {/* Meta Info */}
+        <div className="flex justify-between flex-wrap gap-2 my-2.5 text-[12px] text-black">
+          <div className="leading-[1.8] px-10">
+            <div>
+              Region<span className="ml-[14px]">: </span>
+              <input
+                className={metaInputBase}
+                style={{ width: 120 }}
+                value={header.region}
+                onChange={(e) => updateHeader("region", e.target.value)}
+              />
+            </div>
+            <div>
+              Province<span className="ml-2">: </span>
+              <input
+                className={`${metaInputBase} underline`}
+                style={{ width: 160, fontWeight: 'bold'}}
+                value={header.province}
+                onChange={(e) => updateHeader("province", e.target.value)}
+              />
+            </div>
+            <div>
+              Accountable Officer<span className="ml-2">: </span>
+              <input
+                className={`${metaInputBase} underline`}
+                style={{ width: 160, fontWeight: 'bold'}}
+                value={header.accountableOfficer}
+                onChange={(e) => updateHeader("province", e.target.value)}
+              />
+            </div>
           </div>
-          <div>
-            Warehouse Address<span style={{ marginLeft: 4 }}>: </span>
-            <input className="nfa-meta-input bold" style={{ width: 160 }} value={header.warehouseAddress}
-              onChange={(e) => updateHeader("warehouseAddress", e.target.value)} />
-          </div>
-          <div>
-            Warehouse Code<span style={{ marginLeft: 8 }}>: </span>
-            <input className="nfa-meta-input bold" style={{ width: 100 }} value={header.warehouseCode}
-              onChange={(e) => updateHeader("warehouseCode", e.target.value)} />
+          <div className="leading-[1.8] px-10 text-left">
+            <div>
+              Warehouse Name<span className="ml-2">: </span>
+              <input
+                className={`${metaInputBase} font-bold underline`}
+                style={{ width: 160 }}
+                value={header.warehouseName}
+                onChange={(e) => updateHeader("warehouseName", e.target.value)}
+              />
+            </div>
+            <div>
+              Warehouse Address<span className="ml-2">: </span>
+              <input
+                className={`${metaInputBase} font-bold underline`}
+                style={{ width: 160 }}
+                value={header.warehouseAddress}
+                onChange={(e) => updateHeader("warehouseName", e.target.value)}
+              />
+            </div>
+            <div>
+              Warehouse Code<span className="ml-2">: </span>
+              <input
+                className={`${metaInputBase} font-bold underline`}
+                style={{ width: 100 }}
+                value={header.warehouseCode}
+                onChange={(e) => updateHeader("warehouseCode", e.target.value)}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <table className="nfa-table">
-        <thead>
-          <tr>
-            <th rowSpan={2} style={{ width: "11%", verticalAlign: "middle" }}>Cereal/Type</th>
-            <th rowSpan={2} style={{ width: "6%",  verticalAlign: "middle" }}>Cond.</th>
-            <th colSpan={2}>Beginning Balance</th>
-            <th colSpan={2}>Receipts</th>
-            <th colSpan={2}>Issues</th>
-            <th colSpan={2}>Ending Balance</th>
-          </tr>
-          <tr>
-            {["Bags","Net Kg","Bags","Net Kg","Bags","Net Kg","Bags","Net Kg"].map((h, i) => (
-              <th key={i} style={{ width: "10%" }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const { endBags, endNetKg } = computeEnding(row);
-            return (
-              <tr key={row.id}>
-                <td><input className="nfa-cell-input" value={row.cerealType}    onChange={(e) => updateRow(row.id, "cerealType",    e.target.value)} /></td>
-                <td><input className="nfa-cell-input" value={row.condition}     onChange={(e) => updateRow(row.id, "condition",     e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.beginBags}    onChange={(e) => updateRow(row.id, "beginBags",    e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.beginNetKg}   onChange={(e) => updateRow(row.id, "beginNetKg",   e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.receiptBags}  onChange={(e) => updateRow(row.id, "receiptBags",  e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.receiptNetKg} onChange={(e) => updateRow(row.id, "receiptNetKg", e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.issueBags}    onChange={(e) => updateRow(row.id, "issueBags",    e.target.value)} /></td>
-                <td><input className="nfa-cell-input" type="number" value={row.issueNetKg}   onChange={(e) => updateRow(row.id, "issueNetKg",   e.target.value)} /></td>
-                <td className="ending">{endBags}</td>
-                <td className="ending">{endNetKg}</td>
+        {/* Table */}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full border-collapse table-fixed text-black" style={{ minWidth: 600 }}>
+            <thead>
+              <tr>
+                <th rowSpan={2} className={thClass} style={{ width: "11%", verticalAlign: "middle" }}>Cereal Type</th>
+                <th rowSpan={2} className={thClass} style={{ width: "6%", verticalAlign: "middle" }}>Cond.</th>
+                <th colSpan={2} className={thClass}>Beginning Balance</th>
+                <th colSpan={2} className={thClass}>Receipts</th>
+                <th colSpan={2} className={thClass}>Issues</th>
+                <th colSpan={2} className={thClass}>Ending Balance</th>
               </tr>
-            );
-          })}
+              <tr>
+                {["Bags", "Nkg", "Bags", "Nkg", "Bags", "Nkg", "Bags", "Nkg"].map((h, i) => (
+                  <th key={i} className={thClass} style={{ width: "10%" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const { endBags, endNetKg } = computeEnding(row);
+                return (
+                  <tr key={row.id}>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                    <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                  </tr>
+                );
+              })}
 
-          {/* Totals */}
-          <tr className="totals-row">
-            <td colSpan={2} className="totals-label">TOTAL</td>
-            <td>{totals.beginBags    || ""}</td>
-            <td>{totals.beginNetKg   ? totals.beginNetKg.toFixed(2)   : ""}</td>
-            <td>{totals.receiptBags  || ""}</td>
-            <td>{totals.receiptNetKg ? totals.receiptNetKg.toFixed(2) : ""}</td>
-            <td>{totals.issueBags    || ""}</td>
-            <td>{totals.issueNetKg   ? totals.issueNetKg.toFixed(2)   : ""}</td>
-            <td className="ending">{totals.endBags    || ""}</td>
-            <td className="ending">{totals.endNetKg   ? totals.endNetKg.toFixed(2)   : ""}</td>
-          </tr>
-        </tbody>
-      </table>
+              {/* Totals Row */}
+              <tr className="font-bold text-[11px]">
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+                <td className={tdClass} style={{ height: "clamp(18px,2.5vw,28px)" }}></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      
-      {/* Signatures */}
-      <div className="nfa-signatures">
-        {SIGNATURES.map((sig, i) => (
-          <div key={i} className="nfa-sig-block">
-            <div className="nfa-sig-label">{sig.label}</div>
-            <div className="nfa-sig-name">{sig.name}</div>
-            <div className="nfa-sig-title">{sig.title}</div>
-          </div>
-        ))}
+        {/* Signatures */}
+        <div
+          className="flex justify-between flex-wrap mt-15 text-[11px] text-black"
+          style={{ gap: "clamp(8px,2vw,16px)" }}
+        >
+          {SIGNATURES.map((sig, i) => (
+            <div key={i} className="text-center w-[22%] min-w-25">
+              <div className="text-[#555] mb-1" style={{ fontSize: "clamp(8px,1vw,11px)" }}>{sig.label}</div>
+              <div className="font-bold underline mb-0.5">{sig.name}</div>
+              <div className="text-[11px] text-[#444]">{sig.title}</div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
