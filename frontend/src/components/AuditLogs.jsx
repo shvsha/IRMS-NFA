@@ -167,7 +167,7 @@ export default function AuditLogs() {
         </div>
 
         {/* Pagination */}
-        <div className="mt-auto flex items-center justify-between border-t border-[#E9EEF6] px-4 py-[10px]">
+        <div className="mt-auto flex items-center justify-between border-t border-[#E9EEF6] px-4 py-[15px]">
           <span className="text-[13px] font-medium text-[#6B7280]">
             {totalPages > 0 ? `${currentPage} of ${totalPages}` : '—'}
           </span>
