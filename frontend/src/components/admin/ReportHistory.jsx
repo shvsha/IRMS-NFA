@@ -237,7 +237,6 @@ export default function ReportHistory() {
                           value={selectedDate}
                           onChange={(date) => {
                             setSelectedDate(date)
-                            setShowCalendarFilter(false)
                           }}
                         />
                       )}
@@ -252,7 +251,6 @@ export default function ReportHistory() {
                           onYearChange={setWeeklyYear}
                           onWeekSelect={(week) => {
                             setSelectedWeek(week)
-                            setShowCalendarFilter(false)
                           }}
                         />
                       )}
@@ -263,7 +261,6 @@ export default function ReportHistory() {
                           onYearChange={setMonthlyYear}
                           onMonthChange={(month) => {
                             setSelectedMonth(month)
-                            setShowCalendarFilter(false)
                           }}
                         />
                       )}
@@ -348,14 +345,14 @@ export default function ReportHistory() {
       </div>
 
       {/* ── Table ── */}
-      <div className="mt-3 flex min-h-[330px] flex-col overflow-hidden bg-white shadow-sm">
-        <div className="w-full h-[280px] overflow-hidden">
+      <div className="mt-3 flex h-[390px] flex-col overflow-hidden bg-white shadow-sm">
+        <div className="w-full overflow-hidden">
 
           {/* shadcn Table */}
           <Table>
             <TableHeader>
               <TableRow className="bg-[#E2EBFF] !hover:bg-transparent">
-                <TableHead className="h-13 pl-5 text-center font-bold text-[13px] text-[#2D317F]">
+                <TableHead className="h-12 pl-5 text-center font-bold text-[13px] text-[#2D317F]">
                   <div className="flex items-center justify-center gap-2">
                     <input
                       type="checkbox"
@@ -365,80 +362,93 @@ export default function ReportHistory() {
                     <span>Select All</span>
                   </div>
                 </TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Date</TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Report ID</TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Report Type</TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Warehouse</TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Cereal Type</TableHead>
-                <TableHead className="h-10 text-center font-bold text-[13px] text-[#2D317F]">Action</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Date</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report ID</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report Type</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Warehouse</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Cereal Type</TableHead>
+                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Action</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {paginatedReports.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="py-10   text-center text-[#9CA3AF]"
-                  >
-                    No records found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedReports.map((report) => (
-                  <TableRow
-                    key={report.reportid}
-                    className="h-13 border-b border-[#E9EEF6] transition-colors"
-                  >
-                    <TableCell className="pl-5 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(report.reportid)}
-                        onChange={() => toggleRow(report.reportid)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                      {report.date}
-                    </TableCell>
-                    <TableCell className="text-center text-[13px] font-semibold text-[#2D317F]">
-                      {report.reportid}
-                    </TableCell>
-                    <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                      {report.reporttype}
-                    </TableCell>
-                    <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                      {report.whse}
-                    </TableCell>
-                    <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                      {report.cerealtype}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => navigate("/admin/evaluation/receipt")}
-                          className="
-                            inline-flex items-center gap-[5px] rounded-md border-[1.5px]
-                            border-[#2D317F] bg-white px-[14px] py-[6px]
-                            text-[13px] font-semibold text-[#2D317F]
-                            transition-colors hover:bg-[#2D317F] hover:text-white
-                          "
-                        >
-                          <GoLinkExternal size={14} />View
-                        </button>
-                        <button
-                          className="
-                            inline-flex items-center gap-[5px] rounded-md border-[1.5px]
-                            border-[#1F7A3E] bg-[#1F7A3E] px-[14px] py-[6px]
-                            text-[13px] font-semibold text-white
-                            transition-colors hover:border-[#185f30] hover:bg-[#185f30]
-                          "
-                        >
-                          <CiExport size={15} />Export
-                        </button>
-                      </div>
+                <>
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-10 text-center text-[#9CA3AF]">
+                      No records found.
                     </TableCell>
                   </TableRow>
-                ))
+                  {Array.from({ length: ITEMS_PER_PAGE - 1 }).map((_, i) => (
+                    <TableRow key={`filler-${i}`} className="h-11 border-b border-[#E9EEF6] hover:bg-transparent">
+                      <TableCell colSpan={7} />
+                    </TableRow>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {paginatedReports.map((report) => (
+                    <TableRow
+                      key={report.reportid}
+                      className="h-9 border-b border-[#E9EEF6] transition-colors"
+                    >
+                      <TableCell className="pl-5 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(report.reportid)}
+                          onChange={() => toggleRow(report.reportid)}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                        {report.date}
+                      </TableCell>
+                      <TableCell className="text-center text-[13px] font-semibold text-[#2D317F]">
+                        {report.reportid}
+                      </TableCell>
+                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                        {report.reporttype}
+                      </TableCell>
+                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                        {report.whse}
+                      </TableCell>
+                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                        {report.cerealtype}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => navigate("/admin/evaluation/receipt")}
+                            className="
+                              inline-flex items-center gap-[5px] rounded-md border-[1.5px]
+                              border-[#2D317F] bg-white px-[14px] py-[6px]
+                              text-[13px] font-semibold text-[#2D317F]
+                              transition-colors hover:bg-[#2D317F] hover:text-white
+                            "
+                          >
+                            <GoLinkExternal size={14} />View
+                          </button>
+                          <button
+                            className="
+                              inline-flex items-center gap-[5px] rounded-md border-[1.5px]
+                              border-[#1F7A3E] bg-[#1F7A3E] px-[14px] py-[6px]
+                              text-[13px] font-semibold text-white
+                              transition-colors hover:border-[#185f30] hover:bg-[#185f30]
+                            "
+                          >
+                            <CiExport size={15} />Export
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* filler */}
+                  {Array.from({ length: ITEMS_PER_PAGE - paginatedReports.length }).map((_, i) => (
+                    <TableRow key={`filler-${i}`} className="h-12 border-b border-[#E9EEF6] hover:bg-transparent">
+                      <TableCell colSpan={7} />
+                    </TableRow>
+                  ))}
+                </>
               )}
             </TableBody>
           </Table>
