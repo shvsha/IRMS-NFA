@@ -24,13 +24,15 @@ dist-ssr
 *.sln
 *.sw?
 
-# Django / Python
+# Python cache
+__pycache__/
+*.pyc
 
+# Django / Python
 backend/myenv/
 backend/env/
 backend/.venv/
 
-backend/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -42,5 +44,7 @@ backend/.env
 
 # Python build files
 *.egg-info/
-dist/
 build/
+
+# sql lite database
+*.sqlite3
