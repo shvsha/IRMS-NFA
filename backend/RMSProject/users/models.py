@@ -28,5 +28,10 @@ class User (models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Active')
 
 
+    @property 
+    def full_name(self):
+        if self.mI:
+            return f"{self.fname} {self.mI} {self.lname}"
+        return f"{self.fname} {self.lname}"
     def __str__(self):
         return f"{self.fname} {self.lname}"
