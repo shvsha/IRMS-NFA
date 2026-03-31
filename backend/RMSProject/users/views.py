@@ -1,12 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import User
 from .serializers import UserSerializer
 
 class UserListView(APIView):
-    permission_classes = [IsAuthenticated]
+    # allows the user to create user for the first time (empty database)
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [AllowAny()] 
+        return [IsAuthenticated()] 
 
     # get
     def get(self, request):
