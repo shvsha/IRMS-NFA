@@ -267,7 +267,7 @@ export default function UserManagement() {
         </AlertDialogContent>
       </AlertDialog>
                     
-      <div className='table-wrapper'>
+      <div className='min-h-[430px] overflow-hidden'>
         <Table>
           <TableHeader className='text-center'>
             <TableRow className='bg-[#E2EBFF]'>

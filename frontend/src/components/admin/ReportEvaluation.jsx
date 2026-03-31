@@ -110,11 +110,11 @@ export default function ReportEvaluation() {
           </div>
           <div className="flex gap-4">
             <label>Pending: </label>
-            <p className="pending-report">{sampleReports.filter(r => r.status === "Pending").length}</p>
+            <p className="bg-[#F0E48B] px-1.5 text-[#AE9C0F] rounded">{sampleReports.filter(r => r.status === "Pending").length}</p>
             <label>Approved: </label>
-            <p className="approved-report">{sampleReports.filter(r => r.status === "Approved").length}</p>
+            <p className="bg-[#8BF093] px-1.5 text-[#3E7A43] rounded">{sampleReports.filter(r => r.status === "Approved").length}</p>
             <label>Rejected: </label>
-            <p className="rejected-report">{sampleReports.filter(r => r.status === "Rejected").length}</p>
+            <p className="bg-[#FF595C] px-1.5 text-[#BB2325] rounded">{sampleReports.filter(r => r.status === "Rejected").length}</p>
           </div>
         </div>
 
@@ -190,20 +190,20 @@ export default function ReportEvaluation() {
                   <TableCell className='text-center px-0 !w-100'>
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 view-report-eval "
+                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] text-[#2D317F]"
                         onClick={() => navigate(reportRoutes[report.reportType] ?? "/admin/evaluation")}
                       >
                         <GoLinkExternal size={15}/> View
                       </button>
                       <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 approve-report-eval disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none text-[#3E7A43]"
                         onClick={() => handleApprove(report)}
                         disabled={report.status === "Approved" || report.status === "Rejected"}
                       >
                         <IoMdCheckmarkCircleOutline size={20} color={"green"}/> Approve
                       </button>
                       <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 reject-report-eval disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none text-[#BB2325]"
                         onClick={() => handleRejectOpen(report)}
                         disabled={report.status === "Approved" || report.status === "Rejected"}
                       >

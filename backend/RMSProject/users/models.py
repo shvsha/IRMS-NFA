@@ -34,4 +34,4 @@ class User (models.Model):
             return f"{self.fname} {self.mI} {self.lname}"
         return f"{self.fname} {self.lname}"
     def __str__(self):
-        return f"{self.fname} {self.lname}"
+        return self.full_name

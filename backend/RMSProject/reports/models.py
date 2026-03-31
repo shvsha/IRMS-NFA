@@ -14,7 +14,7 @@ class StockBook(models.Model):
     Particulars = models.CharField(max_length=100, blank=True, null=True)
     Plate_Number = models.CharField(max_length=20, blank=True, null=True)
     WTS = models.IntegerField(blank=True, null=True)
-    WSR = models.IntegerField(blank=True, null=True)       # ✅ WSR not WRS
+    WSR = models.IntegerField(blank=True, null=True)
     WSI = models.IntegerField(blank=True, null=True)
     Batch_No = models.IntegerField(blank=True, null=True)
     Age = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -74,7 +74,7 @@ class WSR(models.Model):
         'StockBook',
         on_delete=models.CASCADE,
         related_name='wsr_receipts',
-        limit_choices_to={'WSR__isnull': False}    # ✅ WSR not WRS
+        limit_choices_to={'WSR__isnull': False}
     )
     Evaluation = models.CharField(
         max_length=20,
@@ -93,7 +93,7 @@ class WSR(models.Model):
 
     @property
     def WSR_WTS(self):
-        return self.Report_id.WSR                  # ✅ WSR not WRS
+        return self.Report_id.WSR
 
     @property
     def Transaction(self):
@@ -176,7 +176,7 @@ class WSI(models.Model):
 
     @property
     def Created_at(self):
-        return self.Report_id.Date                 # ✅ fixed typo Creataed_at
+        return self.Report_id.Date
 
     @property
     def WSI_number(self):

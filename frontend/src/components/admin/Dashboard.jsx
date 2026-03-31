@@ -125,16 +125,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className='whole-container-dashboard'>
+    <div className='m-7.5 mt-5 flex flex-col overflow-hidden box-border'>
 
       <div className='relative'>
-        <div className='welcome-filter-container-dashboard'>
-          <p>Welcome, <span>Sir </span><span>Louie</span>!</p>
+        <div className='flex justify-between items-center mb-3.5 shrink-0 relative'>
+          <p className='font-bold text-3xl text-[#2D317F] m-0'>Welcome, <span>Sir </span><span>Louie</span>!</p>
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-[#072560] border border-[#2D317F] rounded-md">
-                <FaRegCalendarAlt className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="text-[#072560]rounded-md bg-white px-5 py-5">
+                <FaRegCalendarAlt size={20} />
               </Button>
             </PopoverTrigger>
 
