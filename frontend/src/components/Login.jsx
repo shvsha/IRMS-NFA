@@ -108,6 +108,7 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
+                  autoComplete="off" 
                   onChange={handleCredentials}
                   className='border border-[#2D317F] focus:ring-0 focus:border-[#2D317F] bg-white pl-10 pr-10'          
                 />

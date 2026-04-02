@@ -1,252 +1,319 @@
-// cc
+// icons
 import { GoLinkExternal } from "react-icons/go";
 import { FiEdit } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
-import { TbProgress, TbFileSearch  } from "react-icons/tb";
+import { TbProgress, TbFileSearch } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
+import { CiImport } from "react-icons/ci";
+import { LuPenLine } from "react-icons/lu"
+
+// shadcn
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet, } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 // react
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// css
-import "../../styles/warehouse supervisor/stockBook.css";
-
-// component
-import FilterDropdown from '../filters/FilterDropdown'
-
-// sample reports
 const stockReports = [
-  {
-    cereal: "Palay",
-    id: "R-001",
-    transaction: "Milling",
-    warehouse: "Warehouse 1",
-    date: "30-Jan-26",
-    status: "In Progress",
-  },
-  {
-    cereal: "Rice",
-    id: "R-002",
-    transaction: "Sales",
-    warehouse: "Warehouse 2",
-    date: "30-Jan-26",
-    status: "Completed",
-  },
-  {
-    cereal: "Palay",
-    id: "R-003",
-    transaction: "Milling",
-    warehouse: "Warehouse 1",
-    date: "30-Jan-26",
-    status: "Under Review",
-  },
+  { cereal: "PD1350", id: "R-001", transaction: "Milling", warehouse: "Warehouse 1", date: "30-Jan-26", status: "In Progress" },
+  { cereal: "WD1G50", id: "R-002", transaction: "Sales", warehouse: "Warehouse 2", date: "30-Jan-26", status: "Completed" },
+  { cereal: "PD1350", id: "R-003", transaction: "Milling", warehouse: "Warehouse 1", date: "30-Jan-26", status: "Under Review" },
 ];
+
+const getStatusStyle = (status) => {
+  const base = "px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 w-28 pl-4";
+  if (status === "In Progress")  return `${base} bg-[#FFF3CD] text-[#856404]`;
+  if (status === "Completed")    return `${base} bg-[#D4EDDA] text-[#155724]`;
+  if (status === "Under Review") return `${base} bg-[#D6E4FF] text-[#1D3A8A]`;
+  return base;
+};
+
+const getStatusIcon = (status) => {
+  if (status === "In Progress")  return <TbProgress size={16} />;
+  if (status === "Completed")    return <FaRegCircleCheck size={16} />;
+  if (status === "Under Review") return <TbFileSearch size={16} />;
+  return null;
+};
 
 export default function StockBook() {
   const navigate = useNavigate();
 
   // us
-  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCereal, setSelectedCereal] = useState("All Cereal Type");
-
-  // for creating a new stock book
   const [selectedType, setSelectedType] = useState("");
-  const [isHiding, setIsHiding] = useState(false);
-  const [isShowing, setIsShowing] = useState(false);
 
-  const openAddModal = () => {
-    setShowAddModal(true);
-    setTimeout(() => setIsShowing(true), 10);
+  // default values for the signatory
+  const [signatory, setSignatory] = useState({
+    abm: "Marcelina A. Domingo",
+    accountant: "Lovelyn M. Picardal",
+    bm: "Celerina T. Capones",
+  })
+
+  // modal
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [signatoryDialogOpen, setSignatoryDialogOpen] = useState(false);
+
+  const [flow, setFlow] = useState("");
+  // replace with backend api later on
+  const [isFirstTime, setIsFirstTime] = useState(true) // check if user has submitted a report today
+
+  const filteredReports = selectedCereal === "All Cereal Type"
+    ? stockReports
+    : stockReports.filter((r) => r.cereal === selectedCereal);
+
+  const handleAddReportClick = () => {
+    setSelectedType("");
+    if (isFirstTime) {
+      setFlow("first-time");
+    } else {
+      setFlow("not-first-time");
+    }
+    setAddDialogOpen(true);
   };
 
-  const closeAddModal = () => {
-    setIsShowing(false);
-    setIsHiding(true);
-    setTimeout(() => {
-      setShowAddModal(false);
-      setIsHiding(false);
-      setSelectedType("");
-    }, 300);
+  const handleSignatoryClick = () => {
+    setFlow("signatory-only");
+    setSignatoryDialogOpen(true);
   };
 
-  const handleCerealChange = (val) => { setSelectedCereal(val); }
-  const handleTypeChange = (val) => { setSelectedType(val); }
-
-  const filteredReports =
-    selectedCereal === "All Cereal Type"
-      ? stockReports
-      : stockReports.filter((r) => r.cereal === selectedCereal);
-
-  const getStatusStyle = (status) => {
-    const base = {
-      padding: "6px 14px",
-      borderRadius: "20px",
-      fontWeight: "600",
-      fontSize: "13px",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      width: '115px',
-      paddingLeft: '20px',
-
-    };
-
-    if (status === "In Progress")
-      return { ...base,  background: "#FFF3CD", color: "#856404" };
-
-    if (status === "Completed")
-      return { ...base, background: "#D4EDDA", color: "#155724" };
-
-    if (status === "Under Review")
-      return { ...base, background: "#D6E4FF", color: "#1D3A8A" };
-
-    return base;
-  };
-  const getStatusIcon = (status) => {
-    if (status === "In Progress")  return <TbProgress size={16} />;
-    if (status === "Completed")    return <FaRegCircleCheck size={16} />;
-    if (status === "Under Review") return <TbFileSearch size={16} />;
-    return null;
-  };
-
-  // redirect to stock book management if u didnt create any stock book yet
-  const handleCreateReport = () => {
+  const handleCerealNext = () => {
     if (!selectedType) {
       alert("Please select a cereal type");
       return;
     }
-
-    navigate(`/whse/create/${selectedType}`);
+    if (flow === "first-time") {
+      setAddDialogOpen(false);
+      setSignatoryDialogOpen(true);
+    } else {
+      setAddDialogOpen(false);
+      navigate(`/whse/create/${selectedType}`);
+    }
   };
 
-  // In CreateReport, use: const location = useLocation(); const stockBook = location.state?.stockBook;
-  // TODO (backend): replace `record` with the fetched DB record when ready
+  const handleSignatorySubmit = () => {
+    if (flow === "first-time") {
+      setSignatoryDialogOpen(false);
+      navigate(`/whse/create/${selectedType}`);
+    } else {
+      setSignatoryDialogOpen(false);
+    }
+  };
+
   const handleViewReport = (record) => {
     navigate(`/whse/view/${record.id}`, { state: { stockBook: record } });
   };
 
   return (
-    <div className="whole-content-stock">
-      <div className="stock-controls">
-        <FilterDropdown
-          selected={selectedCereal}
-          options={['All Cereal Type', 'Palay', 'Rice']}
-          onSelect={handleCerealChange}
-          buttonClass={'cereal-filter-stockbook'}
-        />
+    <div className="m-7.5 flex flex-col h-[calc(100vh-160px)]">
 
-        <button
-          className="add-report-btn"
-          onClick={openAddModal}
-        >
-          + Add Report
+      {/* Top controls */}
+      <div className="flex justify-between items-center mb-4 pt-2">
+        <button className="bg-[#1D8104] p-2 rounded text-white">
+          <CiImport size={20} />
         </button>
+
+        <div className="flex items-center gap-6">
+          <Select value={selectedCereal} onValueChange={setSelectedCereal}>
+            <SelectTrigger className="w-44 bg-white border-gray-300 py-5.5">
+              <SelectValue placeholder="All Cereal Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem className='p-2' value="All Cereal Type">All Cereal Type</SelectItem>
+              <SelectItem className='p-2' value="WD1G50">Palay</SelectItem>
+              <SelectItem className='p-2' value="PD1350">Rice</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            onClick={handleSignatoryClick}
+            className="bg-[#2D317F] text-white rounded-xl px-5 py-5.5 w-35 font-semibold hover:bg-[#1f2360]"
+          >
+            Signatory
+          </Button>
+          <Button
+            onClick={handleAddReportClick}
+            className="bg-[#2D317F] text-white rounded-xl px-5 py-5.5 w-35 font-semibold hover:bg-[#1f2360]"
+          >
+            + Add Report
+          </Button>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="table-wrapper-stock">
-        <table className="reports-table-stock">
-          <thead>
-            <tr>
-              <th>Cereal Type</th>
-              <th>Report ID</th>
-              <th>Transaction</th>
-              <th>Warehouse</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
+      {/* table */}
+      <div className="bg-white flex-1 overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-[#E2EBFF]">
+              <TableHead className="text-[#2D317F] font-bold text-center">Cereal Type</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Report ID</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Transaction</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Warehouse</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Date</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Status</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredReports.map((r) => (
-              <tr key={r.id}>
-                <td>{r.cereal}</td>
-                <td>{r.id}</td>
-                <td>{r.transaction}</td>
-                <td>{r.warehouse}</td>
-                <td>{r.date}</td>
-
-                <td>
-                  <span style={getStatusStyle(r.status)}>
+              <TableRow key={r.id}>
+                <TableCell className="text-center text-[#2D317F]">{r.cereal}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.id}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.transaction}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.warehouse}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.date}</TableCell>
+                <TableCell className="text-center">
+                  <span className={getStatusStyle(r.status)}>
                     {getStatusIcon(r.status)}
                     {r.status}
                   </span>
-                </td>
-
-                <td>
-                  <div className="action-btns-stock">
-                    <button className="view-btn-stock" onClick={() => handleViewReport(r)}>
-                      <GoLinkExternal size={14} />
-                      View
-                    </button>
-
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex justify-center gap-2">
                     <button
-                      className="edit-btn-stock"
-                      disabled={r.status === "Completed"}
+                      onClick={() => handleViewReport(r)}
+                      className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
                     >
-                      <FiEdit size={14} />
-                      Edit
+                      <GoLinkExternal size={14} /> View
                     </button>
-
+                    <button
+                      disabled={r.status === "Completed"}
+                      className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
+                    >
+                      <FiEdit size={14} /> Edit
+                    </button>
                     {r.status !== "In Progress" && (
-                      <button
-                        className="delete-btn-stock"
-                      >
+                      <button className="flex items-center border border-red-500 text-red-500 rounded px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500">
                         <IoClose size={18} />
                       </button>
                     )}
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
+      {/* add modal */}
+      <Dialog open={addDialogOpen} onOpenChange={(open) => {
+        setAddDialogOpen(open);
+        if (!open) setSelectedType("");
+      }}>
+        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden w-80 [&>button]:hidden bg-[#DDE4F3]">
+          {/* Header bar */}
+          <div className="bg-[#2D317F] h-8 rounded-t-lg" />
 
-      {/* ADD REPORT MODAL */}
-        <div className={
-          "modal-overlay-stock" +
-          (isShowing ? " show" : "") +
-          (isHiding ? " hiding" : "")
-        }>
-          <div className="modal-box-stock">
-            <div className="top-part-add-report"></div>
+          {/* Body */}
+          <div className="px-5 pb-5">
+            <DialogHeader className="mb-3">
+              <DialogTitle className="text-[#2D317F] font-bold py-2">Cereal Type</DialogTitle>
+            </DialogHeader>
 
-            <div className="body-part-add-report">
-              <h3>Cereal Type</h3>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold py-5">
+                <SelectValue placeholder="Select cereal type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem className='p-2' value="Palay">Palay</SelectItem>
+                <SelectItem className='p-2' value="Rice">Rice</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <FilterDropdown
-                selected={selectedType}
-                options={["Palay", "Rice"]}
-                onSelect={handleTypeChange}
-                buttonClass={'cereal-filter-stockbook type-filter-create'}
-              />
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => { setAddDialogOpen(false); setSelectedType(""); }}
+                className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCerealNext}
+                disabled={!selectedType}
+                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {flow === "first-time" ? "Next" : "Create"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
+      {/* signatory modal */}
+      <Dialog open={signatoryDialogOpen} onOpenChange={(open) => {
+        setSignatoryDialogOpen(open);
+      }}>
+        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden !max-w-[500px] [&>button]:hidden bg-[#E6EEF6]">
+          {/* Header bar */}
+          <div className="bg-[#2D317F] h-8 rounded-t-lg" />
 
-              <div className="modal-buttons-stock">
-                <button
-                  className="modal-cancel"
-                  onClick={closeAddModal}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  className="modal-create"
-                  disabled={!selectedType}
-                  onClick={handleCreateReport}
-                >
-                  Create
-                </button>
+          {/* Body */}
+          <div className="px-5 pb-5">
+            <DialogHeader className="mb-3 flex flex-col items-center">
+              <div className="w-[90px] h-[90px] flex items-center justify-center bg-[#ADCEFF] rounded-full">
+                <LuPenLine color={"#2D317F"} size={45}/>
               </div>
+              <DialogTitle className="text-[#2D317F] font-extrabold text-center mt-2 mb-2 text-2xl">Signatory Details</DialogTitle>
+            </DialogHeader>
+
+            <div className="bg-white p-4 m-4 rounded">
+              <FieldSet>
+                <FieldGroup className='text-[#2D317F]'>
+                  <Field>
+                    <FieldLabel className='font-bold' htmlFor="name">Assistant Branch Manager</FieldLabel>
+                    <Input 
+                      id="name" 
+                      autoComplete="off" 
+                      placeholder="Assistant Branch Manager..." 
+                      value={signatory.abm}
+                      onChange={(e) => setSignatory(prev => ({ ...prev, abm: e.target.value }))}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel className='font-bold' htmlFor="name">Accountant II</FieldLabel>
+                    <Input 
+                      id="name" 
+                      autoComplete="off" 
+                      placeholder="Accountant II..."
+                      value={signatory.accountant}
+                      onChange={(e) => setSignatory(prev => ({ ...prev, accountant: e.target.value }))}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel className='font-bold' htmlFor="name">Branch Manager</FieldLabel>
+                    <Input 
+                      id="name" 
+                      autoComplete="off" 
+                      placeholder="Branch Manager..."
+                      value={signatory.bm}
+                      onChange={(e) => setSignatory(prev => ({ ...prev, bm: e.target.value }))}
+                    />
+                  </Field>
+                </FieldGroup>
+            </FieldSet>
             </div>
 
-
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => { setSignatoryDialogOpen(false);}}
+                className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignatorySubmit}
+                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {flow === "signatory-only" ? "Save" : "Create"}
+              </button>
+            </div>
           </div>
-        </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
