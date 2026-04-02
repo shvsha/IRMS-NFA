@@ -6,13 +6,14 @@ import { TbProgress, TbFileSearch } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { CiImport } from "react-icons/ci";
 import { LuPenLine } from "react-icons/lu"
+import { RiPenNibFill } from "react-icons/ri";
 
 // shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet, } from "@/components/ui/field"
+import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
 // react
@@ -20,9 +21,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const stockReports = [
-  { cereal: "PD1350", id: "R-001", transaction: "Milling", warehouse: "Warehouse 1", date: "30-Jan-26", status: "In Progress" },
-  { cereal: "WD1G50", id: "R-002", transaction: "Sales", warehouse: "Warehouse 2", date: "30-Jan-26", status: "Completed" },
-  { cereal: "PD1350", id: "R-003", transaction: "Milling", warehouse: "Warehouse 1", date: "30-Jan-26", status: "Under Review" },
+  { cereal: "PD1350", id: "R-001", date: "30-Jan-26", status: "In Progress" },
+  { cereal: "WD1G50", id: "R-002", date: "30-Jan-26", status: "Completed" },
+  { cereal: "PD1350", id: "R-003", date: "30-Jan-26", status: "Under Review" },
 ];
 
 const getStatusStyle = (status) => {
@@ -43,24 +44,19 @@ const getStatusIcon = (status) => {
 export default function StockBook() {
   const navigate = useNavigate();
 
-  // us
   const [selectedCereal, setSelectedCereal] = useState("All Cereal Type");
   const [selectedType, setSelectedType] = useState("");
 
-  // default values for the signatory
   const [signatory, setSignatory] = useState({
     abm: "Marcelina A. Domingo",
     accountant: "Lovelyn M. Picardal",
     bm: "Celerina T. Capones",
   })
 
-  // modal
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [signatoryDialogOpen, setSignatoryDialogOpen] = useState(false);
-
   const [flow, setFlow] = useState("");
-  // replace with backend api later on
-  const [isFirstTime, setIsFirstTime] = useState(true) // check if user has submitted a report today
+  const [isFirstTime, setIsFirstTime] = useState(true)
 
   const filteredReports = selectedCereal === "All Cereal Type"
     ? stockReports
@@ -68,11 +64,7 @@ export default function StockBook() {
 
   const handleAddReportClick = () => {
     setSelectedType("");
-    if (isFirstTime) {
-      setFlow("first-time");
-    } else {
-      setFlow("not-first-time");
-    }
+    setFlow(isFirstTime ? "first-time" : "not-first-time");
     setAddDialogOpen(true);
   };
 
@@ -82,10 +74,7 @@ export default function StockBook() {
   };
 
   const handleCerealNext = () => {
-    if (!selectedType) {
-      alert("Please select a cereal type");
-      return;
-    }
+    if (!selectedType) { alert("Please select a cereal type"); return; }
     if (flow === "first-time") {
       setAddDialogOpen(false);
       setSignatoryDialogOpen(true);
@@ -119,7 +108,7 @@ export default function StockBook() {
 
         <div className="flex items-center gap-6">
           <Select value={selectedCereal} onValueChange={setSelectedCereal}>
-            <SelectTrigger className="w-44 bg-white border-gray-300 py-5.5">
+            <SelectTrigger className="w-44 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F]">
               <SelectValue placeholder="All Cereal Type" />
             </SelectTrigger>
             <SelectContent>
@@ -133,7 +122,7 @@ export default function StockBook() {
             onClick={handleSignatoryClick}
             className="bg-[#2D317F] text-white rounded-xl px-5 py-5.5 w-35 font-semibold hover:bg-[#1f2360]"
           >
-            Signatory
+          <RiPenNibFill/> Signatory
           </Button>
           <Button
             onClick={handleAddReportClick}
@@ -148,24 +137,20 @@ export default function StockBook() {
       <div className="bg-white flex-1 overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#E2EBFF]">
-              <TableHead className="text-[#2D317F] font-bold text-center">Cereal Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Report ID</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Transaction</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Warehouse</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Date</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Status</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center">Action</TableHead>
+            <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF]">
+              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Date</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Stock Book ID</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Cereal Type</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Status</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredReports.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-center text-[#2D317F]">{r.cereal}</TableCell>
-                <TableCell className="text-center text-[#2D317F]">{r.id}</TableCell>
-                <TableCell className="text-center text-[#2D317F]">{r.transaction}</TableCell>
-                <TableCell className="text-center text-[#2D317F]">{r.warehouse}</TableCell>
                 <TableCell className="text-center text-[#2D317F]">{r.date}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.id}</TableCell>
+                <TableCell className="text-center text-[#2D317F]">{r.cereal}</TableCell>
                 <TableCell className="text-center">
                   <span className={getStatusStyle(r.status)}>
                     {getStatusIcon(r.status)}
@@ -205,15 +190,11 @@ export default function StockBook() {
         if (!open) setSelectedType("");
       }}>
         <DialogContent className="pt-0 px-0 pb-0 overflow-hidden w-80 [&>button]:hidden bg-[#DDE4F3]">
-          {/* Header bar */}
           <div className="bg-[#2D317F] h-8 rounded-t-lg" />
-
-          {/* Body */}
           <div className="px-5 pb-5">
             <DialogHeader className="mb-3">
               <DialogTitle className="text-[#2D317F] font-bold py-2">Cereal Type</DialogTitle>
             </DialogHeader>
-
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold py-5">
                 <SelectValue placeholder="Select cereal type" />
@@ -223,7 +204,6 @@ export default function StockBook() {
                 <SelectItem className='p-2' value="Rice">Rice</SelectItem>
               </SelectContent>
             </Select>
-
             <div className="flex justify-end gap-3 mt-5">
               <button
                 onClick={() => { setAddDialogOpen(false); setSelectedType(""); }}
@@ -244,14 +224,9 @@ export default function StockBook() {
       </Dialog>
 
       {/* signatory modal */}
-      <Dialog open={signatoryDialogOpen} onOpenChange={(open) => {
-        setSignatoryDialogOpen(open);
-      }}>
+      <Dialog open={signatoryDialogOpen} onOpenChange={setSignatoryDialogOpen}>
         <DialogContent className="pt-0 px-0 pb-0 overflow-hidden !max-w-[500px] [&>button]:hidden bg-[#E6EEF6]">
-          {/* Header bar */}
           <div className="bg-[#2D317F] h-8 rounded-t-lg" />
-
-          {/* Body */}
           <div className="px-5 pb-5">
             <DialogHeader className="mb-3 flex flex-col items-center">
               <div className="w-[90px] h-[90px] flex items-center justify-center bg-[#ADCEFF] rounded-full">
@@ -259,54 +234,43 @@ export default function StockBook() {
               </div>
               <DialogTitle className="text-[#2D317F] font-extrabold text-center mt-2 mb-2 text-2xl">Signatory Details</DialogTitle>
             </DialogHeader>
-
             <div className="bg-white p-4 m-4 rounded">
               <FieldSet>
                 <FieldGroup className='text-[#2D317F]'>
                   <Field>
-                    <FieldLabel className='font-bold' htmlFor="name">Assistant Branch Manager</FieldLabel>
-                    <Input 
-                      id="name" 
-                      autoComplete="off" 
-                      placeholder="Assistant Branch Manager..." 
+                    <FieldLabel className='font-bold' htmlFor="abm">Assistant Branch Manager</FieldLabel>
+                    <Input id="abm" autoComplete="off" placeholder="Assistant Branch Manager..."
                       value={signatory.abm}
                       onChange={(e) => setSignatory(prev => ({ ...prev, abm: e.target.value }))}
                     />
                   </Field>
                   <Field>
-                    <FieldLabel className='font-bold' htmlFor="name">Accountant II</FieldLabel>
-                    <Input 
-                      id="name" 
-                      autoComplete="off" 
-                      placeholder="Accountant II..."
+                    <FieldLabel className='font-bold' htmlFor="accountant">Accountant II</FieldLabel>
+                    <Input id="accountant" autoComplete="off" placeholder="Accountant II..."
                       value={signatory.accountant}
                       onChange={(e) => setSignatory(prev => ({ ...prev, accountant: e.target.value }))}
                     />
                   </Field>
                   <Field>
-                    <FieldLabel className='font-bold' htmlFor="name">Branch Manager</FieldLabel>
-                    <Input 
-                      id="name" 
-                      autoComplete="off" 
-                      placeholder="Branch Manager..."
+                    <FieldLabel className='font-bold' htmlFor="bm">Branch Manager</FieldLabel>
+                    <Input id="bm" autoComplete="off" placeholder="Branch Manager..."
                       value={signatory.bm}
                       onChange={(e) => setSignatory(prev => ({ ...prev, bm: e.target.value }))}
                     />
                   </Field>
                 </FieldGroup>
-            </FieldSet>
+              </FieldSet>
             </div>
-
             <div className="flex justify-end gap-3 mt-5">
               <button
-                onClick={() => { setSignatoryDialogOpen(false);}}
+                onClick={() => setSignatoryDialogOpen(false)}
                 className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSignatorySubmit}
-                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360]"
               >
                 {flow === "signatory-only" ? "Save" : "Create"}
               </button>

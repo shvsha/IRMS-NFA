@@ -2,364 +2,259 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useState } from "react";
 
-// css
-import "../../styles/warehouse supervisor/createReport.css";
-
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
-
-// Auth Context
-// Replace this import path with wherever your AuthContext actually lives
-// import { AuthContext } from "../../context/AuthContext";
-
 
 export default function CreateReport() {
   const { cereal } = useParams();
   const navigate = useNavigate();
-  const location   = useLocation();
+  const location = useLocation();
 
-  // auth context
-  // const { user }= useContext(AuthContext);
-  // const supervisorName = user?.name ?? "—";
-  // const warehouseCode = user?.whcode ?? "—";
-
-  // stock book record
-  // TODO (backend): swap location.state?.stockBook with a real fetch by ID
   const stockBook = location.state?.stockBook ?? null;
   const mode = location.state?.mode ?? "create";
 
   const isViewMode = mode === "view";
-  const isEditMode = mode === 'edit';
+  const isEditMode = mode === "edit";
   const isCreateMode = mode === "create";
 
-  // Status of the Stock Book
   const reportId = stockBook?.StockBook_ID ?? "—";
   const cerealType = stockBook?.CerealType ?? cereal ?? "—";
   const status = stockBook?.Status ?? "In Progress";
 
-  // Status badge styles
   const STATUS_CONFIG = {
-    "In Progress": { label: "In Progress", className: "status-badge status-in-progress"},
-    "Under Review": { label: "Under Review", className: "status-badge status-under-review"},
-    "Completed": { label: "Completed", className: "status-badge status-completed"}
+    "In Progress": {
+      label: "In Progress",
+      className: "inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap bg-[#F0E48B] text-[#856404]",
+    },
+    "Under Review": {
+      label: "Under Review",
+      className: "inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap bg-[#ADCEFF] text-blue-800",
+    },
+    Completed: {
+      label: "Completed",
+      className: "inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[13px] font-semibold whitespace-nowrap bg-[#8BF093] text-green-800",
+    },
   };
-  const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG["In Progress"]
+  const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG["In Progress"];
 
-  // each fields/row in the table
-    const EMPTY_ROW = {
-    year:            "",
-    month:           "",
-    Particulars:     "",
-    Plate_Number:    "",
-    WSR:             "",
-    WSI:             "",
-    Batch_No:        "",
-    Age:             "",
-    AI_Number:       "",
-    OR_Number:       "",
-    Moisture_Content:"",
-    Classifier:      "",
-    Transaction:     "",
-    Pile_No:         "",
-    R_Bags:          "",
-    R_GKG:           "",
-    R_NKG:           "",
-    R_Ave_Weight:    "",
-    I_Bags:          "",
-    I_GKG:           "",
-    I_NKG:           "",
-    I_Ave_Weight:    "",
-    Fillers:         "",
-    B_Bags:          "",
-    B_GKG:           "",
-    B_NKG:           "",
-    Avg_Weight:      "",
-    Bags_Weight:     "",
-    SOBRA:           "",
+  const EMPTY_ROW = {
+    year: "", month: "", Particulars: "", Plate_Number: "", WTS: "",
+    WSR: "", WSI: "", Batch_No: "", Age: "", AI_Number: "", OR_Number: "",
+    Moisture_Content: "", Classifier: "", Transaction: "", Pile_No: "",
+    R_Bags: "", R_GKG: "", R_NKG: "", R_Cond: "", I_Bags: "", I_GKG: "",
+    I_NKG: "", I_Cond: "", Fillers: "", B_Bags: "", B_GKG: "", B_NKG: "",
   };
-  const [rows, setRows]= useState(
-    // TODO (backend): when viewing an existing stock book, pre-fill from fetched rows:
-    // stockBook?.rows ?? Array.from({ length: 15 }, () => ({ ...EMPTY_ROW }))
-    Array.from({ length: 15}, () => ({ ...EMPTY_ROW}))
+
+  const [rows, setRows] = useState(
+    Array.from({ length: 15 }, () => ({ ...EMPTY_ROW }))
   );
 
-  // custom functions
   const handleRowChange = (rowIndex, field, value) => {
     if (isViewMode) return;
     setRows((prev) => {
       const updated = [...prev];
-      updated[rowIndex] = { ...updated[rowIndex], [field]: value};
+      updated[rowIndex] = { ...updated[rowIndex], [field]: value };
       return updated;
     });
   };
 
   const handleSubmitCreate = () => {
     const payload = {
-      // Name: supervisorName,
-      // WHCode: warehouseCode,
       CerealType: cerealType,
       Status: "Under Review",
-
-      rows: rows.filter((row) =>
-        Object.values(row).some((v) => v !== "")
-      ),
+      rows: rows.filter((row) => Object.values(row).some((v) => v !== "")),
     };
-
     console.log("Stock Book Payload (ready for API):", payload);
-
-    // TODO (backend): wire up your API call here, e.g.:
-    // const res = await axios.post("/api/stockbook", payload);
-    // or:
-    // const res = await fetch("/api/stockbook", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(payload),
-    // });
-    
     navigate("/whse/management");
-  }
+  };
+
   const handleSubmitEdit = () => {
     const payload = {
       StockBook_ID: reportId,
-      // Name: supervisorName,
-      // WHCode: warehouseCode,
       CerealType: cerealType,
       Status: status,
       rows: rows.filter((row) => Object.values(row).some((v) => v !== "")),
     };
-
     console.log("Edit Payload (ready for API):", payload);
-
-    // TODO (backend):
-    // await axios.put(`/api/stockbook/${reportId}`, payload);
- 
     navigate("/whse/management");
-  }
+  };
+
+  const CellInput = ({ value, onChange }) => (
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      className="w-full h-full border border-[#cfd6e0] px-1 py-0.5 text-[12px] outline-none bg-white text-[#2d317f] focus:bg-[#f3f7ff] focus:border-[#2d317f]"
+    />
+  );
 
   return (
-    <div className="create-report-container">
-      {/* HEADER */}
-      <div className="report-header">
+    <div className="flex flex-col min-h-full p-5 box-border">
+
+      {/* header */}
+      <div className="flex-shrink-0 flex gap-[30px] items-center bg-white px-5 py-3 text-sm text-[#2d317f] border border-[#cfd6e0]">
         <div>
           <strong>Report ID:</strong> {reportId}
         </div>
-
-        <div className="header-input">
+        <div className="flex items-center gap-2.5">
           <strong>Warehouse Supervisor:</strong>
-          {/* reflect to the user later on */}
-          {/* <span>{supervisorName}</span> */}
         </div>
-
         <div>
           <strong>Cereal Type:</strong> {cerealType}
         </div>
-
-        <div className="header-input">
+        <div className="flex items-center gap-2.5">
           <strong>Warehouse Code:</strong>
-          {/* reflect to the user's whse code later on */}
-          {/* <span>{warehouseCode}</span> */}
         </div>
-
-        <div style={{ display: 'flex', alignItems: "center", gap: '8px'}}>
+        <div className="flex items-center gap-2">
           <strong>Status:</strong>
           <div className={badgeConfig.className}>{badgeConfig.label}</div>
         </div>
-
-        {/* import and export of stock book */}
-        <div className="import-export-container">
-          <button className="imp-exp-btn imp-btn"><CiImport size={25} color={'#3E7A43'} /></button>
-          <button className="imp-exp-btn exp-btn"><CiExport size={25} color={'white'} />Export</button>
-
+        <div className="flex gap-5 ml-auto">
+          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 border border-[#3e7a43] bg-transparent rounded-lg px-2 py-1">
+            <CiImport size={25} color="#3E7A43" />
+          </button>
+          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1d8104] text-white rounded-lg px-3 py-1 flex items-center gap-1">
+            <CiExport size={25} color="white" />
+            Export
+          </button>
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="report-table-scroll">
-        <table className="report-table">
-          <thead>
+      {/* table */}
+      <div className="mt-[15px] overflow-auto border border-[#8fa3c1]">
+        <table className="border-collapse min-w-[2200px] w-full">
+          <thead className="sticky top-0 z-10">
             <tr>
-              <th colSpan="2">Date</th>
-              <th rowSpan="2">Particulars</th>
-              <th rowSpan="2">Plate #</th>
-              <th colSpan="2">WTS#</th>
-              <th rowSpan="2">Batch No.</th>
-              <th rowSpan="2">Age</th>
-              <th rowSpan="2">AI#</th>
-              <th rowSpan="2">OR#</th>
-              <th rowSpan="2">Moisture Content</th>
-              <th rowSpan="2">Classifier</th>
-              <th rowSpan="2">Transaction</th>
-              <th rowSpan="2">Pile No.</th>
-              <th colSpan="3">Receipts</th>
-              <th rowSpan="2">Average Weight</th>
-              <th colSpan="3">Issues</th>
-              <th rowSpan="2">Average Weight</th>
-              <th rowSpan="2">Fillers</th>
-              <th colSpan="3">Balance</th>
-              <th rowSpan="2">AVE. WT. per GKg BAL</th>
-              <th rowSpan="2">BAGS @50KGs per BAG</th>
-              <th rowSpan="2">SOBRA</th>
+              {[
+                { label: "Date", colSpan: 2 },
+                { label: "Particulars", rowSpan: 2 },
+                { label: "Plate #", rowSpan: 2 },
+                { label: "WTS #", rowSpan: 2 },
+                { label: "WSR #", rowSpan: 2 },
+                { label: "WSI #", rowSpan: 2 },
+                { label: "Batch No.", rowSpan: 2 },
+                { label: "Age", rowSpan: 2 },
+                { label: "AI#", rowSpan: 2 },
+                { label: "OR#", rowSpan: 2 },
+                { label: "Moisture Content", rowSpan: 2 },
+                { label: "Classifier", rowSpan: 2 },
+                { label: "Transaction", rowSpan: 2 },
+                { label: "Pile No.", rowSpan: 2 },
+                { label: "Receipts", colSpan: 3 },
+                { label: "Cond", rowSpan: 2 },
+                { label: "Issues", colSpan: 3 },
+                { label: "Cond", rowSpan: 2 },
+                { label: "Fillers", rowSpan: 2 },
+                { label: "Balance", colSpan: 3 },
+              ].map((th, i) => (
+                <th
+                  key={i}
+                  colSpan={th.colSpan}
+                  rowSpan={th.rowSpan}
+                  className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
+                >
+                  {th.label}
+                </th>
+              ))}
             </tr>
-
             <tr>
-              <th>Year</th>
-              <th>Month</th>
-
-              <th>WSR#</th>
-              <th>WSI#</th>
-
-              <th>Bags</th>
-              <th>GKg</th>
-              <th>NKg</th>
-
-              <th>Bags</th>
-              <th>GKg</th>
-              <th>NKg</th>
-
-              <th>Bags</th>
-              <th>GKg</th>
-              <th>NKg</th>
+              {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
+                (label, i) => (
+                  <th
+                    key={i}
+                    className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
+                  >
+                    {label}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
 
           <tbody>
             {rows.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                <td>
-                  <input type="text" value={row.year} onChange={(e) => handleRowChange(rowIndex, "year", e.target.value)} />
-                </td>
-                <td>
-                  <input type="text" value={row.month} onChange={(e) => handleRowChange(rowIndex, "month", e.target.value)} />
-                </td>
-                {/* Main info */}
-                <td>
-                  <input type="text" value={row.Particulars} onChange={(e) => handleRowChange(rowIndex, "Particulars", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Plate_Number} onChange={(e)=> handleRowChange(rowIndex, "Plate_Number", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.WSR} onChange={(e) => handleRowChange(rowIndex, "WSR", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.WSI} onChange={(e) => handleRowChange(rowIndex, "WSI", e.target.value)} />
-                </td>
-                <td>
-                  <input type="text" value={row.Batch_No} onChange={(e) => handleRowChange(rowIndex, "Batch_No", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Age} onChange={(e) => handleRowChange(rowIndex, "Age", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.AI_Number} onChange={(e) => handleRowChange(rowIndex, "AI_Number", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.OR_Number} onChange={(e) => handleRowChange(rowIndex, "OR_Number", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Moisture_Content} onChange={(e) => handleRowChange(rowIndex, "Moisture_Content", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Classifier} onChange={(e) => handleRowChange(rowIndex, "Classifier", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Transaction} onChange={(e) => handleRowChange(rowIndex, "Transaction", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.Pile_No} onChange={(e) => handleRowChange(rowIndex, "Pile_No", e.target.value)}/>
-                </td>
-
-                {/* Receipts */}
-                <td>
-                  <input type="text" value={row.R_Bags} onChange={(e) => handleRowChange(rowIndex, "R_Bags", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.R_GKG} onChange={(e) => handleRowChange(rowIndex, "R_GKG", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.R_NKG} onChange={(e) => handleRowChange(rowIndex, "R_NKG", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.R_Ave_Weight} onChange={(e) => handleRowChange(rowIndex, "R_Ave_Weight", e.target.value)}/>
-                </td>
-
-                {/* Issues */}
-                <td>
-                  <input type="text" value={row.I_Bags} onChange={(e) => handleRowChange(rowIndex, "I_Bags", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.I_GKG} onChange={(e) => handleRowChange(rowIndex, "I_GKG", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.I_NKG} onChange={(e) => handleRowChange(rowIndex, "I_NKG", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.I_Ave_Weight} onChange={(e) => handleRowChange(rowIndex, "I_Ave_Weight", e.target.value)}/>
-                </td>
-
-                {/* Fillers */}
-                <td>
-                  <input type="text" value={row.Fillers} onChange={(e) => handleRowChange(rowIndex, "Fillers", e.target.value)}/>
-                </td>
-
-                {/* Balance */}
-                <td>
-                  <input type="text" value={row.B_Bags} onChange={(e) => handleRowChange(rowIndex, "B_Bags", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.B_GKG} onChange={(e) => handleRowChange(rowIndex, "B_GKG", e.target.value)}/>
-                </td>
-                <td>
-                  <input type="text" value={row.B_NKG} onChange={(e) => handleRowChange(rowIndex, "B_NKG", e.target.value)}/>
-                </td>
-
-                {/* AVE. WT. per GKg BAL */}
-                <td>
-                  <input type="text" value={row.Avg_Weight} onChange={(e) => handleRowChange(rowIndex, "Avg_Weight", e.target.value)}/>
-                </td>
-                {/* BAGS @50KGs per BAG */}
-                <td>
-                  <input type="text" value={row.Bags_Weight} onChange={(e) => handleRowChange(rowIndex, "Bags_Weight", e.target.value)}/>
-                </td>
-                {/* SOBRA */}
-                <td>
-                  <input type="text" value={row.SOBRA} onChange={(e) => handleRowChange(rowIndex, "SOBRA", e.target.value)}/>
-                </td>
+              <tr key={rowIndex} className="text-[#2d317f] bg-white">
+                {[
+                  ["year", row.year],
+                  ["month", row.month],
+                  ["Particulars", row.Particulars],
+                  ["Plate_Number", row.Plate_Number],
+                  ["WTS", row.WTS],
+                  ["WSR", row.WSR],
+                  ["WSI", row.WSI],
+                  ["Batch_No", row.Batch_No],
+                  ["Age", row.Age],
+                  ["AI_Number", row.AI_Number],
+                  ["OR_Number", row.OR_Number],
+                  ["Moisture_Content", row.Moisture_Content],
+                  ["Classifier", row.Classifier],
+                  ["Transaction", row.Transaction],
+                  ["Pile_No", row.Pile_No],
+                  ["R_Bags", row.R_Bags],
+                  ["R_GKG", row.R_GKG],
+                  ["R_NKG", row.R_NKG],
+                  ["R_Cond", row.R_Cond],
+                  ["I_Bags", row.I_Bags],
+                  ["I_GKG", row.I_GKG],
+                  ["I_NKG", row.I_NKG],
+                  ["I_Cond", row.I_Cond],
+                  ["Fillers", row.Fillers],
+                  ["B_Bags", row.B_Bags],
+                  ["B_GKG", row.B_GKG],
+                  ["B_NKG", row.B_NKG],
+                ].map(([field, value]) => (
+                  <td key={field} className="border border-[#8fa3c1] h-8">
+                    <CellInput
+                      value={value}
+                      onChange={(e) => handleRowChange(rowIndex, field, e.target.value)}
+                    />
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* BUTTONS */}
-      <div className="report-buttons">
-
+      {/* button */}
+      <div className="flex-shrink-0 mt-[15px] flex justify-end gap-2.5">
         {isCreateMode && (
           <>
             <button
-              className="btn-back"
+              className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer"
               onClick={() => navigate("/whse/management")}
-            >Back</button>
-            <button className="btn-submit" onClick={handleSubmitCreate}>
+            >
+              Back
+            </button>
+            <button
+              className="px-[18px] py-2 border-none bg-[#2d317f] text-white rounded-md cursor-pointer"
+              onClick={handleSubmitCreate}
+            >
               Submit
             </button>
           </>
         )}
-
         {isEditMode && (
           <>
             <button
-              className="btn-back"
+              className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer"
               onClick={() => navigate("/whse/management")}
-            >Cancel</button>
-            <button className="btn-submit" onClick={handleSubmitEdit}>
+            >
+              Cancel
+            </button>
+            <button
+              className="px-[18px] py-2 border-none bg-[#2d317f] text-white rounded-md cursor-pointer"
+              onClick={handleSubmitEdit}
+            >
               Submit
             </button>
           </>
         )}
-
         {isViewMode && (
-          <button className="btn-back" onClick={() => navigate("/whse/management")}>
+          <button
+            className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer"
+            onClick={() => navigate("/whse/management")}
+          >
             Back
           </button>
         )}

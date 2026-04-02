@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // layouts
 import AdminLayout from "./layouts/AdminLayout";
 import WhseSpvsorLayout from "./layouts/WhseSpvsorLayout";
+import CreateReportLayout from "./layouts/CreateReportLayout";
 
 // general import
 import ReportSummarization from "./components/ReportSummarization";
@@ -68,14 +69,15 @@ function App() {
         {/* report */}
         <Route path = "summarization/summary" element={<SummaryReport/>}/>
 
-        {/* for stock book */}
+        <Route path="notif" element={<Notifications role="supervisor" />} />
+        <Route path="audit" element={<AuditLogs />} />
+      </Route>
+
+      {/* create report layout for whse (stock book) */}
+      <Route path="/whse" element={<ProtectedRoute><CreateReportLayout /></ProtectedRoute>}>
         <Route path="create/:cereal" element={<CreateReport />} />
         <Route path="view/:id" element={<CreateReport />} />
         <Route path="edit/:id" element={<CreateReport />} />
-
-        <Route path="notif" element={<Notifications role="supervisor" />} />
-        <Route path="audit" element={<AuditLogs />} />
-        <Route path="summarization/summary" element={<SummaryReport/>}/>
       </Route>
     </Routes>
   );
