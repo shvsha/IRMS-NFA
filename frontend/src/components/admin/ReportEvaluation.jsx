@@ -165,16 +165,16 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto ">
           <Table>
             <TableHeader className='text-center'>
-              <TableRow className='bg-[#E2EBFF]'>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Date</TableHead>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Cereal Type</TableHead>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Report Type</TableHead>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Warehouse</TableHead>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Status</TableHead>
-                <TableHead className='text-[#2D317F] font-bold py-3 text-center'>Actions</TableHead>
+              <TableRow className='bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]'>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Date</TableHead>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Cereal Type</TableHead>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Report Type</TableHead>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Warehouse</TableHead>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Status</TableHead>
+                <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -220,7 +220,7 @@ export default function ReportEvaluation() {
 
       {/* approve modal */}
       <AlertDialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0'>
+        <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none'>
           <div className='h-7 bg-[#3E7A43] rounded-t-lg'></div>
           <AlertDialogHeader className='p-5 text-center items-center pb-4'>
             <div className="rounded-full px-5 py-5 bg-[#3E7A43]">
@@ -244,7 +244,7 @@ export default function ReportEvaluation() {
 
       {/* reject modal */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className='pt-0 px-0 pb-0 overflow-hidden !max-w-lg bg-[#E6EEF6] [&>button]:hidden'>
+        <DialogContent className='pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[540px] bg-[#E6EEF6] [&>button]:hidden'>
           <div className='h-7 bg-[#BB2325]'></div>
           <DialogHeader className='p-5 text-center items-center pb-2'>
             <div className="rounded-full p-5 bg-[#BB2325] w-fit">

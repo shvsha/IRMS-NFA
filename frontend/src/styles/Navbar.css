@@ -1,12 +1,12 @@
 .nav-link {
   font-weight: 600;
   color: #0B3B66;
-  padding: 10px 20px;
+  padding: 0 clamp(10px, 1.2vw, 20px);
   text-decoration: none;
   position: relative;
+  font-size: clamp(1rem, 0.9vw, 1.15rem);
   transition: color 0.3s ease;
-  padding-top: 0;
-  padding-bottom: 0;
+  white-space: nowrap;
 }
 .nav-link::after {
   content: '';

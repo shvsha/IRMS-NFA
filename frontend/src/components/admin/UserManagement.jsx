@@ -267,18 +267,18 @@ export default function UserManagement() {
         </AlertDialogContent>
       </AlertDialog>
                     
-      <div className='min-h-[430px] overflow-hidden'>
+      <div className='min-h-[430px] overflow-hidden '>
         <Table>
           <TableHeader className='text-center'>
-            <TableRow className='bg-[#E2EBFF]'>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Warehouse ID</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Office ID</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Name</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Email</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>User Level</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Position</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Status</TableHead>
-              <TableHead className='text-[#2D317F] font-bold py-3 text-center '>Action</TableHead>
+            <TableRow className='bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]'>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Warehouse ID</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Office ID</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Name</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Email</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>User Level</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Position</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Status</TableHead>
+              <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

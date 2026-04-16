@@ -118,14 +118,14 @@ export default function ReportSummarization() {
         </div>
 
         {/* Table */}
-        <div className="w-full flex-1">
+        <div className="w-full flex-1 ">
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#e2ebff] !hover:bg-transparent h-[46px] ">
+              <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px] ">
                 {TABLE_HEADERS.map((h, i) => (
                   <TableHead
                     key={i}
-                    className="font-bold text-[13px] text-[#2d317f] text-center px-4 first:pl-5 leading-tight"
+                    className="font-bold text-[#2d317f] text-center px-4 first:pl-5 leading-tight h-10 xl:h-12 2xl:h-[50px] text-[11px] xl:text-[13px]"
                   >
                     <div className="flex flex-col items-center">
                       <span>{h.label}</span>

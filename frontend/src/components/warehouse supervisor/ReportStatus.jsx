@@ -69,7 +69,7 @@ export default function ReportStatus() {
       {/* Filters */}
       <div className="flex justify-end gap-2.5 py-2.5 mb-4">
         <Select value={selectedCerealType} onValueChange={(v) => setSelectedCerealType(v)}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-42 cursor-pointer whitespace-nowrap">
+          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-42 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Cereal Type" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +80,7 @@ export default function ReportStatus() {
         </Select>
 
         <Select value={selectedReportType} onValueChange={(v) => setSelectedReportType(v)}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-45 min-w-0 cursor-pointer whitespace-nowrap">
+          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-45 min-w-0 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Report Type" />
           </SelectTrigger>
           <SelectContent>
@@ -91,7 +91,7 @@ export default function ReportStatus() {
         </Select>
 
         <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v)}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-32 min-w-0 cursor-pointer whitespace-nowrap">
+          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-32 min-w-0 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -107,13 +107,13 @@ export default function ReportStatus() {
       <div className="bg-white flex-1 overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF]">
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Date</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Report ID</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Report Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Cereal Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Status</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Actions</TableHead>
+            <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Date</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Report ID</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Report Type</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Cereal Type</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Status</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -156,7 +156,7 @@ export default function ReportStatus() {
 
       {/* Modal*/}
       <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
-        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden !max-w-[500px] [&>button]:hidden bg-[#E6EEF6]">
+        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[540px] [&>button]:hidden bg-[#E6EEF6]">
           <div className="bg-[#BB2325] h-8 rounded-t-lg" />
           <div className="px-5 pb-5">
             <DialogHeader className="mb-3 flex flex-col items-center">

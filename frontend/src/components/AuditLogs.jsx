@@ -113,13 +113,13 @@ export default function AuditLogs() {
       </div>
 
       {/* Table Container */}
-      <div className="mx-[30px] mt-3 flex flex-col bg-white shadow-sm">
+      <div className="mx-[30px] mt-3 flex flex-col bg-white shadow-sm ">
         <div className="w-full overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF]">
+              <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
                 {HEADERS.map(header => (
-                  <TableHead key={header} className="h-12 text-left text-[13px] font-bold text-[#2D317F] px-4">
+                  <TableHead key={header} className="h-10 xl:h-12 2xl:h-[50px] text-left text-sm xl:text-base font-bold text-[#2D317F] px-4">
                     {header}
                   </TableHead>
                 ))}

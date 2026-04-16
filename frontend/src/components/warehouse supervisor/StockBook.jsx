@@ -137,12 +137,12 @@ export default function StockBook() {
       <div className="bg-white flex-1 overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#E2EBFF] hover:bg-[#E2EBFF]">
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Date</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Stock Book ID</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Cereal Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Status</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-[50px]">Action</TableHead>
+            <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Date</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Stock Book ID</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Cereal Type</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Status</TableHead>
+              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -189,7 +189,7 @@ export default function StockBook() {
         setAddDialogOpen(open);
         if (!open) setSelectedType("");
       }}>
-        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden w-80 [&>button]:hidden bg-[#DDE4F3]">
+        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[340px] [&>button]:hidden bg-[#DDE4F3]">
           <div className="bg-[#2D317F] h-8 rounded-t-lg" />
           <div className="px-5 pb-5">
             <DialogHeader className="mb-3">

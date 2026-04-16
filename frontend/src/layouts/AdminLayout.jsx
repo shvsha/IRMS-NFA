@@ -16,7 +16,7 @@ export default function AdminLayout() {
   }, [location.pathname]) // runs every time the path changes
 
   return (
-    <div className="flex flex-col h-screen pb-6.5">
+    <div className="flex flex-col h-screen pb-3 xl:pb-4 2xl:pb-6">
       <TitleBar/>
       <NavBarAdmin/>
       <div className="flex-1 overflow-hidden">

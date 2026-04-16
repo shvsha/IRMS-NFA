@@ -121,7 +121,7 @@ export default function CreateReport() {
       </div>
 
       {/* table */}
-      <div className="mt-[15px] overflow-auto border border-[#8fa3c1]">
+      <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
         <table className="border-collapse min-w-[2200px] w-full">
           <thead className="sticky top-0 z-10">
             <tr>

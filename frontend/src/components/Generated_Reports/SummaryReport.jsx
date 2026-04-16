@@ -80,7 +80,7 @@ export default function NFAWarehouseReceipt() {
 
   return (
       <div
-        className="w-full overflow-y-auto p-5 pb-15"
+        className="w-full h-full overflow-auto p-3 xl:p-5"
         style={{ maxHeight: "calc(100vh - 90px - 60px)" }}
       >
       <div className="relative bg-white w-full box-border p-[clamp(8px,2vw,20px)]"

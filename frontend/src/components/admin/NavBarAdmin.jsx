@@ -8,7 +8,7 @@ import '../../styles/Navbar.css'
 
 export default function NavBarAdmin() {
   return (
-    <nav className='bg-[#ECF0F3] flex justify-between items-center px-2.5 h-15'>
+    <nav className='bg-[#ECF0F3] flex justify-between items-center px-2.5 h-12 xl:h-13 2xl:h-15'>
       <div>
         <NavLink to="/admin/dashboard" className="nav-link">
           Dashboard

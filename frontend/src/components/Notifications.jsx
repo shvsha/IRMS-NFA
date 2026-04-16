@@ -6,7 +6,7 @@ import { TbXboxX } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// shadcn
+// shadcnAlertDialogContent 
 import {
   AlertDialog,
   AlertDialogContent,
@@ -159,11 +159,11 @@ function SupervisorNotifItem({ notif, onClick }) {
   )
 }
 
-// ── Success Modal ─────────────────────────────────────────────────────────────
+// ── Success Modal ──
 function ApproveModal({ open, onClose }) {
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[400px] overflow-hidden rounded-[10px] border-none">
+      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
         {/* colored top bar */}
         <div className="h-[30px] bg-[#3E7A43]" />
 
@@ -183,9 +183,9 @@ function ApproveModal({ open, onClose }) {
         </div>
 
         {/* footer */}
-        <AlertDialogFooter className="justify-center pb-6 mt-4">
+        <AlertDialogFooter className="!flex !items-center !justify-center pb-9 mt-4 bg-[#E6EEF6] border-0">
           <button
-            className="text-white bg-[#3E7A43] px-[30px] py-[10px] rounded-[9px] cursor-pointer transition-opacity duration-200 hover:opacity-80"
+            className="text-white bg-[#3E7A43] px-[30px] py-[7px] rounded-[9px] cursor-pointer transition-opacity duration-200 hover:opacity-80 -mt-5"
             onClick={onClose}
           >
             Done
@@ -196,11 +196,11 @@ function ApproveModal({ open, onClose }) {
   )
 }
 
-// ── Reject Modal ──────────────────────────────────────────────────────────────
+// ── Reject Modal ──
 function RejectModal({ open, onClose, onEdit }) {
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[600px] overflow-hidden rounded-[10px] border-none">
+      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px]  overflow-hidden rounded-[10px] border-none">
         {/* colored top bar */}
         <div className="h-[30px] bg-[#BB2325]" />
 
@@ -222,7 +222,7 @@ function RejectModal({ open, onClose, onEdit }) {
         </div>
 
         {/* footer */}
-        <AlertDialogFooter className="justify-center gap-3 pb-6 mt-4 sm:justify-center">
+        <AlertDialogFooter className="justify-center gap-3 pb-10 mt-4 sm:justify-center border-0 bg-[#E6EEF6]">
           <button
             className="text-[#5B5B5B] bg-[#D9D9D9] px-6 py-2 rounded-[9px] cursor-pointer"
             onClick={onClose}
@@ -241,7 +241,7 @@ function RejectModal({ open, onClose, onEdit }) {
   )
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── Main Component ──
 export default function Notifications({ role }) {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])

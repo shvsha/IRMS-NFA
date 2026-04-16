@@ -37,15 +37,17 @@ export default function TitleBar() {
     <>
       <div className='flex justify-between w-full text-center text-white title-bar-grad p-2 items-center'>
         <div className='flex items-center py2.5 px-4'>
-          <img className='h-22.5 max-w-22.5' src={NFALogo} alt="" />
-          <p className='text-2xl font-semibold ml-4 italic'>Integrated Report Monitoring System</p>
+          <img 
+            className='h-16 xl:h-18 2xl:h-22 max-w-full' 
+            src={NFALogo}/>
+          <p className='text-lg xl:text-xl 2xl:text-2xl font-semibold ml-3 xl:ml-4 italic'>Integrated Report Monitoring System</p>
         </div>
         <AlertDialog>
           <AlertDialogTrigger className='flex items-center justify-center pr-7.5 '  asChild>
-            <Button  className='bg-transparent rounded-8 text-white py-2.5 px-7.5 border-white border font-bold text-17 italic mr-4 '>Logout</Button>
+            <Button className='bg-transparent rounded-lg text-white py-2 px-5 xl:py-2.5 xl:px-7.5  border-white border font-bold text-sm xl:text-base italic mr-3 xl:mr-4 '>Logout</Button>
           </AlertDialogTrigger>
 
-          <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0'>
+          <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none'>
             <div className='h-7 bg-[#2D317F] rounded-t-lg'></div>
             <AlertDialogHeader className='p-5 text-center items-center pb-4'>
               <AlertDialogTitle className='font-bold text-[#2D317F] text-3xl'>Logout</AlertDialogTitle>

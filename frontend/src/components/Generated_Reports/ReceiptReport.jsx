@@ -14,7 +14,7 @@ export default function WarehouseReceiptsForm() {
 
   return (
     <div
-      className="overflow-y-auto w-full p-5 pb-15 box-border flex justify-center items-start"
+      className="overflow-auto h-full w-full p-3 xl:p-5 box-border flex justify-center items-start"
       style={{ maxHeight: "calc(100vh - 90px - 60px)" }}
     >
       <div className="p-[clamp(8px,2vw,20px)] bg-white w-full box-border overflow-x-auto relative">

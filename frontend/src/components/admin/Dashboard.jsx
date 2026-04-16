@@ -125,7 +125,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className='m-7.5 mt-5 flex flex-col overflow-hidden box-border'>
+    <div className='m-4 xl:m-5 2xl:m-7.5 flex flex-col h-[calc(100vh-var(--titlebar-height,130px))]'>
 
       <div className='relative'>
         <div className='flex justify-between items-center mb-3.5 shrink-0 relative'>
@@ -282,7 +282,7 @@ export default function Dashboard() {
             <CardHeader className='p-0'><div className='bg-[#418447] h-3 p-0'></div></CardHeader>
             <CardContent>
               <p className='text-[#418447]'>Approved</p>
-              <div className='ml-15 mt-3 text-5xl text-[#418447] font-medium'>148</div>
+              <div className='ml-8 xl:ml-12 2xl:ml-15 mt-2 xl:mt-3 text-3xl xl:text-4xl 2xl:text-5xl font-medium text-[#418447]'>148</div>
             </CardContent>
 
           </Card>
@@ -304,9 +304,9 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className='flex gap-2.5 flex-1 mt-2'>
+        <div className='flex gap-2 xl:gap2.5 flex-1 mt-2 flex-col lg:flex-row'>
           {/* bar graph */}
-          <div className='bg-[#E1EBFF] rounded-md flex-1 p-4 w-full h-auto pb-1'>
+          <div className='bg-[#E1EBFF] rounded-md flex-1 p-3 xl:p-4 w-full'>
             {/* header */}
             <div className='flex justify-between items--center shrink overflow relative border-b border-b-[#ADCEFF] pb-3'>
               <p className='font-bold text-[#2D317F] p-1 '>Weekly Trend</p>
@@ -321,42 +321,44 @@ export default function Dashboard() {
 
             </div>
             
-          <div className="min-w-[650px] w-full">
-            <ChartContainer config={barChartConfig} className="h-65 w-full mt-2">
-              <BarChart 
-                data={barData} 
-                barCategoryGap="40%" 
-                barGap={6}
-                margin={{ top: 10, right: 20, left: -10, bottom: 20 }}
-              >
-                <CartesianGrid vertical={false} stroke="#0B3B66" strokeDasharray="0" strokeWidth={0.1} />
-                <XAxis
-                  dataKey="warehouse"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#1A2F6F", fontSize: 13 }}
-                />
-                <YAxis
-                  domain={[1, 11]}
-                  ticks={[1, 3, 5, 7, 9, 11]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
-                  width={30}
-                />
-                <Bar barSize={40} dataKey="receipts" fill="var(--color-receipts)" radius={[4, 4, 0, 0]} />
-                <Bar barSize={40} dataKey="issues" fill="var(--color-issues)" radius={[4, 4, 0, 0]} />
-                <ChartLegend 
-                  verticalAlign="bottom"
-                  content={<ChartLegendContent className="pt-2" />} 
-                />
-              </BarChart>
-            </ChartContainer>
+          <div className="overflow-x-auto w-full">
+              <div className='min-w-[400px]'>
+                <ChartContainer config={barChartConfig} className="h-65 w-full mt-2">
+                  <BarChart 
+                    data={barData} 
+                    barCategoryGap="40%" 
+                    barGap={6}
+                    margin={{ top: 10, right: 20, left: -10, bottom: 20 }}
+                  >
+                    <CartesianGrid vertical={false} stroke="#0B3B66" strokeDasharray="0" strokeWidth={0.1} />
+                    <XAxis
+                      dataKey="warehouse"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#1A2F6F", fontSize: 13 }}
+                    />
+                    <YAxis
+                      domain={[1, 11]}
+                      ticks={[1, 3, 5, 7, 9, 11]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#6b7280", fontSize: 12 }}
+                      width={30}
+                    />
+                    <Bar barSize={40} dataKey="receipts" fill="var(--color-receipts)" radius={[4, 4, 0, 0]} />
+                    <Bar barSize={40} dataKey="issues" fill="var(--color-issues)" radius={[4, 4, 0, 0]} />
+                    <ChartLegend 
+                      verticalAlign="bottom"
+                      content={<ChartLegendContent className="pt-2" />} 
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </div>
           </div>
 
           </div>
           {/* pie graph */}
-          <div className='bg-[#E1EBFF] rounded-md p-4 w-full h-auto flex flex-col '>
+          <div className='bg-[#E1EBFF] rounded-md p-3 xl:p-4 w-full lg:w-auto lg:min-[220px] xl:min-[250px]'>
             {/* header */}
             <div className='flex justify-between items-center mb-2 border-b border-b-[#ADCEFF] pb-3'>
               <span className='text-[#2D317F] font-bold '>Report Status</span>
@@ -436,7 +438,7 @@ export default function Dashboard() {
           </div>
 
           {/* audit quic act */}
-          <div className='w-full'>
+          <div className='w-full lg:w-auto lg:min-[200px] xl:min-w[220px]'>
             <div className='bg-[#E1EBFF] p-2 mb-2 rounded-md px-4 py-2'>
               <div className='text-[#2859C5] font-medium mb-2 border-b border-b-[#ADCEFF] pb-3 p-1'>
                 Recent Activities

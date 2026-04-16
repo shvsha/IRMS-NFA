@@ -354,7 +354,7 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <Button className="w-20 px-4 py-3 bg-[#D9D9D9] text-[#5B5B5B]" type='button'>Cancel</Button>
               </AlertDialogTrigger>
 
-              <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0'>
+              <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none'>
                 <div className='h-7 bg-[#BB2325] rounded-t-lg'></div>
                 <AlertDialogHeader className='p-5 text-center items-center pb-4'>
                   <div className="rounded-full px-5 py-5 bg-[#BB2325]"><FaExclamation color={'white'} size={60} /></div>

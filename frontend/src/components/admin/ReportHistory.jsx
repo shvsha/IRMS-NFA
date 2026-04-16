@@ -345,13 +345,13 @@ export default function ReportHistory() {
       </div>
 
       {/* ── Table ── */}
-      <div className="mt-3 flex h-[390px] flex-col overflow-hidden bg-white shadow-sm">
+      <div className="mt-3 flex h-[390px] flex-col overflow-hidden bg-white shadow-sm ">
         <div className="w-full overflow-hidden">
 
           {/* shadcn Table */}
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#E2EBFF] !hover:bg-transparent">
+              <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
                 <TableHead className="h-12 pl-5 text-center font-bold text-[13px] text-[#2D317F]">
                   <div className="flex items-center justify-center gap-2">
                     <input
