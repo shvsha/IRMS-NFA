@@ -1,3 +1,5 @@
+# notification/models.py
+
 from django.db import models
 
 
@@ -11,33 +13,37 @@ class Notification(models.Model):
         related_name='notifications'
     )
 
-    # Submitted by (optional, plain text)
-    # submitted_by = models.CharField(max_length=100, null=True, blank=True)
-    # submitted_by = models.ForeignKey(
-    #     'reports.StockBook',
-    #     on_delete=models.CASCADE,
-    #     related_name='notifications',
-    #     blank=True, null=True
-    # )
-
     # Optional links to WSR or WSI (to get status)
     wsr = models.ForeignKey(
         'reports.WSR', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     wsi = models.ForeignKey(
         'reports.WSI', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
 
+    # Reviewed by (admin who approved/rejected)
+    reviewed_by = models.ForeignKey(        # 👈 added
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reviewed_notifications'
+    )
+
     # Date & Time of audit
     date_audited = models.DateField(null=True, blank=True)
     time_audited = models.TimeField(null=True, blank=True)
 
-    # ───────────── Properties for FK display ─────────────
+    # ───────────── Properties ─────────────
+
     @property
     def submitted_by_name(self):
-        return self.report_id.name  # if self.report_id else '-'
+        """Warehouse user who submitted the report."""
+        return self.report_id.name.full_name if self.report_id.name else '-'
 
-    # @property
-    # def report_id_value(self):
-    #     return self.report.report_id #if self.report else None
+    @property
+    def reviewed_by_name(self):             # 👈 added
+        """Admin who reviewed (approved/rejected) the report."""
+        if self.reviewed_by:
+            return self.reviewed_by.full_name  # → "fname mI lname" from User @property
+        return '-'
 
     @property
     def status(self):

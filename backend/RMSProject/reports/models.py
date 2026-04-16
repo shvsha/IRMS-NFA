@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class StockBook(models.Model):
     report_id = models.AutoField(primary_key=True)
@@ -82,6 +83,13 @@ class WSR(models.Model):
         default='Pending'
     )
     Reason = models.TextField(null=True, blank=True)
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
 
     @property
     def CerealType(self):
@@ -169,6 +177,13 @@ class WSI(models.Model):
         default='Pending'
     )
     Reason = models.TextField(null=True, blank=True)
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
 
     @property
     def Cereal_Type(self):
