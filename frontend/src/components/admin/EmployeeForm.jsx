@@ -136,8 +136,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <div className="m-7.5 text-[#2D317F] bg-white p-6 pb-4">
+      <form onSubmit={handleSubmit} className="h-full">
+        <div className="mx-7.5 my-4 text-[#2D317F] bg-white p-6 pb-4 h-[calc(100%-2rem)] overflow-auto">
           <h2 className="m-0 font-bold text-2xl  ">{isEdit ? "Edit Employee" : "Add New Employee"}</h2>
 
           {/* name information  */}
@@ -344,8 +344,6 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
               </Field>
             </div>
           </div>
-
-
 
           <div className="mt-2.5 flex justify-end gap-4">
             {/* cancel btn */}

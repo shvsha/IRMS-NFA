@@ -28,6 +28,7 @@ import SummaryReport from "./components/Generated_Reports/SummaryReport";
 import ReportStatus from "./components/warehouse supervisor/ReportStatus";
 import CreateReport from "./components/warehouse supervisor/CreateReport";
 import StockBook from "./components/warehouse supervisor/StockBook";
+import ViewReport from './components/warehouse supervisor/ViewReport'
 
 function App() {
   return (
@@ -76,7 +77,7 @@ function App() {
       {/* create report layout for whse (stock book) */}
       <Route path="/whse" element={<ProtectedRoute><CreateReportLayout /></ProtectedRoute>}>
         <Route path="create/:cereal" element={<CreateReport />} />
-        <Route path="view/:id" element={<CreateReport />} />
+        <Route path="view/:id" element={<ViewReport />} />
         <Route path="edit/:id" element={<CreateReport />} />
       </Route>
     </Routes>

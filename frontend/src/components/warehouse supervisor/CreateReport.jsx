@@ -2,6 +2,10 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useState } from "react";
 
+// shadcn
+import { Input } from "@/components/ui/input"
+import { Field, FieldLabel } from "@/components/ui/field"
+
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
 
@@ -79,14 +83,6 @@ export default function CreateReport() {
     navigate("/whse/management");
   };
 
-  const CellInput = ({ value, onChange }) => (
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-      className="w-full h-full border border-[#cfd6e0] px-1 py-0.5 text-[12px] outline-none bg-white text-[#2d317f] focus:bg-[#f3f7ff] focus:border-[#2d317f]"
-    />
-  );
 
   return (
     <div className="flex flex-col min-h-full p-5 box-border">
@@ -120,100 +116,313 @@ export default function CreateReport() {
         </div>
       </div>
 
-      {/* table */}
-      <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
-        <table className="border-collapse min-w-[2200px] w-full">
-          <thead className="sticky top-0 z-10">
-            <tr>
-              {[
-                { label: "Date", colSpan: 2 },
-                { label: "Particulars", rowSpan: 2 },
-                { label: "Plate #", rowSpan: 2 },
-                { label: "WTS #", rowSpan: 2 },
-                { label: "WSR #", rowSpan: 2 },
-                { label: "WSI #", rowSpan: 2 },
-                { label: "Batch No.", rowSpan: 2 },
-                { label: "Age", rowSpan: 2 },
-                { label: "AI#", rowSpan: 2 },
-                { label: "OR#", rowSpan: 2 },
-                { label: "Moisture Content", rowSpan: 2 },
-                { label: "Classifier", rowSpan: 2 },
-                { label: "Transaction", rowSpan: 2 },
-                { label: "Pile No.", rowSpan: 2 },
-                { label: "Receipts", colSpan: 3 },
-                { label: "Cond", rowSpan: 2 },
-                { label: "Issues", colSpan: 3 },
-                { label: "Cond", rowSpan: 2 },
-                { label: "Fillers", rowSpan: 2 },
-                { label: "Balance", colSpan: 3 },
-              ].map((th, i) => (
-                <th
-                  key={i}
-                  colSpan={th.colSpan}
-                  rowSpan={th.rowSpan}
-                  className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
-                >
-                  {th.label}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
-                (label, i) => (
-                  <th
-                    key={i}
-                    className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
-                  >
-                    {label}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
+      {/* container for form */}
+      <div className="mt-[15px] overflow-x-auto w-full flex flex-col gap-3">
 
-          <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="text-[#2d317f] bg-white">
-                {[
-                  ["year", row.year],
-                  ["month", row.month],
-                  ["Particulars", row.Particulars],
-                  ["Plate_Number", row.Plate_Number],
-                  ["WTS", row.WTS],
-                  ["WSR", row.WSR],
-                  ["WSI", row.WSI],
-                  ["Batch_No", row.Batch_No],
-                  ["Age", row.Age],
-                  ["AI_Number", row.AI_Number],
-                  ["OR_Number", row.OR_Number],
-                  ["Moisture_Content", row.Moisture_Content],
-                  ["Classifier", row.Classifier],
-                  ["Transaction", row.Transaction],
-                  ["Pile_No", row.Pile_No],
-                  ["R_Bags", row.R_Bags],
-                  ["R_GKG", row.R_GKG],
-                  ["R_NKG", row.R_NKG],
-                  ["R_Cond", row.R_Cond],
-                  ["I_Bags", row.I_Bags],
-                  ["I_GKG", row.I_GKG],
-                  ["I_NKG", row.I_NKG],
-                  ["I_Cond", row.I_Cond],
-                  ["Fillers", row.Fillers],
-                  ["B_Bags", row.B_Bags],
-                  ["B_GKG", row.B_GKG],
-                  ["B_NKG", row.B_NKG],
-                ].map(([field, value]) => (
-                  <td key={field} className="border border-[#8fa3c1] h-8">
-                    <CellInput
-                      value={value}
-                      onChange={(e) => handleRowChange(rowIndex, field, e.target.value)}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* first layer */}
+        <div className="bg-white py-4 px-5 ">
+          <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Deliver & Vehicle Information</p>
+
+            <div className="flex gap-9 w-full">
+              {/* year and month */}
+              <div>
+                <Field className="flex-col w-fit">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Year</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Year"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Month</FieldLabel>
+                  <Input
+                    placeholder="Month"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              {/* Particulars */}
+              <div className="flex-1">
+                <Field className="flex w-full">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Particulars</FieldLabel>
+                  <Input
+                    placeholder="Particulars"
+                    className="bg-[#E6EEF6] border-0 rounded pb-21 pt-5 "
+                  />
+                </Field>
+              </div>
+              {/* plate # and batch # */}
+              <div className="flex gap-10 flex-1">
+                <Field className="flex flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Plate #</FieldLabel>
+                  <Input
+                    placeholder="Particulars"
+                    className="bg-[#E6EEF6] border-0 rounded h-10"
+                  />
+                </Field>
+                <Field className="flex flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Batch No.</FieldLabel>
+                  <Input
+                    placeholder="Particulars"
+                    className="bg-[#E6EEF6] border-0 rounded h-10"
+                  />
+                </Field>
+              </div>
+            </div>
+
+
+        </div>
+
+        {/* second layer */}
+        <div className="flex gap-3 w-full">
+          {/* Documents */}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Documents</p>
+            
+            <div className="flex gap-9 w-full">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">WTS #</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="WTS #"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">AI #</FieldLabel>
+                  <Input
+                    placeholder="AI #"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">WSR #</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="WSR #"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">OR #</FieldLabel>
+                  <Input
+                    placeholder="OR #"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">WSI #</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="WSI #"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Transaction</FieldLabel>
+                  <Input
+                    placeholder="Transaction"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+          {/* QUality Metrics */}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Quality Metrics</p>
+          
+            {/* Age, Classifier, Moisture Content (%), Pile No. */}
+            <div className="flex gap-5">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Age</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Age"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Moisture Content (%)</FieldLabel>
+                  <Input
+                    placeholder="Moisture Content (%)"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Classifier</FieldLabel>
+                  <Input
+                    placeholder="Classifier"
+                    className="bg-[#E6EEF6] border-0 rounded h-8"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Pile No.</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Pile No."
+                    className="bg-[#E6EEF6] border-0 rounded h-8"
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* third layer */}
+        <div className="flex gap-3 w-full">
+          {/* Receipts */}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Receipts</p>
+            
+            <div className="flex gap-9 w-full">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Bags</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Bags"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Condition</FieldLabel>
+                  <Input
+                    placeholder="Condition"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Gkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Gkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Nkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Nkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+          {/* Issues*/}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Issues</p>
+            
+            <div className="flex gap-9 w-full">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Bags</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Bags"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Condition</FieldLabel>
+                  <Input
+                    placeholder="Condition"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Gkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Gkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Nkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Nkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* fourth layer */}
+        <div className="flex gap-3 w-full">
+          {/* Receipts */}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Receipts</p>
+            
+            <div className="flex gap-9 w-full">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Fillers Description</FieldLabel>
+                  <Input
+                    placeholder="Fillers Description"
+                    className="bg-[#E6EEF6] border-0 rounded pt-5 pb-21 w-full"
+                  />
+                </Field>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Balances*/}
+          <div className="bg-white py-4 px-5 flex-1">
+            <p className="font-bold text-[#2D317F] border-b-[#8fa3c1] border-b pb-2 mb-3">Balances</p>
+            
+            <div className="flex gap-9 w-full">
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Bags</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Bags"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Condition</FieldLabel>
+                  <Input
+                    placeholder="Condition"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Gkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Gkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-col flex-1">
+                <Field className="flex-col w-full flex-1">
+                  <FieldLabel className="text-base font-semibold text-[#2D317F]" htmlFor="firstName">Nkg</FieldLabel>
+                  <Input
+                    type='number'
+                    placeholder="Nkg"
+                    className="bg-[#E6EEF6] border-0 rounded h-8 w-full"
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
       {/* button */}

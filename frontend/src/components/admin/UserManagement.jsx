@@ -93,7 +93,7 @@ export default function UserManagement() {
   }
 
   return (
-    <div className='bg-white m-7.5'>
+    <div className='bg-white mx-7.5 my-4 flex flex-col h-[calc(100%-2rem)]'>
       <div className='flex justify-between items-center mx-7.5 py-4'>
         <p className='text-[#0B3B66] font-bold text-2xl'>User Management</p>
         
@@ -267,7 +267,7 @@ export default function UserManagement() {
         </AlertDialogContent>
       </AlertDialog>
                     
-      <div className='min-h-[430px] overflow-hidden '>
+      <div className='flex-1 overflow-auto'>
         <Table>
           <TableHeader className='text-center'>
             <TableRow className='bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]'>
