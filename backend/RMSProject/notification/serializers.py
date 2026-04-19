@@ -7,6 +7,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     status = serializers.ReadOnlyField()
     reason_text = serializers.ReadOnlyField()
     office_id = serializers.ReadOnlyField()
+    submitted_by_name = serializers.ReadOnlyField()
+    reviewed_by_name = serializers.ReadOnlyField()
 
     class Meta:
         model = Notification
@@ -14,7 +16,9 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = [
             'notif_id',
             'report_id',        # FK to StockBook
+            'recipient',            # ✅ added
             'submitted_by_name',  # dynamic from StockBook.name
+            'reviewed_by_name',     # ✅ added
             'status',        # dynamic
             'date_audited',
             'time_audited',

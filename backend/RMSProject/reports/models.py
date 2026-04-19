@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 class StockBook(models.Model):
     report_id = models.AutoField(primary_key=True)
     name = models.ForeignKey(
@@ -18,31 +19,43 @@ class StockBook(models.Model):
     WSR = models.IntegerField(blank=True, null=True)
     WSI = models.IntegerField(blank=True, null=True)
     Batch_No = models.IntegerField(blank=True, null=True)
-    Age = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Age = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
     AI_Number = models.IntegerField(blank=True, null=True)
     OR_Number = models.IntegerField(blank=True, null=True)
-    Moisture_Content = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Moisture_Content = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
     Classifier = models.CharField(max_length=50, blank=True, null=True)
     Transaction = models.CharField(max_length=20, blank=True, null=True)
     Pile_No = models.IntegerField(blank=True, null=True)
 
     # Receipt
-    R_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_GKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_NKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    R_Bags = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    R_GKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    R_NKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
     Cond_R = models.CharField(max_length=5, blank=True, null=True)
 
     # Issue
-    I_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    I_GKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    I_NKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    I_Bags = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    I_GKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    I_NKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
     Cond_I = models.CharField(max_length=5, blank=True, null=True)
 
-    Fillers = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Fillers = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
 
-    B_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    B_GKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    B_NKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    B_Bags = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    B_GKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
+    B_NKG = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True)
 
     # Signatories
     Assist_BM = models.CharField(max_length=50, blank=True, null=True)
@@ -85,11 +98,12 @@ class WSR(models.Model):
     Reason = models.TextField(null=True, blank=True)
 
     reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True
     )
+    _notification_sent = False  # Internal flag to prevent duplicate notifications
 
     @property
     def CerealType(self):
@@ -176,14 +190,15 @@ class WSI(models.Model):
         choices=EVALUATION_CHOICES,
         default='Pending'
     )
-    Reason = models.TextField(null=True, blank=True)
+    Reason = models.TextField(null=False, blank=False)
 
     reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True
     )
+    _notification_sent = False
 
     @property
     def Cereal_Type(self):
@@ -274,8 +289,10 @@ class Summary(models.Model):
         null=True, blank=True
     )
 
-    E_Bags = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    E_NKG = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    E_Bags = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
+    E_NKG = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
 
     # ── All properties through WSR or WSI → StockBook ─────
 

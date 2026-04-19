@@ -13,11 +13,27 @@ class Notification(models.Model):
         related_name='notifications'
     )
 
+    # ✅ ADDED recipient (who receives notif)
+    recipient = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        null=True, blank=True   # safe for migration
+    )
+
     # Optional links to WSR or WSI (to get status)
     wsr = models.ForeignKey(
         'reports.WSR', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     wsi = models.ForeignKey(
         'reports.WSI', on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+
+    # ✅ NEW: Submitted by (warehouse user who created report)
+    submitted_by = models.ForeignKey(  # 👈 ADDED
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='submitted_notifications'
+    )
 
     # Reviewed by (admin who approved/rejected)
     reviewed_by = models.ForeignKey(        # 👈 added
@@ -35,8 +51,10 @@ class Notification(models.Model):
 
     @property
     def submitted_by_name(self):
-        """Warehouse user who submitted the report."""
-        return self.report_id.name.full_name if self.report_id.name else '-'
+        """Warehouse user who submitted (direct field fallback to report)."""
+        # ✅ IMPROVED: Use direct field first, fallback to old logic
+        return (self.submitted_by.full_name if self.submitted_by
+                else (self.report_id.name.full_name if self.report_id.name else '-'))
 
     @property
     def reviewed_by_name(self):             # 👈 added
@@ -72,3 +90,15 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notif #{self.notif_id} - Report #{self.report_id} - Status: {self.status} - Reason: {self.reason_text}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['wsr', 'recipient'],
+                name='unique_wsr_per_user'
+            ),
+            models.UniqueConstraint(
+                fields=['wsi', 'recipient'],
+                name='unique_wsi_per_user'
+            ),
+        ]

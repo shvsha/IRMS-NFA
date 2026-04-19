@@ -84,7 +84,7 @@ def upd_wsr(request, pk):
 
             # ✅ Auto assign reviewed_by from logged-in user
             wsr_instance._reviewed_by = request.user  # 👈 attach to signal
-            wsr_instance.reviewed_by = request.user   # 👈 save to DB
+            # wsr_instance.reviewed_by = request.user   # 👈 save to DB
             wsr_instance.save()
 
             return Response(serializer.data)
@@ -130,7 +130,7 @@ def upd_wsi(request, pk):
 
             # ✅ Auto assign reviewed_by from logged-in user
             wsi_instance._reviewed_by = request.user  # 👈 attach to signal
-            wsi_instance.reviewed_by = request.user   # 👈 save to DB
+            # wsi_instance.reviewed_by = request.user   # 👈 save to DB
             wsi_instance.save()
 
             return Response(serializer.data)
