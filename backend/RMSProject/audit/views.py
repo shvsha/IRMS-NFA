@@ -1,14 +1,23 @@
-#not yet sure
+from rest_framework import generics, permissions
+from audit.models import AuditLog
+from .serializers import AuditLogSerializer
+from audit.models import create_audit_entry
 
-from .models import AuditLog
+class AuditLogListView(generics.ListAPIView):
+    serializer_class = AuditLogSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-def create_audit_entry(user, module, action):
-    """
-    Utility function to standardize audit logging across the system.
-    """
-    return AuditLog.objects.create(
-        User_ID=user,
-        Module=module,
-        Action=action
-    )
+    def get_queryset(self):
+        queryset = AuditLog.objects.all().order_by('-Date_audited', '-Time_audited')
+        module = self.request.query_params.get('module')
+        user_id = self.request.query_params.get('user_id')
+        date = self.request.query_params.get('date')
 
+        if module:
+            queryset = queryset.filter(Module__icontains=module)
+        if user_id:
+            queryset = queryset.filter(User_ID=user_id)
+        if date:
+            queryset = queryset.filter(Date_audited=date)
+
+        return queryset

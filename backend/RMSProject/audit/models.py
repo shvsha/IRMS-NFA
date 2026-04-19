@@ -37,7 +37,7 @@ class AuditLog(models.Model):
     @property
     def Position(self):
         if self.User_ID:
-            return self.User_ID.User_Level 
+            return self.User_ID.position 
         return None
 
     def __str__(self):
@@ -47,3 +47,11 @@ class AuditLog(models.Model):
         db_table = 'tbl_audit'
         verbose_name = "Audit Log"
         verbose_name_plural = "Audit Logs"
+
+
+def create_audit_entry(user, module, action):
+    return AuditLog.objects.create(
+        User_ID=user,
+        Module=module,
+        Action=action
+    )
