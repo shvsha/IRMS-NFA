@@ -168,6 +168,7 @@ export default function StockBook() {
                     <button
                       disabled={r.status === "Completed"}
                       className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
+                      onClick={() => navigate('edit/')}
                     >
                       <FiEdit size={14} /> Edit
                     </button>

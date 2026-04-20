@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import NavBarAdmin from "../components/admin/NavBarAdmin";
+import NavBarAdmin from "../AdminModule/pages/NavBarAdmin";
 import TitleBar from "../components/TitleBar";
 
 export default function AdminLayout() {

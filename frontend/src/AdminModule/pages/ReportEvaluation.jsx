@@ -10,8 +10,6 @@ import { useState } from 'react'
 // react router
 import { useNavigate } from "react-router-dom";
 
-// css
-import '../../styles/admin/ReportEvaluation.css'
 
 // shadcn components
 import { Input } from "@/components/ui/input"

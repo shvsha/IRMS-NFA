@@ -9,9 +9,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 // components
-import { DailyFilter } from '../filters/DailyFilter';
-import { WeeklyFilter } from '../filters/WeeklyFilter';
-import { MonthlyFilter } from '../filters/MonthlyFilter';
+import { DailyFilter } from '../../components/filters/DailyFilter';
+import { WeeklyFilter } from '../../components/filters/WeeklyFilter';
+import { MonthlyFilter } from '../../components/filters/MonthlyFilter';
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

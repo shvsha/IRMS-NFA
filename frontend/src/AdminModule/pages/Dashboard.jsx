@@ -1,6 +1,6 @@
 // filter components
-import { WeeklyFilter } from '../filters/WeeklyFilter'
-import { MonthlyFilter } from '../filters/MonthlyFilter'
+import { WeeklyFilter } from '../../components/filters/WeeklyFilter'
+import { MonthlyFilter } from '../../components/filters/MonthlyFilter'
 
 // react icons
 import { FaRegCalendarAlt } from "react-icons/fa";

@@ -1,5 +1,5 @@
 // react
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useContext, useState } from "react";
 
 // react icons
@@ -7,15 +7,12 @@ import { CiExport, CiImport } from "react-icons/ci";
 
 export default function CreateReport() {
   const { cereal } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const stockBook = location.state?.stockBook ?? null;
   const mode = location.state?.mode ?? "create";
 
   const isViewMode = mode === "view";
-  const isEditMode = mode === "edit";
-  const isCreateMode = mode === "create";
 
   const reportId = stockBook?.StockBook_ID ?? "—";
   const cerealType = stockBook?.CerealType ?? cereal ?? "—";
@@ -58,26 +55,6 @@ export default function CreateReport() {
     });
   };
 
-  const handleSubmitCreate = () => {
-    const payload = {
-      CerealType: cerealType,
-      Status: "Under Review",
-      rows: rows.filter((row) => Object.values(row).some((v) => v !== "")),
-    };
-    console.log("Stock Book Payload (ready for API):", payload);
-    navigate("/whse/management");
-  };
-
-  const handleSubmitEdit = () => {
-    const payload = {
-      StockBook_ID: reportId,
-      CerealType: cerealType,
-      Status: status,
-      rows: rows.filter((row) => Object.values(row).some((v) => v !== "")),
-    };
-    console.log("Edit Payload (ready for API):", payload);
-    navigate("/whse/management");
-  };
 
   const CellInput = ({ value, onChange }) => (
     <input

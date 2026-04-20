@@ -14,8 +14,6 @@ import { FaExclamation } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa6";
 import { Eye, EyeOff } from "lucide-react"
 
-// css
-import '../../styles/admin/EmployeeForm.css'
 
 export default function EmployeeForm({ mode = 'add', employeeData = null, onCancel }) {
   const isEdit = mode === 'edit';

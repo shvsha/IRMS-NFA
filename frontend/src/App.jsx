@@ -1,85 +1,38 @@
-import "./App.css";
 import Login from "./components/Login";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // layouts
-import AdminLayout from "./layouts/AdminLayout";
-import WhseSpvsorLayout from "./layouts/WhseSpvsorLayout";
+import AdminLayout from "./AdminModule/AdminLayout";
+import WhseSpvsorLayout from "./WhseModule/WhseSpvsorLayout";
 import CreateReportLayout from "./layouts/CreateReportLayout";
 
-// general import
-import ReportSummarization from "./components/ReportSummarization";
-import Notifications from "./components/Notifications";
-import AuditLogs from "./components/AuditLogs";
-
-// import for admin nav
-import Dashboard from "./components/admin/Dashboard";
-import UserMagement from "./components/admin/UserManagement";
-import ReportEvaluation from "./components/admin/ReportEvaluation";
-import ReportHistory from "./components/admin/ReportHistory";
-
-// import Generated Receipt Report 
-import ReceiptReport from "./components/Generated_Reports/ReceiptReport";
-import IssuesReport from "./components/Generated_Reports/IssuesReport";
-import SummaryReport from "./components/Generated_Reports/SummaryReport";
-
-// import for whse supervisor nav
-import ReportStatus from "./components/warehouse supervisor/ReportStatus";
-import CreateReport from "./components/warehouse supervisor/CreateReport";
-import StockBook from "./components/warehouse supervisor/StockBook";
-import ViewReport from './components/warehouse supervisor/ViewReport'
+// Routes
+import AdminRoute from './AdminModule/Index'
+import WhseRoute, { WhseReportRoute } from './WhseModule/Index'
 
 function App() {
   return (
     <Routes>
-      {/* Public route */}
+      {/* landing page */}
       <Route path="/" element={<Login />} />
 
       {/* admin */}
-      <Route path="/admin" element={
-        <ProtectedRoute>
-         <AdminLayout />
-        </ProtectedRoute>
-        }>
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="users" element={<UserMagement />} />
-        <Route path="evaluation" element={<ReportEvaluation />} />
-        <Route path="summarization" element={<ReportSummarization />} />
-        <Route path="history" element={<ReportHistory />} />
-        <Route path="audit" element={<AuditLogs />} />
-        <Route path="notif" element={<Notifications role="admin" />} />
-
-        {/* Generated Receipt Report Route */}
-        <Route path = "evaluation/receipt" element={<ReceiptReport/>}/>
-        <Route path = "evaluation/issue" element={<IssuesReport/>}/>
-        <Route path = "summarization/summary" element={<SummaryReport/>}/>
-
+      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+        {AdminRoute}
       </Route>
 
       {/* warehouse supervisor */}
-      <Route path="/whse" element={
-        <ProtectedRoute>
-          <WhseSpvsorLayout />
-        </ProtectedRoute>
+      <Route path="/whse" element={<ProtectedRoute> <WhseSpvsorLayout /> </ProtectedRoute>
         }>
-        <Route path="management" element={<StockBook />} />
-        <Route path="status" element={<ReportStatus />} />
-        <Route path="summarization" element={<ReportSummarization />} />
-
-        {/* report */}
-        <Route path = "summarization/summary" element={<SummaryReport/>}/>
-
-        <Route path="notif" element={<Notifications role="supervisor" />} />
-        <Route path="audit" element={<AuditLogs />} />
+        {WhseRoute}
       </Route>
 
-      {/* create report layout for whse (stock book) */}
+      {/* create/edit/view report layout for whse (stock book) */}
       <Route path="/whse" element={<ProtectedRoute><CreateReportLayout /></ProtectedRoute>}>
-        <Route path="create/:cereal" element={<CreateReport />} />
-        <Route path="view/:id" element={<ViewReport />} />
-        <Route path="edit/:id" element={<CreateReport />} />
+        {WhseReportRoute}
       </Route>
+
     </Routes>
   );
 }
