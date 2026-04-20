@@ -7,6 +7,7 @@ from rest_framework import status
 from .models import StockBook, WSR, WSI, Summary
 from .serializers import StockBookSerializer, WSRSerializer, WSISerializer, SummarySerializer
 from reports.models import Summary, WSR, WSI
+from audit.views import create_audit_entry # Import the utility
 
 
 # ── StockBook ──────────────────────────────────────────────
