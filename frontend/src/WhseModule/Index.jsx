@@ -35,8 +35,8 @@ export const WhseReportRoute = (
   <>
     <Route path="create/:cereal" element={<CreateReport />}/>
     <Route path='create/:cereal/review/' element={<ReviewTransaction/>}/>
-    <Route path="view/" element={<ViewReport />} />
-    <Route path="edit/" element={<CreateReport />} />
+    <Route path="view/:id" element={<ViewReport />} />
+    <Route path="edit/:id" element={<CreateReport />} />
   </>
 )
 

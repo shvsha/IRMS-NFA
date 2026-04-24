@@ -11,14 +11,13 @@ def log_user_save(sender, instance, created, **kwargs):
     if created:
         action = f"Added User: {instance.full_name} ({instance.username}) - Level: {instance.user_level}"
     else:
-        # Check if it was an archive/status change
         if instance.status == 'Inactive':
             action = f"Archived User: {instance.full_name} ({instance.username})"
         else:
             action = f"Edited User: {instance.full_name} ({instance.username}) - Level: {instance.user_level}, Status: {instance.status}"
 
     AuditLog.objects.create(
-        User_ID=None,  # the actor (who made the change) isn't available in signals
+        User_ID=None,
         Module="User Management",
         Action=action
     )
@@ -40,7 +39,7 @@ def log_stockbook_save(sender, instance, created, **kwargs):
     AuditLog.objects.create(
         User_ID=instance.name,
         Module="Stock Book",
-        Action=f"StockBook #{instance.report_id} {action} - {instance.CerealType} ({instance.Transaction})"
+        Action=f"StockBook #{instance.report_id} {action} - {instance.CerealType} - Status: {instance.Status}"
     )
 
 
@@ -53,41 +52,61 @@ def log_stockbook_delete(sender, instance, **kwargs):
     )
 
 
-# ── Audit WSR Changes ──────────────────────────────────────
-@receiver(post_save, sender='reports.WSR')
-def log_wsr_save(sender, instance, created, **kwargs):
+# ── Audit Transaction Changes ──────────────────────────────
+@receiver(post_save, sender='reports.Transaction')
+def log_transaction_save(sender, instance, created, **kwargs):
     action = "Created" if created else "Updated"
     AuditLog.objects.create(
-        User_ID=instance.Report_id.name,
-        Module="WSR",
-        Action=f"WSR #{instance.Receipt_ID} {action} - Evaluation: {instance.Evaluation}"
+        User_ID=instance.stockbook.name,
+        Module=instance.type,
+        Action=f"{instance.type} #{instance.transaction_id} {action} - StockBook #{instance.stockbook.report_id}"
     )
 
 
-@receiver(post_delete, sender='reports.WSR')
-def log_wsr_delete(sender, instance, **kwargs):
+@receiver(post_delete, sender='reports.Transaction')
+def log_transaction_delete(sender, instance, **kwargs):
     AuditLog.objects.create(
         User_ID=None,
-        Module="WSR",
-        Action=f"Deleted WSR #{instance.Receipt_ID}"
+        Module=instance.type,
+        Action=f"Deleted {instance.type} #{instance.transaction_id}"
     )
 
 
-# ── Audit WSI Changes ──────────────────────────────────────
-@receiver(post_save, sender='reports.WSI')
-def log_wsi_save(sender, instance, created, **kwargs):
+# ── Audit WSRReport Changes ────────────────────────────────
+@receiver(post_save, sender='reports.WSRReport')
+def log_wsr_report_save(sender, instance, created, **kwargs):
     action = "Created" if created else "Updated"
     AuditLog.objects.create(
-        User_ID=instance.Report_id.name,
-        Module="WSI",
-        Action=f"WSI #{instance.Issue_ID} {action} - Evaluation: {instance.Evaluation}"
+        User_ID=instance.reviewed_by if not created else None,
+        Module="WSR Report",
+        Action=f"WSRReport #{instance.wsr_report_id} {action} - Evaluation: {instance.Evaluation} - StockBook #{instance.stockbook.report_id}"
     )
 
 
-@receiver(post_delete, sender='reports.WSI')
-def log_wsi_delete(sender, instance, **kwargs):
+@receiver(post_delete, sender='reports.WSRReport')
+def log_wsr_report_delete(sender, instance, **kwargs):
     AuditLog.objects.create(
         User_ID=None,
-        Module="WSI",
-        Action=f"Deleted WSI #{instance.Issue_ID}"
+        Module="WSR Report",
+        Action=f"Deleted WSRReport #{instance.wsr_report_id}"
+    )
+
+
+# ── Audit WSIReport Changes ────────────────────────────────
+@receiver(post_save, sender='reports.WSIReport')
+def log_wsi_report_save(sender, instance, created, **kwargs):
+    action = "Created" if created else "Updated"
+    AuditLog.objects.create(
+        User_ID=instance.reviewed_by if not created else None,
+        Module="WSI Report",
+        Action=f"WSIReport #{instance.wsi_report_id} {action} - Evaluation: {instance.Evaluation} - StockBook #{instance.stockbook.report_id}"
+    )
+
+
+@receiver(post_delete, sender='reports.WSIReport')
+def log_wsi_report_delete(sender, instance, **kwargs):
+    AuditLog.objects.create(
+        User_ID=None,
+        Module="WSI Report",
+        Action=f"Deleted WSIReport #{instance.wsi_report_id}"
     )

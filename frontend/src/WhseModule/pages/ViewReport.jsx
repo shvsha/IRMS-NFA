@@ -1,22 +1,25 @@
 // react
-import { useParams, useLocation } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
+import { IoArrowBack } from "react-icons/io5";
 
-export default function CreateReport() {
-  const { cereal } = useParams();
+// api
+import api from "@/api/axios";
+
+export default function ViewReport() {
+  const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const stockBook = location.state?.stockBook ?? null;
-  const mode = location.state?.mode ?? "create";
+  const stockBook  = location.state?.stockBook ?? null;
+  const reportId   = stockBook?.report_id ?? id ?? "—";
+  const cerealType = stockBook?.CerealType ?? "—";
+  const status     = stockBook?.Status ?? "In Progress";
 
-  const isViewMode = mode === "view";
-
-  const reportId = stockBook?.StockBook_ID ?? "—";
-  const cerealType = stockBook?.CerealType ?? cereal ?? "—";
-  const status = stockBook?.Status ?? "In Progress";
+  const whseUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   const STATUS_CONFIG = {
     "In Progress": {
@@ -34,6 +37,11 @@ export default function CreateReport() {
   };
   const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG["In Progress"];
 
+  // us 
+  const [rows, setRows]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+
   const EMPTY_ROW = {
     year: "", month: "", Particulars: "", Plate_Number: "", WTS: "",
     WSR: "", WSI: "", Batch_No: "", Age: "", AI_Number: "", OR_Number: "",
@@ -42,27 +50,71 @@ export default function CreateReport() {
     I_NKG: "", I_Cond: "", Fillers: "", B_Bags: "", B_GKG: "", B_NKG: "",
   };
 
-  const [rows, setRows] = useState(
-    Array.from({ length: 15 }, () => ({ ...EMPTY_ROW }))
-  );
+  const FIELDS = [
+    "year", "month", "Particulars", "Plate_Number", "WTS", "WSR", "WSI",
+    "Batch_No", "Age", "AI_Number", "OR_Number", "Moisture_Content",
+    "Classifier", "Transaction", "Pile_No",
+    "R_Bags", "R_GKG", "R_NKG", "R_Cond",
+    "I_Bags", "I_GKG", "I_NKG", "I_Cond",
+    "Fillers", "B_Bags", "B_GKG", "B_NKG",
+  ];
 
-  const handleRowChange = (rowIndex, field, value) => {
-    if (isViewMode) return;
-    setRows((prev) => {
-      const updated = [...prev];
-      updated[rowIndex] = { ...updated[rowIndex], [field]: value };
-      return updated;
-    });
-  };
+  // fetch transactions 
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get(`/reports/transactions/?stockbook=${reportId}`);
 
+        const mapped = res.data.map((t) => ({
+          year:             stockBook?.Date?.split("-")[0]  ?? "",
+          month:            stockBook?.Date?.split("-")[1]  ?? "",
+          Particulars:      t.Particulars                   ?? "",
+          Plate_Number:     t.Plate_Number                  ?? "",
+          WTS:              t.WTS_no                        ?? "",
+          WSR:              t.WSR_no                        ?? "",
+          WSI:              t.WSI_no                        ?? "",
+          Batch_No:         t.Batch_No                      ?? "",
+          Age:              t.Age                           ?? "",
+          AI_Number:        t.AI_Number                     ?? "",
+          OR_Number:        t.OR_Number                     ?? "",
+          Moisture_Content: t.Moisture_Content              ?? "",
+          Classifier:       t.Classifier                    ?? "",
+          Transaction:      t.Transaction_ref               ?? "",
+          Pile_No:          t.Pile_No                       ?? "",
+          R_Bags:           t.R_Bags                        ?? "",
+          R_GKG:            t.R_GKG                         ?? "",
+          R_NKG:            t.R_NKG                         ?? "",
+          R_Cond:           t.Cond_R                        ?? "",
+          I_Bags:           t.I_Bags                        ?? "",
+          I_GKG:            t.I_GKG                         ?? "",
+          I_NKG:            t.I_NKG                         ?? "",
+          I_Cond:           t.Cond_I                        ?? "",
+          Fillers:          t.Fillers                       ?? "",
+          B_Bags:           stockBook?.B_Bags               ?? "",
+          B_GKG:            stockBook?.B_GKG                ?? "",
+          B_NKG:            stockBook?.B_NKG                ?? "",
+        }));
 
-  const CellInput = ({ value, onChange }) => (
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-      className="w-full h-full border border-[#cfd6e0] px-1 py-0.5 text-[12px] outline-none bg-white text-[#2d317f] focus:bg-[#f3f7ff] focus:border-[#2d317f]"
-    />
+        // Pad to at least 15 rows
+        const padded = [...mapped];
+        while (padded.length < 15) padded.push({ ...EMPTY_ROW });
+        setRows(padded);
+      } catch (err) {
+        setError("Failed to load transactions.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (reportId !== "—") fetchTransactions();
+  }, [reportId]);
+
+  // read-only cell
+  const Cell = ({ value }) => (
+    <div className="w-full h-full px-1 py-0.5 text-[12px] text-[#2d317f] bg-white">
+      {value !== "" && value !== null && value !== undefined ? String(value) : ""}
+    </div>
   );
 
   return (
@@ -70,18 +122,16 @@ export default function CreateReport() {
 
       {/* header */}
       <div className="flex-shrink-0 flex gap-[30px] items-center bg-white px-5 py-3 text-sm text-[#2d317f] border border-[#cfd6e0]">
-        <div>
-          <strong>Report ID:</strong> {reportId}
-        </div>
-        <div className="flex items-center gap-2.5">
-          <strong>Warehouse Supervisor:</strong>
-        </div>
-        <div>
-          <strong>Cereal Type:</strong> {cerealType}
-        </div>
-        <div className="flex items-center gap-2.5">
-          <strong>Warehouse Code:</strong>
-        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="cursor-pointer transition-opacity duration-200 hover:opacity-70 flex items-center gap-1 text-[#2d317f]"
+        >
+          <IoArrowBack size={18} />
+        </button>
+        <div><strong>Report ID:</strong> R-{String(reportId).padStart(3, "0")}</div>
+        <div><strong>Warehouse Supervisor:</strong> {whseUser?.fname} {whseUser?.lname}</div>
+        <div><strong>Cereal Type:</strong> {cerealType}</div>
+        <div><strong>Warehouse Code:</strong> {whseUser?.WHCode ?? "—"}</div>
         <div className="flex items-center gap-2">
           <strong>Status:</strong>
           <div className={badgeConfig.className}>{badgeConfig.label}</div>
@@ -97,102 +147,87 @@ export default function CreateReport() {
         </div>
       </div>
 
-      {/* table */}
-      <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
-        <table className="border-collapse min-w-[2200px] w-full">
-          <thead className="sticky top-0 z-10">
-            <tr>
-              {[
-                { label: "Date", colSpan: 2 },
-                { label: "Particulars", rowSpan: 2 },
-                { label: "Plate #", rowSpan: 2 },
-                { label: "WTS #", rowSpan: 2 },
-                { label: "WSR #", rowSpan: 2 },
-                { label: "WSI #", rowSpan: 2 },
-                { label: "Batch No.", rowSpan: 2 },
-                { label: "Age", rowSpan: 2 },
-                { label: "AI#", rowSpan: 2 },
-                { label: "OR#", rowSpan: 2 },
-                { label: "Moisture Content", rowSpan: 2 },
-                { label: "Classifier", rowSpan: 2 },
-                { label: "Transaction", rowSpan: 2 },
-                { label: "Pile No.", rowSpan: 2 },
-                { label: "Receipts", colSpan: 3 },
-                { label: "Cond", rowSpan: 2 },
-                { label: "Issues", colSpan: 3 },
-                { label: "Cond", rowSpan: 2 },
-                { label: "Fillers", rowSpan: 2 },
-                { label: "Balance", colSpan: 3 },
-              ].map((th, i) => (
-                <th
-                  key={i}
-                  colSpan={th.colSpan}
-                  rowSpan={th.rowSpan}
-                  className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
-                >
-                  {th.label}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
-                (label, i) => (
-                  <th
-                    key={i}
-                    className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
-                  >
-                    {label}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
+      {/* loading / error states */}
+      {loading && (
+        <div className="flex items-center justify-center flex-1 mt-20 text-[#2d317f]">
+          Loading transactions...
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center justify-center flex-1 mt-20 text-red-500">
+          {error}
+        </div>
+      )}
 
-          <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="text-[#2d317f] bg-white">
-                {[
-                  ["year", row.year],
-                  ["month", row.month],
-                  ["Particulars", row.Particulars],
-                  ["Plate_Number", row.Plate_Number],
-                  ["WTS", row.WTS],
-                  ["WSR", row.WSR],
-                  ["WSI", row.WSI],
-                  ["Batch_No", row.Batch_No],
-                  ["Age", row.Age],
-                  ["AI_Number", row.AI_Number],
-                  ["OR_Number", row.OR_Number],
-                  ["Moisture_Content", row.Moisture_Content],
-                  ["Classifier", row.Classifier],
-                  ["Transaction", row.Transaction],
-                  ["Pile_No", row.Pile_No],
-                  ["R_Bags", row.R_Bags],
-                  ["R_GKG", row.R_GKG],
-                  ["R_NKG", row.R_NKG],
-                  ["R_Cond", row.R_Cond],
-                  ["I_Bags", row.I_Bags],
-                  ["I_GKG", row.I_GKG],
-                  ["I_NKG", row.I_NKG],
-                  ["I_Cond", row.I_Cond],
-                  ["Fillers", row.Fillers],
-                  ["B_Bags", row.B_Bags],
-                  ["B_GKG", row.B_GKG],
-                  ["B_NKG", row.B_NKG],
-                ].map(([field, value]) => (
-                  <td key={field} className="border border-[#8fa3c1] h-8">
-                    <CellInput
-                      value={value}
-                      onChange={(e) => handleRowChange(rowIndex, field, e.target.value)}
-                    />
-                  </td>
+      {/* table */}
+      {!loading && !error && (
+        <>
+          <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
+            <table className="border-collapse min-w-[2200px] w-full">
+              <thead className="sticky top-0 z-10">
+                <tr>
+                  {[
+                    { label: "Date",             colSpan: 2 },
+                    { label: "Particulars",      rowSpan: 2 },
+                    { label: "Plate #",          rowSpan: 2 },
+                    { label: "WTS #",            rowSpan: 2 },
+                    { label: "WSR #",            rowSpan: 2 },
+                    { label: "WSI #",            rowSpan: 2 },
+                    { label: "Batch No.",        rowSpan: 2 },
+                    { label: "Age",              rowSpan: 2 },
+                    { label: "AI#",              rowSpan: 2 },
+                    { label: "OR#",              rowSpan: 2 },
+                    { label: "Moisture Content", rowSpan: 2 },
+                    { label: "Classifier",       rowSpan: 2 },
+                    { label: "Transaction",      rowSpan: 2 },
+                    { label: "Pile No.",         rowSpan: 2 },
+                    { label: "Receipts",         colSpan: 3 },
+                    { label: "Cond",             rowSpan: 2 },
+                    { label: "Issues",           colSpan: 3 },
+                    { label: "Cond",             rowSpan: 2 },
+                    { label: "Fillers",          rowSpan: 2 },
+                    { label: "Balance",          colSpan: 3 },
+                  ].map((th, i) => (
+                    <th
+                      key={i}
+                      colSpan={th.colSpan}
+                      rowSpan={th.rowSpan}
+                      className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
+                    >
+                      {th.label}
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
+                    (label, i) => (
+                      <th
+                        key={i}
+                        className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
+                      >
+                        {label}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="text-[#2d317f] bg-white">
+                    {FIELDS.map((field) => (
+                      <td key={field} className="border border-[#8fa3c1] h-8">
+                        <Cell value={row[field]} />
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

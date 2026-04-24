@@ -2,120 +2,110 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from reports.models import WSR, WSI
+from reports.models import WSRReport, WSIReport
 from .models import Notification
 from users.models import User
-
 
 NOTIFY_STATUSES = ['Approved', 'Rejected']
 
 
-# ───────────────────────────────
-# 🟢 GET ADMINS
-# ───────────────────────────────
 def get_admins():
     return User.objects.filter(user_level='Admin')
 
 
-# ───────────────────────────────
-# 🟢 WSR CREATED → NOTIFY ADMINS
-# ───────────────────────────────
-@receiver(post_save, sender=WSR)
-def notify_admin_wsr_create(sender, instance, created, **kwargs):
+# ── WSRReport CREATED → Notify Admins ─────────────────────
+@receiver(post_save, sender=WSRReport)
+def notify_admin_wsr_created(sender, instance, created, **kwargs):
     if not created:
         return
 
-    now = timezone.now()
-    submitted_by = instance.Report_id.name  # Warehouse user who submitted
+    now          = timezone.now()
+    submitted_by = instance.stockbook.name
 
     for admin in get_admins():
+        if Notification.objects.filter(wsr_report=instance, recipient=admin).exists():
+            continue
         Notification.objects.create(
-            report_id=instance.Report_id,
-            wsr=instance,
-            recipient=admin,
-            submitted_by=submitted_by,      # ✅ NEW
-            reviewed_by=None,               # Admin notifs have no reviewer yet
-            date_audited=now.date(),
-            time_audited=now.time(),
+            report_id    = instance.stockbook,
+            wsr_report   = instance,
+            recipient    = admin,
+            submitted_by = submitted_by,
+            reviewed_by  = None,
+            date_audited = now.date(),
+            time_audited = now.time(),
         )
 
 
-# ───────────────────────────────
-# 🟢 WSI CREATED → NOTIFY ADMINS
-# ───────────────────────────────
-@receiver(post_save, sender=WSI)
-def notify_admin_wsi_create(sender, instance, created, **kwargs):
+# ── WSIReport CREATED → Notify Admins ─────────────────────
+@receiver(post_save, sender=WSIReport)
+def notify_admin_wsi_created(sender, instance, created, **kwargs):
     if not created:
         return
 
-    now = timezone.now()
-    submitted_by = instance.Report_id.name  # Warehouse user who submitted
+    now          = timezone.now()
+    submitted_by = instance.stockbook.name
 
     for admin in get_admins():
+        if Notification.objects.filter(wsi_report=instance, recipient=admin).exists():
+            continue
         Notification.objects.create(
-            report_id=instance.Report_id,
-            wsi=instance,
-            recipient=admin,
-            submitted_by=submitted_by,      # ✅ NEW
-            reviewed_by=None,               # Admin notifs have no reviewer yet
-            date_audited=now.date(),
-            time_audited=now.time(),
+            report_id    = instance.stockbook,
+            wsi_report   = instance,
+            recipient    = admin,
+            submitted_by = submitted_by,
+            reviewed_by  = None,
+            date_audited = now.date(),
+            time_audited = now.time(),
         )
 
 
-# ───────────────────────────────
-# 🔴 WSR APPROVED/REJECTED → NOTIFY USER
-# ───────────────────────────────
-@receiver(post_save, sender=WSR)
-def notify_user_wsr_status(sender, instance, created, **kwargs):
+# ── WSRReport APPROVED/REJECTED → Notify Warehouse User ───
+@receiver(post_save, sender=WSRReport)
+def notify_user_wsr_evaluated(sender, instance, created, **kwargs):
+    if created:
+        return
     if instance.Evaluation not in NOTIFY_STATUSES:
         return
 
-    now = timezone.now()
-    reviewed_by = getattr(instance, '_reviewed_by',
-                          None) or instance.reviewed_by
-    report_user = instance.Report_id.name  # User who submitted
-    submitted_by = report_user
+    now         = timezone.now()
+    report_user = instance.stockbook.name
+    reviewed_by = instance.reviewed_by
 
-    # Prevent duplicates (uses model constraint)
-    if Notification.objects.filter(wsr=instance, recipient=report_user).exists():
+    if Notification.objects.filter(wsr_report=instance, recipient=report_user).exists():
         return
 
     Notification.objects.create(
-        report_id=instance.Report_id,
-        wsr=instance,
-        recipient=report_user,
-        submitted_by=submitted_by,      # ✅ NEW
-        reviewed_by=reviewed_by,        # Admin who approved/rejected
-        date_audited=now.date(),
-        time_audited=now.time(),
+        report_id    = instance.stockbook,
+        wsr_report   = instance,
+        recipient    = report_user,
+        submitted_by = report_user,
+        reviewed_by  = reviewed_by,
+        date_audited = now.date(),
+        time_audited = now.time(),
     )
 
 
-# ───────────────────────────────
-# 🔴 WSI APPROVED/REJECTED → NOTIFY USER
-# ───────────────────────────────
-@receiver(post_save, sender=WSI)
-def notify_user_wsi_status(sender, instance, created, **kwargs):
+# ── WSIReport APPROVED/REJECTED → Notify Warehouse User ───
+@receiver(post_save, sender=WSIReport)
+def notify_user_wsi_evaluated(sender, instance, created, **kwargs):
+    if created:
+        return
     if instance.Evaluation not in NOTIFY_STATUSES:
         return
 
-    now = timezone.now()
-    reviewed_by = getattr(instance, '_reviewed_by',
-                          None) or instance.reviewed_by
-    report_user = instance.Report_id.name  # User who submitted
-    submitted_by = report_user
+    now         = timezone.now()
+    report_user = instance.stockbook.name
+    reviewed_by = instance.reviewed_by
 
-    # Prevent duplicates (uses model constraint)
-    if Notification.objects.filter(wsi=instance, recipient=report_user).exists():
+    if Notification.objects.filter(wsi_report=instance, recipient=report_user).exists():
         return
 
     Notification.objects.create(
-        report_id=instance.Report_id,
-        wsi=instance,
-        recipient=report_user,
-        submitted_by=submitted_by,      # ✅ NEW
-        reviewed_by=reviewed_by,        # Admin who approved/rejected
-        date_audited=now.date(),
-        time_audited=now.time(),
+        report_id    = instance.stockbook,
+        wsi_report   = instance,
+        recipient    = report_user,
+        submitted_by = report_user,
+        reviewed_by  = reviewed_by,
+        date_audited = now.date(),
+        time_audited = now.time(),
     )

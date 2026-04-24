@@ -1,193 +1,352 @@
-# reports/views.py
-
-from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import StockBook, WSR, WSI, Summary
-from .serializers import StockBookSerializer, WSRSerializer, WSISerializer, SummarySerializer
-from reports.models import Summary, WSR, WSI
-from audit.views import create_audit_entry # Import the utility
+from .models import StockBook, Transaction, WSRReport, WSIReport, Summary
+from .serializers import (
+    StockBookSerializer, TransactionSerializer,
+    WSRReportSerializer, WSIReportSerializer, SummarySerializer
+)
 
+def get_user_from_token(request):
+    from rest_framework_simplejwt.tokens import AccessToken
+    from users.models import User
+    try:
+        raw = request.headers.get('Authorization', '').split(' ')[1]
+        decoded = AccessToken(raw)
+        user_id = decoded.get('user_id')
+        if not user_id:
+            return None
+        return User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return None
+    except Exception:
+        return None
 
-# ── StockBook ──────────────────────────────────────────────
+# Stockbook
 @api_view(['GET'])
 def get_stock(request):
-    stock = StockBook.objects.all()
-    serializer = StockBookSerializer(stock, many=True)
-    return Response(serializer.data)
+    stocks = StockBook.objects.all()
+    return Response(StockBookSerializer(stocks, many=True).data)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_stock(request):
+    user = get_user_from_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if user.user_level != 'Warehouse Supervisor':
+        return Response(
+            {'error': 'Only Warehouse Supervisor can create StockBooks'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
     serializer = StockBookSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(name=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
 def upd_stock(request, pk):
     try:
-        stock_b = StockBook.objects.get(pk=pk)
+        stock = StockBook.objects.get(pk=pk)
     except StockBook.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = StockBookSerializer(stock_b)
-        return Response(serializer.data)
+        return Response(StockBookSerializer(stock).data)
 
     elif request.method == 'PUT':
-        serializer = StockBookSerializer(stock_b, data=request.data)
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if stock.Status in ['Under Review', 'Completed']:
+            if 'Status' in request.data and user.user_level == 'Admin':
+                pass
+            else:
+                return Response(
+                    {'error': 'StockBook is locked. Cannot edit while Under Review or Completed.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        serializer = StockBookSerializer(stock, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        stock_b.delete()
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        if stock.Status in ['Under Review', 'Completed']:
+            return Response({'error': 'Cannot delete a locked StockBook.'}, status=status.HTTP_403_FORBIDDEN)
+        stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ── WSR ────────────────────────────────────────────────────
-@api_view(['GET'])
-def get_wsr(request):
-    wsr = WSR.objects.all()
-    serializer = WSRSerializer(wsr, many=True)
-    return Response(serializer.data)
+# Submit StockBook (changes status to Under Review)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def submit_stock(request, pk):
+    try:
+        stock = StockBook.objects.get(pk=pk)
+    except StockBook.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
+    user = get_user_from_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if user.user_level != 'Warehouse Supervisor':
+        return Response(
+            {'error': 'Only Warehouse Supervisor can submit reports'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    if not stock.transactions.exists():
+        return Response(
+            {'error': 'Cannot submit a StockBook with no transactions'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    stock.Status = 'Under Review'
+    stock.save()
+
+    return Response(StockBookSerializer(stock).data)
+
+# Transactions
+@api_view(['GET'])
+def get_transactions(request):
+    stockbook_id = request.query_params.get('stockbook')
+    txns = Transaction.objects.all()
+    if stockbook_id:
+        txns = txns.filter(stockbook_id=stockbook_id)
+    return Response(TransactionSerializer(txns, many=True).data)
 
 @api_view(['POST'])
-def create_wsr(request):
-    serializer = WSRSerializer(data=request.data)
+@permission_classes([AllowAny])
+def create_transaction(request):
+    user = get_user_from_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if user.user_level != 'Warehouse Supervisor':
+        return Response(
+            {'error': 'Only Warehouse Supervisor can create transactions'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    stockbook_id = request.data.get('stockbook')
+    if stockbook_id:
+        try:
+            stock = StockBook.objects.get(pk=stockbook_id)
+            if stock.Status in ['Under Review', 'Completed']:
+                return Response(
+                    {'error': 'Cannot add transactions. StockBook is locked.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except StockBook.DoesNotExist:
+            pass
+
+    serializer = TransactionSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 @api_view(['GET', 'PUT', 'DELETE'])
-def upd_wsr(request, pk):
+@permission_classes([AllowAny])
+def upd_transaction(request, pk):
     try:
-        wsr_s = WSR.objects.get(pk=pk)
-    except WSR.DoesNotExist:
+        txn = Transaction.objects.get(pk=pk)
+    except Transaction.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = WSRSerializer(wsr_s)
-        return Response(serializer.data)
+        return Response(TransactionSerializer(txn).data)
 
     elif request.method == 'PUT':
-        serializer = WSRSerializer(wsr_s, data=request.data, partial=True)
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Block edits if locked
+        if txn.stockbook.Status in ['Under Review', 'Completed']:
+            return Response(
+                {'error': 'Cannot edit transaction. StockBook is locked.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = TransactionSerializer(txn, data=request.data, partial=True)
         if serializer.is_valid():
-            wsr_instance = serializer.save()
-
-            # ✅ Auto assign reviewed_by from logged-in user
-            wsr_instance._reviewed_by = request.user  # 👈 attach to signal
-            # wsr_instance.reviewed_by = request.user   # 👈 save to DB
-            wsr_instance.save()
-
+            serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        wsr_s.delete()
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if txn.stockbook.Status in ['Under Review', 'Completed']:
+            return Response(
+                {'error': 'Cannot delete transaction. StockBook is locked.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        txn.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ── WSI ────────────────────────────────────────────────────
+# WSRReport
 @api_view(['GET'])
-def get_wsi(request):
-    wsi = WSI.objects.all()
-    serializer = WSISerializer(wsi, many=True)
-    return Response(serializer.data)
+def get_wsr_reports(request):
+    reports = WSRReport.objects.all()
+    return Response(WSRReportSerializer(reports, many=True).data)
 
 
-@api_view(['POST'])
-def create_wsi(request):
-    serializer = WSISerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def upd_wsi(request, pk):
+@api_view(['GET', 'PUT'])
+@permission_classes([AllowAny])
+def upd_wsr_report(request, pk):
     try:
-        wsi_s = WSI.objects.get(pk=pk)
-    except WSI.DoesNotExist:
+        report = WSRReport.objects.get(pk=pk)
+    except WSRReport.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = WSISerializer(wsi_s)
-        return Response(serializer.data)
+        return Response(WSRReportSerializer(report).data)
 
     elif request.method == 'PUT':
-        serializer = WSISerializer(wsi_s, data=request.data, partial=True)
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if user.user_level != 'Admin':
+            return Response(
+                {'error': 'Only Admin can evaluate reports'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = WSRReportSerializer(report, data=request.data, partial=True)
         if serializer.is_valid():
-            wsi_instance = serializer.save()
-
-            # ✅ Auto assign reviewed_by from logged-in user
-            wsi_instance._reviewed_by = request.user  # 👈 attach to signal
-            # wsi_instance.reviewed_by = request.user   # 👈 save to DB
-            wsi_instance.save()
-
-            return Response(serializer.data)
+            instance = serializer.save()
+            instance.reviewed_by = user
+            instance.save()
+            return Response(WSRReportSerializer(instance).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
-        wsi_s.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+# WSIReport
+@api_view(['GET'])
+def get_wsi_reports(request):
+    reports = WSIReport.objects.all()
+    return Response(WSIReportSerializer(reports, many=True).data)
 
 
-# ── Summary ────────────────────────────────────────────────
+@api_view(['GET', 'PUT'])
+@permission_classes([AllowAny])
+def upd_wsi_report(request, pk):
+    try:
+        report = WSIReport.objects.get(pk=pk)
+    except WSIReport.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(WSIReportSerializer(report).data)
+
+    elif request.method == 'PUT':
+        user = get_user_from_token(request)
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if user.user_level != 'Admin':
+            return Response(
+                {'error': 'Only Admin can evaluate reports'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = WSIReportSerializer(report, data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+            instance.reviewed_by = user
+            instance.save()
+            return Response(WSIReportSerializer(instance).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Summary
 @api_view(['GET'])
 def get_summary(request):
-    summary = Summary.objects.all()
-    serializer = SummarySerializer(summary, many=True)
-    return Response(serializer.data)
+    summaries = Summary.objects.all()
+    return Response(SummarySerializer(summaries, many=True).data)
 
 
 @api_view(['POST'])
 def create_summary(request):
     serializer = SummarySerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        summary = serializer.save()
+        summary.compute_and_save()
+        return Response(SummarySerializer(summary).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
 def upd_summary(request, pk):
     try:
-        summary_r = Summary.objects.get(pk=pk)
+        summary = Summary.objects.get(pk=pk)
     except Summary.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = SummarySerializer(summary_r)
-        return Response(serializer.data)
+        return Response(SummarySerializer(summary).data)
 
     elif request.method == 'PUT':
-        serializer = SummarySerializer(summary_r, data=request.data)
+        serializer = SummarySerializer(summary, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            instance = serializer.save()
+            instance.compute_and_save()
+            return Response(SummarySerializer(instance).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        summary_r.delete()
+        summary.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+# for unsubmitting the submitted reports
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def unsubmit_stock(request, pk):
+    try:
+        stock = StockBook.objects.get(pk=pk)
+    except StockBook.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
+    user = get_user_from_token(request)
+    if not user:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-# ── Auto assign to Summary ─────────────────────────────────
-def assign_to_summary(wrs_id=None, wsi_id=None):
-    if wrs_id:
-        wrs = WSR.objects.get(Receipt_ID=wrs_id)
-        Summary.get_or_create_summary(wrs=wrs)
+    if user.user_level != 'Warehouse Supervisor':
+        return Response(
+            {'error': 'Only Warehouse Supervisor can unsubmit reports'},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
-    if wsi_id:
-        wsi = WSI.objects.get(Issue_ID=wsi_id)
-        Summary.get_or_create_summary(wsi=wsi)
+    if stock.Status != 'Under Review':
+        return Response(
+            {'error': 'Only reports Under Review can be unsubmitted'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    stock.Status = 'In Progress'
+    stock.save(update_fields=['Status'])
+
+    return Response(StockBookSerializer(stock).data)

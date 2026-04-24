@@ -3,25 +3,34 @@ import { Navigate } from "react-router-dom";
 function isTokenExpired(token) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp < now; // true if expired
+    return payload.exp < Math.floor(Date.now() / 1000);
   } catch {
-    return true;  // return true if we cant decode it
+    return true;
   }
 }
 
-export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('access_token');
-
-  if (!token) {
-    return <Navigate to="/" replace />;
+function getUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user'));
+  } catch {
+    return null;
   }
+}
 
-  if (isTokenExpired(token)) {
+export default function ProtectedRoute({ children, allowedRoles }) {
+  const token = localStorage.getItem('access_token');
+  const user  = getUser();
+
+  if (!token || isTokenExpired(token)) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     return <Navigate to="/" replace />;
+  }
+
+  // role check
+  if (allowedRoles && !allowedRoles.includes(user?.user_level)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;

@@ -1,24 +1,23 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoLinkExternal } from "react-icons/go";
 import { TbProgress } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
-import { ClipboardList } from "lucide-react"
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 
-// react
-import { Navigate, useNavigate } from "react-router-dom";
+// api
+import api from "@/api/axios";
 
-const reportsData = [
-  { id: "R-001", date: "31-Jan-26", reportType: "Statement of Issuance",  cereal: "WD1G50", status: "Pending"  },
-  { id: "R-002", date: "31-Jan-26", reportType: "Statement of Receipts",  cereal: "PD1350", status: "Rejected" },
-  { id: "R-003", date: "31-Jan-26", reportType: "Statement of Issuance",  cereal: "WD1G50", status: "Approved" },
-];
+const CEREAL_LABEL = { WD1G50: "Palay", PD1350: "Rice" };
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/ /g, "-");
+};
 
 const getStatusStyle = (status) => {
   const base = "px-3 py-1.5 rounded-full font-semibold text-[13px] inline-flex items-center gap-1.5 min-w-[110px] justify-center";
@@ -36,51 +35,88 @@ const getStatusIcon = (status) => {
 };
 
 export default function ReportStatus() {
-  const navigate = useNavigate();
+  const [reports, setReports]               = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState(null);
 
-  // us
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type");
   const [selectedReportType, setSelectedReportType] = useState("All Report Type");
   const [selectedStatus, setSelectedStatus]         = useState("All Status");
 
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const [wsrRes, wsiRes] = await Promise.all([
+          api.get("/reports/wsr-reports/"),
+          api.get("/reports/wsi-reports/"),
+        ]);
 
-  const filteredReports = reportsData.filter((report) => {
-    const matchCereal = selectedCerealType === "All Cereal Type" || report.cereal === selectedCerealType;
-    const matchReport = selectedReportType === "All Report Type" || report.reportType === selectedReportType;
-    const matchStatus = selectedStatus      === "All Status"     || report.status    === selectedStatus;
+        const wsrMapped = wsrRes.data.map((r) => ({
+          id:         r.wsr_report_id,
+          reportId:   `R-${String(r.stockbook).padStart(3, "0")}`,
+          stockbookId: r.stockbook,
+          date:       formatDate(r.stockbook_date ?? r.date),
+          reportType: "Statement of Receipts",
+          cereal:     r.cereal_type ?? r.CerealType ?? "—",
+          status:     r.Evaluation ?? "Pending",
+          reason:     r.Reason ?? "",
+          date:   formatDate(r.stockbook_date),
+          cereal: r.stockbook_cereal ?? "—",
+          raw:        r,
+        }));
+
+        const wsiMapped = wsiRes.data.map((r) => ({
+          id:         r.wsi_report_id,
+          reportId:   `R-${String(r.stockbook).padStart(3, "0")}`,
+          stockbookId: r.stockbook,
+          date:       formatDate(r.stockbook_date ?? r.date),
+          reportType: "Statement of Issuance",
+          cereal:     r.cereal_type ?? r.CerealType ?? "—",
+          status:     r.Evaluation ?? "Pending",
+          reason:     r.Reason ?? "",
+          date:   formatDate(r.stockbook_date),
+          cereal: r.stockbook_cereal ?? "—",
+          raw:        r,
+        }));
+
+        setReports([...wsrMapped, ...wsiMapped]);
+      } catch (err) {
+        setError("Failed to load reports.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
+  // filters
+  const filteredReports = reports.filter((r) => {
+    const matchCereal = selectedCerealType === "All Cereal Type" || r.cereal === selectedCerealType;
+    const matchReport = selectedReportType === "All Report Type" || r.reportType === selectedReportType;
+    const matchStatus = selectedStatus      === "All Status"     || r.status    === selectedStatus;
     return matchCereal && matchReport && matchStatus;
   });
-
-  const handleView = (report) => {
-    setSelectedReport(report);
-    if (report.status === "Rejected") {
-      setShowRejectModal(true);
-    } else {
-      // for approved and pending later on
-    }
-  };
 
   return (
     <div className="m-7.5 flex flex-col h-[calc(100vh-160px)]">
 
       {/* Filters */}
       <div className="flex justify-end gap-2.5 py-2.5 mb-4">
-        <Select value={selectedCerealType} onValueChange={(v) => setSelectedCerealType(v)}>
+        <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
           <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-42 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Cereal Type" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem className="p-2 text-[#2D317F]" value="All Cereal Type">All Cereal Type</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="WD1G50">Rice</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="PD1350">Palay</SelectItem>
+            <SelectItem className="p-2 text-[#2D317F]" value="WD1G50">Palay</SelectItem>
+            <SelectItem className="p-2 text-[#2D317F]" value="PD1350">Rice</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select value={selectedReportType} onValueChange={(v) => setSelectedReportType(v)}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-45 min-w-0 cursor-pointer whitespace-nowrap">
+        <Select value={selectedReportType} onValueChange={setSelectedReportType}>
+          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-52 min-w-0 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Report Type" />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +126,7 @@ export default function ReportStatus() {
           </SelectContent>
         </Select>
 
-        <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v)}>
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-32 min-w-0 cursor-pointer whitespace-nowrap">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
@@ -104,92 +140,82 @@ export default function ReportStatus() {
       </div>
 
       {/* Table */}
-      <div className="bg-white flex-1 overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Date</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Report ID</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Report Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Cereal Type</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Status</TableHead>
-              <TableHead className="text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredReports.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-[#2D317F] font-medium">
-                  No reports found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredReports.map((report) => (
-                <TableRow key={report.id} className="text-[#2D317F] font-medium border-b border-gray-200 h-[50px]">
-                  <TableCell className="text-center">{report.date}</TableCell>
-                  <TableCell className="text-center">{report.id}</TableCell>
-                  <TableCell className="text-center">{report.reportType}</TableCell>
-                  <TableCell className="text-center">{report.cereal}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={getStatusStyle(report.status)}>
-                      {getStatusIcon(report.status)}
-                      {report.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => handleView(report)}
-                        className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white"
-                      >
-                        <GoLinkExternal size={15} />
-                        View
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="bg-white flex-1 overflow-hidden flex flex-col">
+        {loading ? (
+          <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
+        ) : (
+          <>
+            {/* Fixed header table */}
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col className="w-[15%]" />
+                <col className="w-[15%]" />
+                <col className="w-[25%]" />
+                <col className="w-[15%]" />
+                <col className="w-[15%]" />
+                <col className="w-[15%]" />
+              </colgroup>
+              <thead>
+                <tr className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report ID</th>
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report Type</th>
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
+                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Actions</th>
+                </tr>
+              </thead>
+            </table>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-[15%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[25%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[15%]" />
+                </colgroup>
+                <tbody>
+                  {filteredReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-10 text-[#2D317F] font-medium">
+                        No reports found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredReports.map((report, i) => (
+                      <tr key={`${report.reportType}-${report.id}-${i}`} className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]">
+                        <td className="text-center">{report.date}</td>
+                        <td className="text-center">{report.reportId}</td>
+                        <td className="text-center">{report.reportType}</td>
+                        <td className="text-center">{CEREAL_LABEL[report.cereal] || report.cereal}</td>
+                        <td className="text-center">
+                          <span className={getStatusStyle(report.status)}>
+                            {getStatusIcon(report.status)}
+                            {report.status}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <div className="flex justify-center">
+                            <button className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white">
+                              <GoLinkExternal size={15} /> View
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Modal*/}
-      <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
-        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[540px] [&>button]:hidden bg-[#E6EEF6]">
-          <div className="bg-[#BB2325] h-8 rounded-t-lg" />
-          <div className="px-5 pb-5">
-            <DialogHeader className="mb-3 flex flex-col items-center">
-              <div className="w-[90px] h-[90px] flex items-center justify-center bg-[#D9D9D9] rounded-full">
-                <ClipboardList color={"#BB2325"} size={45}/>
-              </div>
-              <DialogTitle className="text-[#BB2325] font-extrabold text-center mt-2 mb-2 text-2xl">Reason for Rejection</DialogTitle>
-            </DialogHeader>
-            <div className="mx-6">
-              <Textarea
-                className='bg-white !py-24'
-                value={rejectionReason}
-                readOnly
-
-              /> {/* get the reason later on from admin*/}
-            </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm w-20 bg-[#D9D9D9] text-[#919191] font-bold"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => navigate(`/whse/create/`)}
-                className="bg-[#BB2325] text-white font-bold px-4 py-1.5 rounded-lg text-sm w-20"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

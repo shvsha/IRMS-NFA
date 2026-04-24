@@ -18,18 +18,18 @@ function App() {
       <Route path="/" element={<Login />} />
 
       {/* admin */}
-      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['Admin']}><AdminLayout /></ProtectedRoute>}>
         {AdminRoute}
       </Route>
 
       {/* warehouse supervisor */}
-      <Route path="/whse" element={<ProtectedRoute> <WhseSpvsorLayout /> </ProtectedRoute>
+      <Route path="/whse" element={<ProtectedRoute allowedRoles={['Warehouse Supervisor']}> <WhseSpvsorLayout /> </ProtectedRoute>
         }>
         {WhseRoute}
       </Route>
 
       {/* create/edit/view report layout for whse (stock book) */}
-      <Route path="/whse" element={<ProtectedRoute><CreateReportLayout /></ProtectedRoute>}>
+      <Route path="/whse" element={<ProtectedRoute allowedRoles={['Warehouse Supervisor']}><CreateReportLayout /></ProtectedRoute>}>
         {WhseReportRoute}
       </Route>
 

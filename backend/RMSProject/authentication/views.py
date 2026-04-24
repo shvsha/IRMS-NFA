@@ -4,19 +4,20 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import LoginSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class LoginView(APIView):
-    permission_classes = [AllowAny]  # no token needed to log in
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
 
-            # generate JWT tokens
             refresh = RefreshToken()
             refresh['user_id'] = user.user_id
+            refresh['user_level'] = user.user_level
 
             return Response({
                 "access":  str(refresh.access_token),
@@ -27,6 +28,10 @@ class LoginView(APIView):
                     "user_level": user.user_level,
                     "fname": user.fname,
                     "lname": user.lname,
+                    "WHCode":     user.WHCode,
+                    "Office_id":  user.Office_id, 
+                    "dept":       user.dept,
+                    "position":   user.position,
                 }
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
