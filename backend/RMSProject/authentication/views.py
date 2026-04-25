@@ -6,6 +6,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import LoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+from users.models import User, PasswordResetCode
+from django.contrib.auth.hashers import make_password
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -48,3 +53,77 @@ class LogoutView(APIView):
             return Response({"message": "Logged out successfully."})
         except Exception:
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+        
+# change password
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'email': 'No account found with this email address.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # generate 6 digit code
+        code = str(random.randint(100000, 999999))
+
+        # save to db
+        PasswordResetCode.objects.create(user=user, code=code)
+
+        # send email
+        send_mail(
+            subject='Password Reset Code',
+            message=f'Your password reset code is: {code}. It expires in 10 minutes.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+
+        return Response({'message': 'Code sent to email.'}, status=status.HTTP_200_OK)
+
+
+class VerifyResetCodeView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        reset = PasswordResetCode.objects.filter(user=user, code=code, is_used=False).last()
+
+        if not reset or reset.is_expired():
+            return Response({'code': 'That code is incorrect. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Code verified.'}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+        new_password = request.data.get('password')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        reset = PasswordResetCode.objects.filter(user=user, code=code, is_used=False).last()
+
+        if not reset or reset.is_expired():
+            return Response({'error': 'Invalid or expired code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.password = make_password(new_password)
+        user.save()
+
+        reset.is_used = True
+        reset.save()
+
+        return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
