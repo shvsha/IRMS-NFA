@@ -1,25 +1,22 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import NavBarAdmin from "../AdminModule/pages/NavBarAdmin";
-import TitleBar from "../components/TitleBar";
+import SidebarAdmin from "../AdminModule/pages/SidebarAdmin";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
-  const location = useLocation(); //triggers re-check on every navigation
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-
     if (!token) {
       navigate('/', { replace: true });
     }
-  }, [location.pathname]) // runs every time the path changes
+  }, [location.pathname]);
 
   return (
-    <div className="flex flex-col h-screen">
-      <TitleBar/>
-      <NavBarAdmin/>
-      <div className="flex-1 overflow-hidden min-h-0">
+    <div className="flex h-screen">
+      <SidebarAdmin />
+      <div className="flex-1 overflow-hidden min-h-0 transition-all duration-300">
         <Outlet />
       </div>
     </div>

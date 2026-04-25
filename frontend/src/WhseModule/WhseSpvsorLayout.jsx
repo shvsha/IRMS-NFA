@@ -1,7 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import TitleBar from "../components/TitleBar";
-import NavBarWhse from "../WhseModule/pages/NavBarWhse";
+import NavBarWhse from "./pages/SideBardWhse";
 
 export default function WhseSpvsorLayout() {
   const navigate = useNavigate();
@@ -9,17 +8,15 @@ export default function WhseSpvsorLayout() {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-
     if (!token) {
       navigate('/', { replace: true }); 
     }
   }, [location.pathname])// runs every time the path changes
 
   return (
-    <div className="flex flex-col h-screen pb-3 xl:pb-4 2xl:pb-6">
-      <TitleBar/>
+    <div className="flex h-screen">
       <NavBarWhse/>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0 transition-all duration-300">
         <Outlet />
       </div>
     </div>

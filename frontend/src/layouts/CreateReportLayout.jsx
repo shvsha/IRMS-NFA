@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import TitleBar from "../components/TitleBar";
-import NavBarWhse from "../WhseModule/pages/NavBarWhse";
+import NavBarWhse from "../WhseModule/pages/SideBardWhse";
 
 export default function CreateReportLayout() {
   const navigate = useNavigate();

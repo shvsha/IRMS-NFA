@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import EmployeeForm from './EmployeeForm'
+import Header from '../../components/Header'
 
 // shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -77,7 +78,6 @@ function ConfirmDialog({ open, onClose, onConfirm, icon, iconBg, title, descript
   )
 }
 
-// ── Main component ─────────────────────────────────────────
 export default function UserManagement() {
   const [search, setSearch]         = useState('')
   const [userStatus, setUserStatus] = useState('Active')
@@ -128,151 +128,160 @@ export default function UserManagement() {
   if (view === 'edit') return <EmployeeForm mode="edit" employeeData={selectedEmployee} onCancel={handleBack} />
 
   return (
-    <div className="bg-white mx-7.5 my-4 flex flex-col h-[calc(100%-2rem)]">
+    <>
+      <Header
+          pageTitle="Users"
+          notifTo="/admin/notif"
+          unreadCount={5}
+          userName="Raph Nigos"
+        />
+      
+      <div className="bg-white mx-7.5 my-4 flex flex-col h-[calc(100%-2rem)]">
 
-      {/* Top bar */}
-      <div className="flex justify-between items-center mx-7.5 py-4">
-        <p className="text-[#0B3B66] font-bold text-2xl">User Management</p>
+        {/* Top bar */}
+        <div className="flex justify-between items-center mx-7.5 py-4">
+          <p className="text-[#0B3B66] font-bold text-2xl">User Management</p>
 
-        <div className="flex items-center gap-8">
-          <Select value={userStatus} onValueChange={setUserStatus}>
-            <SelectTrigger className="w-45 bg-white border border-gray-300 rounded-md">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem className="p-2 text-[#2D317F]" value="Active">Active</SelectItem>
-              <SelectItem className="p-2 text-[#2D317F]" value="Inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-8">
+            <Select value={userStatus} onValueChange={setUserStatus}>
+              <SelectTrigger className="w-45 bg-white border border-gray-300 rounded-md">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem className="p-2 text-[#2D317F]" value="Active">Active</SelectItem>
+                <SelectItem className="p-2 text-[#2D317F]" value="Inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="flex items-center bg-[#2D317F] rounded-2xl px-3 py-1.5 gap-2">
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search Name"
-              className="bg-transparent border-0 rounded-xl text-white placeholder:text-white focus-visible:ring-0 h-8 w-[430px]"
-            />
-            <FaSearch color="white" size={18} className="shrink-0" />
+            <div className="flex items-center bg-[#2D317F] rounded-2xl px-3 py-1.5 gap-2">
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search Name"
+                className="bg-transparent border-0 rounded-xl text-white placeholder:text-white focus-visible:ring-0 h-8 w-[430px]"
+              />
+              <FaSearch color="white" size={18} className="shrink-0" />
+            </div>
+
+            <Button
+              onClick={() => setView('add')}
+              className="p-5 py-5.5 rounded-xl bg-[#2D317F] text-white"
+            >
+              <FaPlus color="white" /> Add Employee
+            </Button>
           </div>
-
-          <Button
-            onClick={() => setView('add')}
-            className="p-5 py-5.5 rounded-xl bg-[#2D317F] text-white"
-          >
-            <FaPlus color="white" /> Add Employee
-          </Button>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-              {['Warehouse ID', 'Office ID', 'Name', 'Email', 'User Level', 'Position', 'Status', 'Action'].map(h => (
-                <TableHead key={h} className="text-[#2D317F] font-bold text-center text-sm xl:text-base">
-                  {h}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-16">
-                  <div className="flex flex-col items-center gap-3 text-[#2D317F]">
-                    <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm font-medium">Loading users...</span>
-                  </div>
-                </TableCell>
+        {/* Table */}
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+                {['Warehouse ID', 'Office ID', 'Name', 'Email', 'User Level', 'Position', 'Status', 'Action'].map(h => (
+                  <TableHead key={h} className="text-[#2D317F] font-bold text-center text-sm xl:text-base">
+                    {h}
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : filteredUsers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-10 text-gray-400 text-sm">
-                  No {userStatus.toLowerCase()} users found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredUsers.map(user => (
-                <TableRow key={user.user_id} className="hover:bg-[#f5f8ff] transition-colors">
-                  <TableCell className="text-center text-[#2D317F]">{user.WHCode}</TableCell>
-                  <TableCell className="text-center text-[#2D317F]">{user.Office_id}</TableCell>
-                  <TableCell className="text-center text-[#2D317F] font-medium">
-                    {user.fname} {user.mI} {user.lname}
-                  </TableCell>
-                  <TableCell className="text-center text-[#2D317F]">{user.email}</TableCell>
-                  <TableCell className="text-center text-[#2D317F]">{user.user_level}</TableCell>
-                  <TableCell className="text-center text-[#2D317F]">{user.position}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold w-24 inline-block text-center ${
-                      user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      {/* Edit */}
-                      <Button
-                        onClick={() => { setSelectedEmployee(user); setView('edit') }}
-                        variant="ghost"
-                        className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-5 [&_svg]:!h-5"
-                      >
-                        <FaEdit color="#2D317F" />
-                      </Button>
-
-                      {/* Archive / Reactivate */}
-                      {user.status === 'Active' ? (
-                        <Button
-                          onClick={() => setArchiveDialog({ open: true, userId: user.user_id })}
-                          variant="ghost"
-                          className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5"
-                        >
-                          <IoArchiveOutline color="#2D317F" />
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => setReactivateDialog({ open: true, userId: user.user_id })}
-                          variant="ghost"
-                          className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5"
-                        >
-                          <MdUnarchive color="#072560" />
-                        </Button>
-                      )}
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                      <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm font-medium">Loading users...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10 text-gray-400 text-sm">
+                    No {userStatus.toLowerCase()} users found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers.map(user => (
+                  <TableRow key={user.user_id} className="hover:bg-[#f5f8ff] transition-colors">
+                    <TableCell className="text-center text-[#2D317F]">{user.WHCode}</TableCell>
+                    <TableCell className="text-center text-[#2D317F]">{user.Office_id}</TableCell>
+                    <TableCell className="text-center text-[#2D317F] font-medium">
+                      {user.fname} {user.mI} {user.lname}
+                    </TableCell>
+                    <TableCell className="text-center text-[#2D317F]">{user.email}</TableCell>
+                    <TableCell className="text-center text-[#2D317F]">{user.user_level}</TableCell>
+                    <TableCell className="text-center text-[#2D317F]">{user.position}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold w-24 inline-block text-center ${
+                        user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                      }`}>
+                        {user.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        {/* Edit */}
+                        <Button
+                          onClick={() => { setSelectedEmployee(user); setView('edit') }}
+                          variant="ghost"
+                          className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-5 [&_svg]:!h-5"
+                        >
+                          <FaEdit color="#2D317F" />
+                        </Button>
+
+                        {/* Archive / Reactivate */}
+                        {user.status === 'Active' ? (
+                          <Button
+                            onClick={() => setArchiveDialog({ open: true, userId: user.user_id })}
+                            variant="ghost"
+                            className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5"
+                          >
+                            <IoArchiveOutline color="#2D317F" />
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => setReactivateDialog({ open: true, userId: user.user_id })}
+                            variant="ghost"
+                            className="bg-transparent border-0 h-10 w-10 p-0 hover:bg-blue-50 [&_svg]:!w-6 [&_svg]:!h-5"
+                          >
+                            <MdUnarchive color="#072560" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Archive dialog */}
+        <ConfirmDialog
+          open={archiveDialog.open}
+          onClose={() => setArchiveDialog({ open: false, userId: null })}
+          onConfirm={handleArchive}
+          icon={<IoArchiveOutline size={60} color="#2D317F" />}
+          iconBg="bg-[#ADCEFF]"
+          title="Archive User"
+          description="Are you sure you want to archive this user? You can restore it later if needed."
+          confirmLabel="Archive"
+          confirmBg="bg-[#2D317F]"
+        />
+
+        {/* Reactivate dialog */}
+        <ConfirmDialog
+          open={reactivateDialog.open}
+          onClose={() => setReactivateDialog({ open: false, userId: null })}
+          onConfirm={handleReactivate}
+          icon={<MdUnarchive size={60} color="#2D317F" />}
+          iconBg="bg-[#ADCEFF]"
+          title="Reactivate User"
+          description="Are you sure you want to reactivate this user?"
+          confirmLabel="Reactivate"
+          confirmBg="bg-[#2D317F]"
+        />
       </div>
-
-      {/* Archive dialog */}
-      <ConfirmDialog
-        open={archiveDialog.open}
-        onClose={() => setArchiveDialog({ open: false, userId: null })}
-        onConfirm={handleArchive}
-        icon={<IoArchiveOutline size={60} color="#2D317F" />}
-        iconBg="bg-[#ADCEFF]"
-        title="Archive User"
-        description="Are you sure you want to archive this user? You can restore it later if needed."
-        confirmLabel="Archive"
-        confirmBg="bg-[#2D317F]"
-      />
-
-      {/* Reactivate dialog */}
-      <ConfirmDialog
-        open={reactivateDialog.open}
-        onClose={() => setReactivateDialog({ open: false, userId: null })}
-        onConfirm={handleReactivate}
-        icon={<MdUnarchive size={60} color="#2D317F" />}
-        iconBg="bg-[#ADCEFF]"
-        title="Reactivate User"
-        description="Are you sure you want to reactivate this user?"
-        confirmLabel="Reactivate"
-        confirmBg="bg-[#2D317F]"
-      />
-    </div>
+    </>
   )
 }
