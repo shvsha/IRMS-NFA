@@ -207,7 +207,7 @@ export default function Login() {
 
   return (
     <div className='w-screen h-screen flex items-center justify-center bg-[#ADCEFF]'>
-      <Card className="w-full max-w-110 p-5 py-18 bg-[#FFFAFA] shadow-2xl">
+      <Card className="w-full max-w-110 p-5 py-18 bg-[#FFFAFA] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]">
         <CardHeader className="items-center justify-center">
           <img src={NFALogo} alt="NF Logo" className='w-35 h-35 mx-auto mb-8 -mt-3' />
           <CardTitle className='font-black text-[#2D317F] text-2xl text-center'>National Food Authority</CardTitle>
@@ -253,7 +253,7 @@ export default function Login() {
 
       {/* forgot password / email */}
       <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-2xl'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
           <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-38 mb-3'>
             <LockKeyhole className="w-12 h-12" color={'#2D317F'} />
           </div>
@@ -303,7 +303,7 @@ export default function Login() {
 
       {/* check email / otp */}
       <Dialog open={checkEmailOpen} onOpenChange={setCheckEmailOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-2xl'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
           <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-39 mb-3'>
             <MdOutlineMarkEmailUnread className="w-12 h-12" color={'#2D317F'} />
           </div>
@@ -375,10 +375,10 @@ export default function Login() {
 
       {/* set new password */}
       <Dialog open={newPasswordOpen} onOpenChange={setNewPasswordOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden pt-10 px-0 !max-w-[450px] shadow-2xl'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden pt-10 px-0 !max-w-[450px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
           {isLoadingReset ? (
             /* loading state */
-            <div className="flex flex-col items-center justify-center py-10 px-10 gap-5">
+            <div className="flex flex-col items-center justify-center py-10 px-10 gap-5 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]">
               <div className='bg-[#E1EBFF] py-7 px-7 rounded-2xl flex justify-center mb-3'>
                 <div className="w-13 h-13 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
               </div>
@@ -395,7 +395,7 @@ export default function Login() {
           ) : (
             /* normal content */
             <>
-              <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-44 mb-3'>
+              <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-44 mb-3 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
                 <KeyRound className="w-12 h-12" color={'#2D317F'} />
               </div>
               <DialogHeader>
@@ -468,7 +468,7 @@ export default function Login() {
 
       {/* success */}
       <Dialog open={successChangePasswordOpen} onOpenChange={setSuccessChangePasswordOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-10 pb-7 px-0 !max-w-[400px] shadow-2xl'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-10 pb-7 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
           <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-39 mb-3'>
             <BadgeCheck className="w-12 h-12" color={'#2D317F'} />
           </div>

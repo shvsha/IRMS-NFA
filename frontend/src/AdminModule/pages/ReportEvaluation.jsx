@@ -1,15 +1,16 @@
 // react icon
 import { GoLinkExternal } from "react-icons/go";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { IoMdCheckmarkCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
 import { FaCheck } from "react-icons/fa6";
 import { TbXboxX } from "react-icons/tb";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaBars } from "react-icons/fa";
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Header from '../../components/Header'
 
 // react router
 import { useNavigate } from "react-router-dom";
-
+import { createPortal } from 'react-dom'
 
 // shadcn components
 import { Input } from "@/components/ui/input"
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 const sampleReports = [
   { date: "30-Jan-26", cerealtype: 'PD1350', reportType: "Statement of Receipt", whse: "Warehouse 1", status: "Pending"},
@@ -26,11 +28,29 @@ const sampleReports = [
 ]
 
 export default function ReportEvaluation() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
+
+  // us
   const [selectedStatus, setSelectedStatus] = useState("All Status")
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [search, setSearch] = useState("");
-  const navigate = useNavigate();
+  const [openDropdown, setOpenDropdown] = useState(null)
+  const [dropdownPos, setDropdownPos]  = useState({ top: 0, left: 0 })
+
+  const [toasts, setToasts] = useState([])
+
+  const addToast = (message, color) => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, color }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
+  }
 
   // selected report
   const [selectedReport, setSelectedReport] = useState(null)
@@ -55,11 +75,17 @@ export default function ReportEvaluation() {
     setRejectDialogOpen(true)
   }
 
+  const handleApproveConfirm = () => {
+    // TODO: connect to backend
+    setApproveOpen(false)
+    addToast(`Report has been approved!`, '#3E7A43')
+  }
+
   const handleRejectSubmit = async () => {
     // TODO: connect to backend
-    // await api.patch(`/api/reports/${selectedReport.id}/`, { status: 'Rejected', reason: rejectReason })
     setRejectDialogOpen(false)
-    setRejectSuccessOpen(true)
+    addToast(`Report has been rejected!`, '#3E7A43')
+    setRejectReason("")
   }
 
   const filterReports = sampleReports.filter(r => {
@@ -73,23 +99,25 @@ export default function ReportEvaluation() {
     return matchSearch && matchStatus && matchCerealType && matchWarehouse
   });
 
-  const getStatusStyle = (status) => {
-    const base = {
-      padding: "6px 14px",
-      borderRadius: "20px",
-      fontWeight: "600",
-      fontSize: "13px",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      width: "100px",
-      textAlign: 'center',
-      justifyContent: "center", 
-    }
-    if (status === "Pending") return { ...base, backgroundColor: "#F0E48B", color: "#856404", border: "1px solid #FFE08A" }
-    if (status === "Approved") return { ...base, backgroundColor: "#8BF093", color: "#155724", border: "1px solid #90EE90" }
-    if (status === "Rejected") return { ...base, backgroundColor: "#FF595C", color: "#721C24", border: "1px solid #F5A0A0" }
-    return base
+  const getStatusBadge = (status) => {
+    if (status === "Pending") return (
+      <span className="inline-flex items-center justify-center gap-3.5 px-4.5 py-1.5 rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: "#F0E48B", color: "#856404", border: "1px solid #FFE08A" }}>
+        <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+        Pending
+      </span>
+    )
+    if (status === "Approved") return (
+      <span className="inline-flex items-center justify-center gap-1.5 px-3.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: "#8BF093", color: "#3E7A43", border: "1px solid #90EE90" }}>
+        <IoMdCheckmarkCircleOutline size={18} />
+        Approved
+      </span>
+    )
+    if (status === "Rejected") return (
+      <span className="inline-flex items-center justify-center gap-1.5 px-4.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: "#BB2325", color: "#fff", border: "1px solid #F5A0A0" }}>
+        <IoMdCloseCircleOutline size={18} />
+        Rejected
+      </span>
+    )
   }
 
   // routes for view
@@ -100,7 +128,14 @@ export default function ReportEvaluation() {
 
   return (
     <>
-      <div className="bg-white m-7.5 flex flex-col h-full">
+      <Header
+        pageTitle="Evaluation"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
+
+      <div className="bg-[#F5F9F9] mx-6 my-6 flex flex-col shadow-2xl border border-black/10 rounded-lg !min-h-[640px]">
         <div className='flex justify-between font-medium w-150 pt-2.5 pl-4 text-[#2D317F]'>
           <div className="flex gap-4">
             <label>Total Reports:</label>
@@ -116,19 +151,21 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center h-auto mt-5 mb-4 mx-4 text-[#2D317F] gap-3 flex-wrap w-[63%]">
-          <div className="bg-[#2D317F] rounded-2xl py-1.5 px-5 flex items-center gap-2">
-            <Input
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search report"
-              className="border-0 bg-transparent w-[330px] text-white font-medium text-base placeholder:text-white"
-            />
-            <FaSearch className="text-white shrink" size={20}/>
+        <div className="flex justify-between items-center h-auto mt-5 mb-4 mx-4 text-[#2D317F] gap-3 ">
+          <div className="bg-white border border-[#2D317F] rounded-full py-1.5 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+            <FaBars color={'#2D317F'} size={18} className="shrink-0" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search Report"
+                className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
+              />
+            <FaSearch className="text-[#2D317F] shrink" size={20}/>
           </div>
 
           <div className="flex gap-2.5 items-center flex-wrap">
             <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v)}>
-              <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-35 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
+              <SelectTrigger className=" bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-35 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
                 <SelectValue placeholder="Select range" />
               </SelectTrigger>
               <SelectContent>
@@ -140,7 +177,7 @@ export default function ReportEvaluation() {
             </Select>
 
             <Select value={selectedCerealType} onValueChange={(v) => setSelectedCerealType(v)}>
-              <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-42 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
+              <SelectTrigger className=" bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-42 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
                 <SelectValue placeholder="Select range" />
               </SelectTrigger>
               <SelectContent>
@@ -151,7 +188,7 @@ export default function ReportEvaluation() {
             </Select>
 
             <Select value={selectedWarehouse} onValueChange={(v) => setSelectedWarehouse(v)}>
-              <SelectTrigger className="inline-flex items-center justify-between gap-2.5 border-[#999] rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-45 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
+              <SelectTrigger className=" bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium  text-sm w-45 min-w-0 cursor-pointer ml-0 whitespace-nowrap transition-colors duration-200">
                 <SelectValue placeholder="Select range" />
               </SelectTrigger>
               <SelectContent>
@@ -183,30 +220,39 @@ export default function ReportEvaluation() {
                   <TableCell className='text-center'>{report.reportType}</TableCell>
                   <TableCell className='text-center'>{report.whse}</TableCell>
                   <TableCell className='text-center'>
-                    <span style={getStatusStyle(report.status)}>{report.status}</span>
+                    {getStatusBadge(report.status)}
                   </TableCell>
                   <TableCell className='text-center px-0 !w-100'>
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] text-[#2D317F]"
+                        className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
                         onClick={() => navigate(reportRoutes[report.reportType] ?? "/admin/evaluation")}
                       >
                         <GoLinkExternal size={15}/> View
                       </button>
-                      <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none text-[#3E7A43]"
-                        onClick={() => handleApprove(report)}
-                        disabled={report.status === "Approved" || report.status === "Rejected"}
-                      >
-                        <IoMdCheckmarkCircleOutline size={20} color={"green"}/> Approve
-                      </button>
-                      <button
-                        className="rounded-xl bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 whitespace-nowrap transition ease-in-out duration-300 border-[1.5px] border-[#ccc] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none text-[#BB2325]"
-                        onClick={() => handleRejectOpen(report)}
-                        disabled={report.status === "Approved" || report.status === "Rejected"}
-                      >
-                        X
-                      </button>
+
+                      {/* ellipsis dropdown */}
+                      <div className="relative">
+                        <button
+                          className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
+                          disabled={report.status === "Approved" || report.status === "Rejected"}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (openDropdown === report.date) {
+                              setOpenDropdown(null)
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setDropdownPos({
+                                top: rect.bottom + window.scrollY + 4,
+                                left: rect.right - 144,
+                              })
+                              setOpenDropdown(report.date)
+                            }
+                          }}
+                        >
+                          <span className="text-lg font-bold tracking-widest">···</span>
+                        </button>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -217,28 +263,37 @@ export default function ReportEvaluation() {
       </div>
 
       {/* approve modal */}
-      <AlertDialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none'>
-          <div className='h-7 bg-[#3E7A43] rounded-t-lg'></div>
-          <AlertDialogHeader className='p-5 text-center items-center pb-4'>
-            <div className="rounded-full px-5 py-5 bg-[#3E7A43]">
-              <FaCheck color={'white'} size={60} />
+      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[400px] shadow-2xl'>
+          <div className='bg-[#3E7A43] py-3 rounded-t-lg'></div>
+          <div className='bg-[#3E7A43] py-5 rounded-full flex justify-center mx-38 mb-3 mt-5'>
+            <IoMdCheckmarkCircleOutline className="w-12 h-12" color='white' />
+          </div>
+          <DialogHeader>
+            <div className='text-center'>
+              <p className='text-[#3E7A43] font-bold text-xl'>Approve Report?</p>
+              <p className='text-sm mx-5 mt-2 text-[#051F52]'>Are you sure you want to approve this report?</p>
             </div>
-            <AlertDialogTitle className='!font-bold text-[#2D317F] text-2xl mx-2'>Success!</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              Report <span className="font-bold">{selectedReport?.id}</span> has been approved!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0'>
-            <button
-              onClick={() => setApproveOpen(false)}
-              className='bg-[#3E7A43] text-white px-7 py-2.5 rounded-md text-sm font-medium mb-4 !-mt-8'
-            >
-              Done
-            </button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <DialogDescription className='flex flex-col gap-5'>
+              <div className='flex justify-center gap-3 mt-6 mb-5'>
+                <Button
+                  variant="ghost"
+                  onClick={() => setApproveOpen(false)}
+                  className='px-7 py-4.5 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleApproveConfirm}
+                  className='px-7 py-4.5 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700'
+                >
+                  Approve
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
       {/* reject modal */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
@@ -302,6 +357,44 @@ export default function ReportEvaluation() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* toasts */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+        {toasts.map(toast => (
+          <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]" style={{ borderLeft: `4px solid ${toast.color}` }}>
+            <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
+              <FaCheck size={16} color="white" />
+            </div>
+            <div>
+              <p className="font-bold text-sm" style={{ color: toast.color }}>Success!</p>
+              <p className="text-gray-500 text-xs">{toast.message}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* dropdown portal */}
+      {openDropdown && createPortal(
+        <div
+          className="fixed bg-white border border-gray-200 rounded-xl shadow-xl z-[9999] w-36 overflow-hidden"
+          style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            onClick={() => { handleApprove(filterReports.find(r => r.date === openDropdown)); setOpenDropdown(null) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#3E7A43] hover:bg-green-50 transition-colors"
+          >
+            <IoMdCheckmarkCircleOutline size={18} /> Approve
+          </button>
+          <button
+            onClick={() => { handleRejectOpen(filterReports.find(r => r.date === openDropdown)); setOpenDropdown(null) }}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors"
+          >
+            <IoMdCloseCircleOutline size={18} /> Reject
+          </button>
+        </div>,
+        document.body
+      )}
     </>
   )
 }

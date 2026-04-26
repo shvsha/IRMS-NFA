@@ -96,7 +96,7 @@ export default function UserManagement() {
 
           <div className="flex items-center gap-8">
             <Select value={userStatus} onValueChange={setUserStatus}>
-              <SelectTrigger className="w-27 px-3 py-5 bg-white border border-[#2D317F] rounded-md [&>svg]:text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+              <SelectTrigger className="w-27 px-3 py-5 bg-white border border-[#2D317F] rounded-md [&>svg]:text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] text-[#2D317F] font-medium">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent className='w-27 min-w-0'>
@@ -105,13 +105,13 @@ export default function UserManagement() {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center border border-[#2D317F] rounded-2xl px-3 py-1 gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+            <div className="flex items-center border border-[#2D317F] rounded-full px-3 py-1 gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
               <FaBars color={'#2D317F'} size={18} className="shrink-0" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search Name"
-                className="bg-transparent border-0 rounded-xl placeholder:text-black focus-visible:ring-0 h-8 w-[430px]"
+                className="bg-transparent border-0 rounded-xl placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
               />
               <FaSearch color={'#2D317F'} size={18} className="shrink-0" />
             </div>
