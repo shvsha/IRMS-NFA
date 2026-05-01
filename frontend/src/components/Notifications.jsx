@@ -6,7 +6,9 @@ import { TbXboxX } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// shadcnAlertDialogContent 
+import Header from './Header'
+
+// cshadcn components
 import {
   AlertDialog,
   AlertDialogContent,
@@ -103,17 +105,29 @@ function StatusIcon({ status }) {
 function AdminNotifItem({ notif, onNavigate }) {
   return (
     <div
-      className={`flex items-start gap-4 px-5 py-4 border-b border-gray-200 transition-colors duration-150 hover:bg-gray-50 bg-white
-        ${notif.read ? 'opacity-60' : 'opacity-100'}`}
+      onClick={onNavigate}
+      className={`flex items-start gap-4 px-5 py-6 rounded-[10px] border cursor-pointer shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]
+        transition-shadow duration-150 hover:shadow-md mb-[10px]
+        ${notif.read
+          ? 'bg-[#F5F9F9] border-[#e8edf3] opacity-70'
+          : 'bg-white border-[#e8edf3] shadow-sm'
+        }`}
     >
-      <div className="flex-shrink-0 pt-5">
-        <StatusIcon />
+      {/* Unread dot */}
+      {!notif.read && (
+        <div className="w-2 h-2 rounded-full bg-[#2D317F] flex-shrink-0 mt-[6px]" />
+      )}
+      {notif.read && <div className="w-2 flex-shrink-0" />}
+
+      {/* Icon */}
+      <div className="flex-shrink-0 pt-[2px] text-[#2D317F]">
+        <FaRegFileAlt size={26} />
       </div>
-      <div onClick={onNavigate} className="flex-1 flex flex-col gap-1 cursor-pointer">
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-[10px] flex-wrap">
-            <span className="text-sm font-bold text-gray-900">{notif.reportTitle}</span>
-          </div>
+          <span className="text-sm font-bold text-gray-900">{notif.reportTitle}</span>
           <div className="flex gap-3 text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
             <span>{notif.date}</span>
             <span>{notif.time}</span>
@@ -123,7 +137,7 @@ function AdminNotifItem({ notif, onNavigate }) {
           <span>WSR#: {notif.wsr}</span>
           <span>Submitted by: {notif.submittedBy}</span>
         </div>
-        <p className="text-[13px] text-gray-700 mt-1 leading-relaxed">{notif.description}</p>
+        <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">{notif.description}</p>
       </div>
     </div>
   )
@@ -132,13 +146,27 @@ function AdminNotifItem({ notif, onNavigate }) {
 function SupervisorNotifItem({ notif, onClick }) {
   return (
     <div
-      className={`flex items-start gap-4 px-5 py-4 border-b border-gray-200 transition-colors duration-150 hover:bg-gray-50
-        ${notif.read ? 'bg-[#fafafa] opacity-75' : 'bg-white'}`}
+      onClick={onClick}
+      className={`flex items-start gap-4 px-5 py-6 rounded-[10px] border cursor-pointer shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]
+        transition-shadow duration-150 hover:shadow-md mb-[10px]
+        ${notif.read
+          ? 'bg-[#F5F9F9] border-[#e8edf3] opacity-70'
+          : 'bg-white border-[#e8edf3] shadow-sm'
+        }`}
     >
-      <div className="flex-shrink-0 pt-5">
+      {/* Unread dot */}
+      {!notif.read && (
+        <div className="w-2 h-2 rounded-full bg-[#2D317F] flex-shrink-0 mt-[6px]" />
+      )}
+      {notif.read && <div className="w-2 flex-shrink-0" />}
+
+      {/* Status Icon */}
+      <div className="flex-shrink-0 pt-[2px]">
         <StatusIcon status={notif.status} />
       </div>
-      <div onClick={onClick} className="flex-1 flex flex-col gap-1 cursor-pointer">
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-[10px] flex-wrap">
             <span className="text-sm font-bold text-gray-900">{notif.reportTitle}</span>
@@ -153,13 +181,13 @@ function SupervisorNotifItem({ notif, onClick }) {
           <span>WSI#: {notif.wsr}</span>
           <span>Reviewed by: {notif.reviewedBy}</span>
         </div>
-        <p className="text-[13px] text-gray-700 mt-1 leading-relaxed">{notif.description}</p>
+        <p className="text-[13px] text-gray-600 mt-1 leading-relaxed">{notif.description}</p>
       </div>
     </div>
   )
 }
 
-// ── Success Modal ──
+// Success Modal 
 function ApproveModal({ open, onClose }) {
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
@@ -241,7 +269,6 @@ function RejectModal({ open, onClose, onEdit }) {
   )
 }
 
-// ── Main Component ──
 export default function Notifications({ role }) {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
@@ -262,11 +289,15 @@ export default function Notifications({ role }) {
 
   return (
     <>
+      <Header
+        pageTitle="Notification"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
+
       {/* Main container */}
-      <div className="m-[30px] text-[#2D317F]">
-        <div className="bg-white text-lg font-bold text-[#2D317F] px-5 py-4 border-b border-gray-200 mb-5">
-          Notifications
-        </div>
+      <div className="mx-4 my-4 text-[#2D317F]">
 
         <div className="bg-white flex flex-col min-h-[calc(100vh-200px)]">
           {loading && (
@@ -293,6 +324,7 @@ export default function Notifications({ role }) {
         </div>
       </div>
 
+      {/* for ws */}
       <ApproveModal
         open={showApproveModal}
         onClose={() => setShowApproveModal(false)}

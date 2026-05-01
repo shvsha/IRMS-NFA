@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { GoLinkExternal } from "react-icons/go";
+import { CiExport } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars } from "react-icons/fa"
 
@@ -179,9 +180,14 @@ export default function ReportSummarization() {
                             <GoLinkExternal size={14} /> View
                           </button>
                           <button
-                            className="font-medium rounded-full bg-transparent py-[2px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F]"
+                            className="
+                              inline-flex items-center gap-[5px] rounded-full border
+                              border-[#1D8104] px-[14px] py-[6px]
+                              text-[13px] font-semibold text-[#1D8104]
+                              transition-colors hover:border-[#1D8104] hover:bg-[#1D8104]
+                            "
                           >
-                            <span className="text-lg font-bold tracking-widest">···</span>
+                            <CiExport size={17} />Export
                           </button>
                         </div>
                       </TableCell>

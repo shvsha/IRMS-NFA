@@ -27,7 +27,6 @@ const WhseRoute = (
     <Route path = "summarization/summary" element={<SummaryReport/>}/>
 
     <Route path="notif" element={<Notifications role="supervisor" />} />
-    <Route path="audit" element={<AuditLogs />} />
   </>
 )
 

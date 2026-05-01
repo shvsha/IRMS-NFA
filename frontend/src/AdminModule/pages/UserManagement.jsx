@@ -86,7 +86,7 @@ export default function UserManagement() {
           userName="Raph Nigos"
         />
       
-      <div className="bg-white mx-6 my-4 mb-5 flex flex-col !min-h-[643px]">
+      <div className="bg-white mx-4 my-4 mb-5 flex flex-col !min-h-[653px]">
 
         {/* Top bar */}
         <div className="flex justify-between items-center py-4 pt-1">

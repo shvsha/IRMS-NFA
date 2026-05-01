@@ -22,7 +22,7 @@ def get_user_from_token(request):
 
 
 class UserListView(APIView):
-    permission_classes = [AllowAny]  # ✅ we handle auth manually
+    permission_classes = [AllowAny]
 
     def get(self, request):
         user = get_user_from_token(request)

@@ -92,10 +92,10 @@ export default function SidebarAdmin() {
       <div className="border-t border-white/10 p-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button className={`flex items-center py-3 text-white/70 hover:text-white hover:bg-white/10 rounded transition-all duration-200 overflow-hidden whitespace-nowrap
-              ${expanded ? 'px-[17px] gap-3' : 'px-[17px]'}
+            <button className={`flex items-center w-full py-3 text-white/70 hover:text-white hover:bg-white/10 rounded transition-all duration-200 overflow-hidden whitespace-nowrap
+              ${expanded ? 'px-[13px] gap-3' : 'px-[13px]'}
             `}>
-              <span className="flex-shrink-0"><LuLogOut size={20} /></span>
+              <span className="flex-shrink-0 w-5 flex items-center justify-center"><LuLogOut size={18} /></span>
               {expanded && <span className="text-sm font-medium">Logout</span>}
             </button>
           </AlertDialogTrigger>

@@ -24,7 +24,6 @@ const navItems = [
   { to: '/whse/management', label: 'Stock Book', icon: <MdOutlineMenuBook size={18} /> },
   { to: '/whse/status', label: 'Report Status', icon: <MdAssessment size={18} /> },
   { to: '/whse/summarization', label: 'Report Summarization', icon: <TbReportSearch size={18} /> },
-  { to: '/whse/audit', label: 'Audit Logs', icon: <FaClipboardList size={18} /> },
 ]
 
 export default function NavBarWhse() {

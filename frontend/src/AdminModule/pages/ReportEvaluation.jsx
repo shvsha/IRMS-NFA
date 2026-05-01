@@ -135,7 +135,7 @@ export default function ReportEvaluation() {
         userName="Raph Nigos"
       />
 
-      <div className="bg-[#F5F9F9] mx-6 my-6 flex flex-col shadow-2xl border border-black/10 rounded-lg !min-h-[640px]">
+      <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
         <div className='flex justify-between font-medium w-150 pt-2.5 pl-4 text-[#2D317F]'>
           <div className="flex gap-4">
             <label>Total Reports:</label>
@@ -151,6 +151,7 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
+        {/* search */}
         <div className="flex justify-between items-center h-auto mt-5 mb-4 mx-4 text-[#2D317F] gap-3 ">
           <div className="bg-white border border-[#2D317F] rounded-full py-1.5 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
             <FaBars color={'#2D317F'} size={18} className="shrink-0" />
@@ -215,11 +216,11 @@ export default function ReportEvaluation() {
             <TableBody>
               {filterReports.map((report) => (
                 <TableRow key={report.id}>
-                  <TableCell className='text-center'>{report.date}</TableCell>
-                  <TableCell className='text-center'>{report.cerealtype}</TableCell>
-                  <TableCell className='text-center'>{report.reportType}</TableCell>
-                  <TableCell className='text-center'>{report.whse}</TableCell>
-                  <TableCell className='text-center'>
+                  <TableCell className='text-center text-[#2D317F]'>{report.date}</TableCell>
+                  <TableCell className='text-center text-[#2D317F]'>{report.cerealtype}</TableCell>
+                  <TableCell className='text-center text-[#2D317F]'>{report.reportType}</TableCell>
+                  <TableCell className='text-center text-[#2D317F]'>{report.whse}</TableCell>
+                  <TableCell className='text-center text-[#2D317F]'>
                     {getStatusBadge(report.status)}
                   </TableCell>
                   <TableCell className='text-center px-0 !w-100'>

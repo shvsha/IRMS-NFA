@@ -1,8 +1,9 @@
 // react icons
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaBars } from "react-icons/fa"
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
 import { FaRegCalendarAlt } from "react-icons/fa";
+import { FiCheckSquare } from "react-icons/fi";
 
 // react
 import { useState } from 'react'
@@ -12,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { DailyFilter } from '../../components/filters/DailyFilter';
 import { WeeklyFilter } from '../../components/filters/WeeklyFilter';
 import { MonthlyFilter } from '../../components/filters/MonthlyFilter';
+import Header from '../../components/Header'
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const ITEMS_PER_PAGE = 4
+const ITEMS_PER_PAGE = 7
 
 const sampleReportHistory = [
   { date: '30-Jan-26', reportid: 'R-001', reporttype: 'Statement of Issuance', whse: 'Warehouse 1', cerealtype: 'WD1G50' },
@@ -110,40 +112,58 @@ export default function ReportHistory() {
   }
 
   return (
-    <div className="mx-[30px] mt-[30px]">
+    <>
+      <Header
+        pageTitle="History"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
+    
+      <div className="bg-[#F5F9F9] mx-4 my-4 !min-h-[650px] h-[calc(100vh-120px)] border border-black/10 rounded-lg shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] flex flex-col">
+        {/* Filter Bar */}
+        <div className="px-3 py-3 mt-3">
+          <div className="flex justify-between gap-4">
 
-      {/* ── Filter Bar ── */}
-      <div className="bg-white px-4 py-3 shadow-sm">
-        <div className="flex flex-wrap items-start gap-8">
+            {/* Left: Search bar */}
+            <div className="flex flex-col">
+              <div className="bg-white flex items-center border border-[#2D317F] rounded-full px-3 py-[6px] gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] w-[440px]">
+                <FaBars color={'#2D317F'} size={15} className="shrink-0" />
+                <Input
+                  value={search}
+                  onChange={handleSearchChange}
+                  placeholder="Search Report"
+                  className="bg-transparent border-0 rounded-xl placeholder:text-black/50 focus-visible:ring-0 h-7 text-sm"
+                />
+                <FaSearch color={'#2D317F'} size={15} className="shrink-0" />
+              </div>
+            </div>
 
-          {/* Date filter */}
-          <div className="flex flex-col">
-            <label className="mb-2 text-[13px] font-semibold text-[#2D317F]">Date</label>
-            <div className="relative">
+            {/* Calendar button + stacked dropdowns */}
+            <div className="flex gap-3">
+
+              {/* Calendar Popover */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-md border border-[#2D317F] text-[#072560]"
+                  <button
+                    className="flex items-center justify-center rounded-md bg-[#E6EEF6] text-[#072560] hover:bg-[#d5e3f0] transition ease-in h-10 w-12 shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]"
                   >
-                    <FaRegCalendarAlt className="h-4 w-4" />
-                  </Button>
+                    <FaRegCalendarAlt color='#072560' size={20} />
+                  </button>
                 </PopoverTrigger>
 
                 <PopoverContent
-                  align="start"
+                  align="end"
+                  alignOffset={-8.4}
                   sideOffset={12}
-                  className="z-40 w-80 overflow-visible rounded-lg border-0 bg-[#E6EEF6] p-0 shadow-lg"
+                  className="z-40 w-80 overflow-visible rounded border-0 bg-[#E6EEF6] p-0 shadow-lg"
                 >
                   {/* Arrow */}
-                  <div className="absolute -top-2 left-4 h-4 w-4 rotate-45 bg-[#2D317F]" />
+                  <div className="absolute -top-2 left-70 h-4 w-4 rotate-45 bg-[#2D317F]" />
 
-                  {/* Header */}
-                  <div className="flex h-8 items-center rounded-t-lg bg-[#2D317F] px-4">
-                    <p className="text-base font-medium text-white">Date</p>
+                  <div className="bg-[#2D317F] rounded-t pl-4 py-2  ">
+                    <p className="text-white font-semibold text-base">Date</p>
                   </div>
-
                   {/* Content */}
                   <div className="px-5 py-3 pb-6">
                     <p className="mb-2 text-sm font-medium text-[#2D317F]">
@@ -151,7 +171,6 @@ export default function ReportHistory() {
                     </p>
 
                     <FieldGroup>
-                      {/* Range dropdown */}
                       <Field>
                         <FieldLabel className="font-medium text-[#2D317F]">Range</FieldLabel>
                         <Select
@@ -172,7 +191,6 @@ export default function ReportHistory() {
                         </Select>
                       </Field>
 
-                      {/* Daily */}
                       {rangeDate === "Daily" && (
                         <Field>
                           <FieldLabel className="font-medium text-[#2D317F]">Date</FieldLabel>
@@ -193,7 +211,6 @@ export default function ReportHistory() {
                         </Field>
                       )}
 
-                      {/* Weekly */}
                       {rangeDate === "Weekly" && (
                         <Field>
                           <FieldLabel className="font-medium text-[#2D317F]">Week</FieldLabel>
@@ -210,7 +227,6 @@ export default function ReportHistory() {
                         </Field>
                       )}
 
-                      {/* Monthly */}
                       {rangeDate === "Monthly" && (
                         <Field>
                           <FieldLabel className="font-medium text-[#2D317F]">Month</FieldLabel>
@@ -229,16 +245,10 @@ export default function ReportHistory() {
                     </FieldGroup>
                   </div>
 
-                  {/* Calendar popup */}
                   {showCalendarFilter && (
-                    <div className="absolute left-78 top-30 z-50 mt-2">
+                    <div className="absolute left-7 top-60 z-50 mt-2">
                       {rangeDate === "Daily" && (
-                        <DailyFilter
-                          value={selectedDate}
-                          onChange={(date) => {
-                            setSelectedDate(date)
-                          }}
-                        />
+                        <DailyFilter value={selectedDate} onChange={(date) => setSelectedDate(date)} />
                       )}
                       {rangeDate === "Weekly" && (
                         <WeeklyFilter
@@ -249,9 +259,7 @@ export default function ReportHistory() {
                           onNextMonth={handleNextMonth}
                           onMonthChange={setWeeklyMonth}
                           onYearChange={setWeeklyYear}
-                          onWeekSelect={(week) => {
-                            setSelectedWeek(week)
-                          }}
+                          onWeekSelect={(week) => setSelectedWeek(week)}
                         />
                       )}
                       {rangeDate === "Monthly" && (
@@ -259,254 +267,246 @@ export default function ReportHistory() {
                           selectedMonth={selectedMonth}
                           year={monthlyYear}
                           onYearChange={setMonthlyYear}
-                          onMonthChange={(month) => {
-                            setSelectedMonth(month)
-                          }}
+                          onMonthChange={(month) => setSelectedMonth(month)}
                         />
                       )}
                     </div>
                   )}
                 </PopoverContent>
               </Popover>
+
+              {/* Stacked dropdowns */}
+              <div className="flex gap-2">
+
+                {/* Warehouses */}
+                <div className="flex flex-col">
+                  <Select value={selectedWarehouse} onValueChange={handleWarehouseChange}>
+                    <SelectTrigger className="py-5 border-[#2D317F] bg-white text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem className='p-2 text-[#2D317F]' value="All Warehouses">All Warehouses</SelectItem>
+                      <SelectItem className='p-2 text-[#2D317F]' value="Warehouse 1">Warehouse 1</SelectItem>
+                      <SelectItem className='p-2 text-[#2D317F]' value="Warehouse 2">Warehouse 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Report Type */}
+                <div className="flex flex-col">
+                  <Select value={selectedReportType} onValueChange={handleReportTypeChange}>
+                    <SelectTrigger className="py-5 border-[#2D317F] bg-white text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["All Reports", "Statement of Receipts", "Statement of Issuance", "Summary of Warehouse Reports"].map((o) => (
+                        <SelectItem key={o} className="p-2 text-[#2D317F]" value={o}>{o}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Cereal Type */}
+                <div className="flex flex-col">
+                  <Select value={selectedCerealType} onValueChange={handleCerealChange}>
+                    <SelectTrigger className="py-5 border-[#2D317F] bg-white text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem className='p-2 text-[#2D317F]' value="All Cereal Type">All Cereal Type</SelectItem>
+                      <SelectItem className='p-2 text-[#2D317F]' value="WD1G50">Rice</SelectItem>
+                      <SelectItem className='p-2 text-[#2D317F]' value="PD1350">Palay</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+              </div>
             </div>
+
           </div>
-
-          {/* Warehouses */}
-          <div className="flex flex-col">
-            <label className="mb-2 text-[13px] font-semibold text-[#2D317F]">Warehouses</label>
-            <Select value={selectedWarehouse} onValueChange={handleWarehouseChange}>
-              <SelectTrigger className="h-9 w-43 border-[#2D317F] bg-white text-[#2D317F] !h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem className='p-2 text-[#2D317F]' value="All Warehouses">All Warehouses</SelectItem>
-                <SelectItem className='p-2 text-[#2D317F]' value="Warehouse 1">Warehouse 1</SelectItem>
-                <SelectItem className='p-2 text-[#2D317F]' value="Warehouse 2">Warehouse 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Report Type */}
-          <div className="flex flex-col">
-            <label className="mb-2 text-[13px] font-semibold text-[#2D317F]">Report Type</label>
-            <Select value={selectedReportType} onValueChange={handleReportTypeChange}>
-              <SelectTrigger className="h-9 w-35 border-[#2D317F] bg-white text-[#2D317F] !h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {["All Reports", "Statement of Receipts", "Statement of Issuance", "Summary of Warehouse Reports"].map((o) => (
-                  <SelectItem key={o} className="p-2 text-[#2D317F]" value={o}>{o}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Cereal Type */}
-          <div className="flex flex-col">
-            <label className="mb-2 text-[13px] font-semibold text-[#2D317F]">Cereal Type</label>
-            <Select value={selectedCerealType} onValueChange={handleCerealChange}>
-              <SelectTrigger className="h-9 w-41 border-[#2D317F] bg-white text-[#2D317F] !h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem className='p-2 text-[#2D317F]' value="All Cereal Type">All Cereal Type</SelectItem>
-                <SelectItem className='p-2 text-[#2D317F]' value="WD1G50">Rice</SelectItem>
-                <SelectItem className='p-2 text-[#2D317F]' value="PD1350">Palay</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Search */}
-          <div className="mt-6 flex flex-col">
-            <div className="flex items-center gap-2 rounded-full bg-[#2D317F] px-4 py-[10px] w-[350px]">
-              <Input
-                type="text"
-                placeholder="Search Report ID"
-                value={search}
-                onChange={handleSearchChange}
-                className="
-                  h-auto border-none bg-transparent p-0 text-[15px] font-medium
-                  text-white shadow-none placeholder:text-white/70
-                  focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-white
-                "
-              />
-              <FaSearch className="shrink-0 text-white" size={18} />
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ── Result Bar ── */}
-      <div className="mt-3 flex items-center gap-3 border-l-4 border-[#2D317F] bg-[#eef4ff] px-3 py-[6px]">
-        <span className="font-semibold text-[#2D317F]">Showing Reports For:</span>
-        <span className="text-[13px] font-medium text-[#2D317F]">Date: January 01, 2026 - May 05, 2026</span>
-        <span className="ml-auto text-[13px] font-medium text-[#2D317F]">Result: {filteredReports.length}</span>
-      </div>
-
-      {/* ── Table ── */}
-      <div className="mt-3 flex h-[390px] flex-col overflow-hidden bg-white shadow-sm ">
-        <div className="w-full overflow-hidden">
-
-          {/* shadcn Table */}
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-                <TableHead className="h-12 pl-5 text-center font-bold text-[13px] text-[#2D317F]">
-                  <div className="flex items-center justify-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={areAllOnPage && paginatedReports.length > 0}
-                      onChange={toggleSelectAll}
-                    />
-                    <span>Select All</span>
-                  </div>
-                </TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Date</TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report ID</TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report Type</TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Warehouse</TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Cereal Type</TableHead>
-                <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {paginatedReports.length === 0 ? (
-                <>
-                  <TableRow>
-                    <TableCell colSpan={7} className="py-10 text-center text-[#9CA3AF]">
-                      No records found.
-                    </TableCell>
-                  </TableRow>
-                  {Array.from({ length: ITEMS_PER_PAGE - 1 }).map((_, i) => (
-                    <TableRow key={`filler-${i}`} className="h-11 border-b border-[#E9EEF6] hover:bg-transparent">
-                      <TableCell colSpan={7} />
-                    </TableRow>
-                  ))}
-                </>
-              ) : (
-                <>
-                  {paginatedReports.map((report) => (
-                    <TableRow
-                      key={report.reportid}
-                      className="h-9 border-b border-[#E9EEF6] transition-colors"
-                    >
-                      <TableCell className="pl-5 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.includes(report.reportid)}
-                          onChange={() => toggleRow(report.reportid)}
-                        />
-                      </TableCell>
-                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                        {report.date}
-                      </TableCell>
-                      <TableCell className="text-center text-[13px] font-semibold text-[#2D317F]">
-                        {report.reportid}
-                      </TableCell>
-                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                        {report.reporttype}
-                      </TableCell>
-                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                        {report.whse}
-                      </TableCell>
-                      <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
-                        {report.cerealtype}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => navigate("/admin/evaluation/receipt")}
-                            className="
-                              inline-flex items-center gap-[5px] rounded-md border-[1.5px]
-                              border-[#2D317F] bg-white px-[14px] py-[6px]
-                              text-[13px] font-semibold text-[#2D317F]
-                              transition-colors hover:bg-[#2D317F] hover:text-white
-                            "
-                          >
-                            <GoLinkExternal size={14} />View
-                          </button>
-                          <button
-                            className="
-                              inline-flex items-center gap-[5px] rounded-md border-[1.5px]
-                              border-[#1F7A3E] bg-[#1F7A3E] px-[14px] py-[6px]
-                              text-[13px] font-semibold text-white
-                              transition-colors hover:border-[#185f30] hover:bg-[#185f30]
-                            "
-                          >
-                            <CiExport size={15} />Export
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-
-                  {/* filler */}
-                  {Array.from({ length: ITEMS_PER_PAGE - paginatedReports.length }).map((_, i) => (
-                    <TableRow key={`filler-${i}`} className="h-12 border-b border-[#E9EEF6] hover:bg-transparent">
-                      <TableCell colSpan={7} />
-                    </TableRow>
-                  ))}
-                </>
-              )}
-            </TableBody>
-          </Table>
         </div>
 
-        {/* selection */}
-        <div className="h-[60px] border-t border-[#E9EEF6] px-5 py-[12px]">
-          {selectedRows.length > 0 && (
-            <div className="flex items-center justify-between gap-3 font-medium text-[#2D317F]">
-              <span>{selectedRows.length} Reports Selected</span>
+        {/* Result Bar */}
+        <div className="mt-3 flex items-center gap-3 px-4 py-[6px]">
+          <span className="font-semibold text-[#2D317F]">Showing Reports For:</span>
+          
+          <div className="flex items-center gap-1">
+            <FaRegCalendarAlt size={14} color="#2D317F" />
+            <span className="text-[13px] font-medium mt-0.5 text-[#2D317F]">Date: January 01, 2026 - May 05, 2026</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1">
+            <FiCheckSquare size={16} color="#2D317F" />
+            <span className="text-[13px] font-medium text-[#2D317F]">Result: {filteredReports.length}</span>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="w-full overflow-auto flex-1">
+
+            {/* shadcn Table */}
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#E2EBFF] text-[#2D317F] font-medium h-10 xl:h-12 2xl:h-[50px]">
+                  <TableHead className="h-12 pl-5 text-center font-bold text-[13px] text-[#2D317F]">
+                    <div className="flex items-center justify-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={areAllOnPage && paginatedReports.length > 0}
+                        onChange={toggleSelectAll}
+                      />
+                      <span>Select All</span>
+                    </div>
+                  </TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Date</TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report ID</TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Report Type</TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Warehouse</TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Cereal Type</TableHead>
+                  <TableHead className="h-12 text-center font-bold text-[13px] text-[#2D317F]">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {paginatedReports.length === 0 ? (
+                  <>
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-10 text-center text-[#9CA3AF]">
+                        No records found.
+                      </TableCell>
+                    </TableRow>
+                    {Array.from({ length: ITEMS_PER_PAGE - 1 }).map((_, i) => (
+                      <TableRow key={`filler-${i}`} className="h-11 border-b border-[#E9EEF6] hover:bg-transparent">
+                        <TableCell colSpan={7} />
+                      </TableRow>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {paginatedReports.map((report) => (
+                      <TableRow
+                        key={report.reportid}
+                        className="h-9 border-0 transition-colors"
+                      >
+                        <TableCell className="pl-5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.includes(report.reportid)}
+                            onChange={() => toggleRow(report.reportid)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                          {report.date}
+                        </TableCell>
+                        <TableCell className="text-center text-[13px] font-semibold text-[#2D317F]">
+                          {report.reportid}
+                        </TableCell>
+                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                          {report.reporttype}
+                        </TableCell>
+                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                          {report.whse}
+                        </TableCell>
+                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                          {report.cerealtype}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => navigate("/admin/evaluation/receipt")}
+                              className="
+                                inline-flex items-center gap-[5px] rounded-full border-[1.5px]
+                                border-[#2D317F] bg-white px-[14px] py-[6px]
+                                text-[13px] font-semibold text-[#2D317F]
+                                transition-colors hover:bg-[#2D317F] hover:text-white
+                              "
+                            >
+                              <GoLinkExternal size={14} />View
+                            </button>
+                            <button
+                              className="
+                                inline-flex items-center gap-[5px] rounded-full border
+                                border-[#1D8104] px-[14px] py-[6px]
+                                text-[13px] font-semibold text-[#1D8104]
+                                transition-colors hover:border-[#1D8104] hover:bg-[#1D8104]
+                                hover:text-white
+                              "
+                            >
+                              <CiExport size={17} />Export
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {/* filler */}
+                    {Array.from({ length: ITEMS_PER_PAGE - paginatedReports.length }).map((_, i) => (
+                      <TableRow key={`filler-${i}`} className="h-12 border-b border-[#E9EEF6] hover:bg-transparent">
+                        <TableCell colSpan={7} />
+                      </TableRow>
+                    ))}
+                  </>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* selection */}
+          <div className="border-t border-[#E9EEF6] px-5 py-[12px] min-h-[50px]">
+            {selectedRows.length > 0 && (
+              <div className="flex items-center justify-between gap-3 font-medium text-[#2D317F]">
+                <span>{selectedRows.length} Reports Selected</span>
+                <button
+                  className="
+                    inline-flex items-center gap-[5px] rounded-full border
+                    border-[#1D8104] px-[14px] py-[6px]
+                    text-[13px] font-semibold text-[#1D8104]
+                    transition-colors hover:border-[#1D8104] hover:bg-[#1D8104]
+                    hover:text-white
+                  "
+                >
+                  <CiExport size={17} />Export
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* pagination with buttons*/}
+          <div className="flex items-center justify-between border-t border-[#E9EEF6] px-4 py-[10px]">
+            <span className="text-[13px] font-medium text-[#6B7280]">
+              {totalPages > 0 ? `${currentPage} of ${totalPages}` : '—'}
+            </span>
+            <div className="flex gap-2">
               <button
+                onClick={() => setCurrentPage((p) => p - 1)}
+                disabled={currentPage === 1 || totalPages === 0}
                 className="
-                  flex items-center gap-1 rounded-md border-[1.5px]
-                  border-[#1F7A3E] bg-[#1F7A3E] px-[14px] py-[6px]
-                  text-[13px] font-semibold text-white
-                  hover:border-[#185f30] hover:bg-[#185f30]
+                  rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px]
+                  text-[13px] font-semibold text-white opacity-75
+                  transition-colors hover:border-[#222669] hover:bg-[#222669]
+                  disabled:cursor-not-allowed
                 "
               >
-                <CiExport size={15} className="mt-[2px]" />Export
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="
+                  rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px]
+                  text-[13px] font-semibold text-white
+                  transition-colors hover:border-[#222669] hover:bg-[#222669]
+                  disabled:cursor-not-allowed
+                "
+              >
+                Next
               </button>
             </div>
-          )}
-        </div>
-
-        {/* pagination with buttons*/}
-        <div className="flex items-center justify-between border-t border-[#E9EEF6] px-4 py-[10px]">
-          <span className="text-[13px] font-medium text-[#6B7280]">
-            {totalPages > 0 ? `${currentPage} of ${totalPages}` : '—'}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => p - 1)}
-              disabled={currentPage === 1 || totalPages === 0}
-              className="
-                rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px]
-                text-[13px] font-semibold text-white opacity-75
-                transition-colors hover:border-[#222669] hover:bg-[#222669]
-                disabled:cursor-not-allowed
-              "
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="
-                rounded-md border-[1.5px] border-[#2D317F] bg-[#2D317F] px-[18px] py-[7px]
-                text-[13px] font-semibold text-white
-                transition-colors hover:border-[#222669] hover:bg-[#222669]
-                disabled:cursor-not-allowed
-              "
-            >
-              Next
-            </button>
           </div>
         </div>
-      </div>
 
-    </div>
+      </div>
+    </>
   )
 }
