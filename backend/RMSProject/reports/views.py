@@ -45,8 +45,9 @@ def create_stock(request):
 
     serializer = StockBookSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save(name=user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        instance = serializer.save(name=user)
+        full = StockBook.objects.get(pk=instance.report_id)
+        return Response(StockBookSerializer(full).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

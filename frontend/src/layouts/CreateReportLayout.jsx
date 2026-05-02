@@ -1,6 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import TitleBar from "../components/TitleBar";
 import NavBarWhse from "../WhseModule/pages/SideBardWhse";
 
 export default function CreateReportLayout() {
@@ -16,7 +15,6 @@ export default function CreateReportLayout() {
 
   return (
     <div className="flex flex-col h-screen">
-      <TitleBar />
       <NavBarWhse />
       <div className="flex-1 overflow-y-auto ">
         <Outlet />

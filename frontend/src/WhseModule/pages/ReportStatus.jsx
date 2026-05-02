@@ -3,10 +3,10 @@ import { GoLinkExternal } from "react-icons/go";
 import { TbProgress } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
+import Header from '../../components/Header'
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // api
 import api from "@/api/axios";
@@ -100,77 +100,62 @@ export default function ReportStatus() {
   });
 
   return (
-    <div className="m-7.5 flex flex-col h-[calc(100vh-160px)]">
+    <>
+      <Header
+        pageTitle="Report Status"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
+      
+      <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[650px]">
+      
+        {/* Filters */}
+        <div className="flex justify-end gap-3 pt-2 pb-3 mx-3">
+          <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
+            <SelectTrigger className="w-40 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+              <SelectValue placeholder="All Cereal Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem className="p-2" value="All Cereal Type">All Cereal Type</SelectItem>
+              <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
+              <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
+            </SelectContent>
+          </Select>
 
-      {/* Filters */}
-      <div className="flex justify-end gap-2.5 py-2.5 mb-4">
-        <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-42 cursor-pointer whitespace-nowrap">
-            <SelectValue placeholder="All Cereal Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem className="p-2 text-[#2D317F]" value="All Cereal Type">All Cereal Type</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="WD1G50">Palay</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="PD1350">Rice</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={selectedReportType} onValueChange={setSelectedReportType}>
+            <SelectTrigger className="w-52 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+              <SelectValue placeholder="All Report Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem className="p-2" value="All Report Type">All Report Type</SelectItem>
+              <SelectItem className="p-2" value="Statement of Issuance">Statement of Issuance</SelectItem>
+              <SelectItem className="p-2" value="Statement of Receipts">Statement of Receipts</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={selectedReportType} onValueChange={setSelectedReportType}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-52 min-w-0 cursor-pointer whitespace-nowrap">
-            <SelectValue placeholder="All Report Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem className="p-2 text-[#2D317F]" value="All Report Type">All Report Type</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="Statement of Issuance">Statement of Issuance</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="Statement of Receipts">Statement of Receipts</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="w-36 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem className="p-2" value="All Status">All Status</SelectItem>
+              <SelectItem className="p-2" value="Approved">Approved</SelectItem>
+              <SelectItem className="p-2" value="Rejected">Rejected</SelectItem>
+              <SelectItem className="p-2" value="Pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-          <SelectTrigger className="inline-flex items-center justify-between gap-2.5 rounded-lg bg-white py-5 px-3.5 text-[#2D317F] font-semibold text-sm w-32 min-w-0 cursor-pointer whitespace-nowrap">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem className="p-2 text-[#2D317F]" value="All Status">All Status</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="Approved">Approved</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="Rejected">Rejected</SelectItem>
-            <SelectItem className="p-2 text-[#2D317F]" value="Pending">Pending</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white flex-1 overflow-hidden flex flex-col">
-        {loading ? (
-          <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
-        ) : (
-          <>
-            {/* Fixed header table */}
-            <table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-[15%]" />
-                <col className="w-[15%]" />
-                <col className="w-[25%]" />
-                <col className="w-[15%]" />
-                <col className="w-[15%]" />
-                <col className="w-[15%]" />
-              </colgroup>
-              <thead>
-                <tr className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report ID</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report Type</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Actions</th>
-                </tr>
-              </thead>
-            </table>
-
-            {/* Scrollable body */}
-            <div className="overflow-y-auto flex-1">
+        {/* Table */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {loading ? (
+            <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
+          ) : (
+            <>
+              {/* Fixed header table */}
               <table className="w-full table-fixed">
                 <colgroup>
                   <col className="w-[15%]" />
@@ -180,42 +165,66 @@ export default function ReportStatus() {
                   <col className="w-[15%]" />
                   <col className="w-[15%]" />
                 </colgroup>
-                <tbody>
-                  {filteredReports.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-10 text-[#2D317F] font-medium">
-                        No reports found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredReports.map((report, i) => (
-                      <tr key={`${report.reportType}-${report.id}-${i}`} className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]">
-                        <td className="text-center">{report.date}</td>
-                        <td className="text-center">{report.reportId}</td>
-                        <td className="text-center">{report.reportType}</td>
-                        <td className="text-center">{CEREAL_LABEL[report.cereal] || report.cereal}</td>
-                        <td className="text-center">
-                          <span className={getStatusStyle(report.status)}>
-                            {getStatusIcon(report.status)}
-                            {report.status}
-                          </span>
-                        </td>
-                        <td className="text-center">
-                          <div className="flex justify-center">
-                            <button className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white">
-                              <GoLinkExternal size={15} /> View
-                            </button>
-                          </div>
+                <thead>
+                  <tr className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report ID</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report Type</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Actions</th>
+                  </tr>
+                </thead>
+              </table>
+
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[15%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[15%]" />
+                  </colgroup>
+                  <tbody>
+                    {filteredReports.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-10 text-[#2D317F] font-medium">
+                          No reports found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                    ) : (
+                      filteredReports.map((report, i) => (
+                        <tr key={`${report.reportType}-${report.id}-${i}`} className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]">
+                          <td className="text-center">{report.date}</td>
+                          <td className="text-center">{report.reportId}</td>
+                          <td className="text-center">{report.reportType}</td>
+                          <td className="text-center">{CEREAL_LABEL[report.cereal] || report.cereal}</td>
+                          <td className="text-center">
+                            <span className={getStatusStyle(report.status)}>
+                              {getStatusIcon(report.status)}
+                              {report.status}
+                            </span>
+                          </td>
+                          <td className="text-center">
+                            <div className="flex justify-center">
+                              <button className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white">
+                                <GoLinkExternal size={15} /> View
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 // react
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
+import Header from '../../components/Header'
 
 // shadcn
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
@@ -112,200 +113,195 @@ export default function ReviewTransaction() {
   };
 
   return (
-    <div className="flex flex-col h-full p-5 box-border">
+    <>
+      <Header pageTitle="Stock Book" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      
+      <div className="mx-4 my-4 mt-2 pb-50 flex flex-col rounded-lg !min-h-[640px]">
 
-      {/* header */}
-      <div className="flex-shrink-0 flex gap-[30px] items-center bg-white px-5 py-3 text-sm text-[#2d317f] border border-[#cfd6e0]">
-        <div><strong>Report ID:</strong> R-{String(reportId).padStart(3, "0")}</div>
-        <div><strong>Warehouse Supervisor:</strong> {whseUser?.fname} {whseUser?.lname}</div>
-        <div><strong>Cereal Type:</strong> {cerealType}</div>
-        <div><strong>Warehouse Code:</strong> {whseUser?.WHCode ?? "—"}</div>
-        <div className="flex items-center gap-2">
-          <strong>Status:</strong>
-          <div className={badgeConfig.className}>{badgeConfig.label}</div>
-        </div>
-        <div className="flex gap-5 ml-auto">
-          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 border border-[#3e7a43] bg-transparent rounded-lg px-2 py-1">
-            <CiImport size={25} color="#3E7A43" />
-          </button>
-          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1d8104] text-white rounded-lg px-3 py-1 flex items-center gap-1">
-            <CiExport size={25} color="white" />
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* main content */}
-      <div className="bg-white mt-3 flex flex-col flex-1 overflow-hidden">
-        <div className="text-white w-full bg-[#2D317F] h-12 flex items-center flex-shrink-0">
-          <p className="font-semibold text-[20px] pl-5">Saved Entries</p>
+        {/* header */}
+        <div className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] flex-shrink-0 flex flex-wrap gap-[30px] rounded-lg items-center bg-white px-3 py-2 text-sm text-[#2d317f] ">
+          <div><strong>Report ID:</strong> R-{String(reportId).padStart(3, "0")}</div>
+          <div><strong>Warehouse Supervisor:</strong> {whseUser?.fname} {whseUser?.lname}</div>
+          <div><strong>Cereal Type:</strong> {cerealType}</div>
+          <div><strong>Warehouse Code:</strong> {whseUser?.WHCode ?? "—"}</div>
+          <div className="flex items-center gap-2">
+            <strong>Status:</strong>
+            <div className={badgeConfig.className}>{badgeConfig.label}</div>
+          </div>
         </div>
 
-        {/* cards grid */}
-        <div className="p-5 grid grid-cols-2 gap-4 overflow-y-auto flex-1">
-          {localTransactions.map((t, i) => {
-            const doc = getDocumentField(t);
-            const isDeleting = deletingIndex === i;
+        {/* main content */}
+        <div className="bg-[#F3F6F9] mt-3 flex flex-col rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.25)] overflow-hidden h-[605px]">
+          <div className="text-white w-full bg-[#2D317F] h-10 flex items-center flex-shrink-0">
+            <p className="font-semibold text-[16px] pl-5">Saved Entries</p>
+          </div>
 
-            return (
-              <div
-                key={t.id ?? i}
-                className={`border border-[#cfd6e0] rounded-md p-4 bg-[#ECF0F3] shadow-md h-43 transition-opacity ${isDeleting ? "opacity-40 pointer-events-none" : ""}`}
-              >
-                {/* card header */}
-                <div className="flex items-center justify-between mb-3 border-b pb-2">
-                  <span className="font-semibold text-[#2D317F]">Entry {i + 1}</span>
-                  <div className="flex gap-5">
+          {/* cards grid */}
+          <div className="p-5 grid grid-cols-2 gap-4 overflow-y-auto flex-1 min-h-0">
+            {localTransactions.map((t, i) => {
+              const doc = getDocumentField(t);
+              const isDeleting = deletingIndex === i;
 
-                    {/* Edit button */}
-                    <button
-                      className="text-sm px-3 py-1 border border-[#2D317F] text-[#2D317F] rounded cursor-pointer hover:bg-[#2D317F] hover:text-white transition-colors"
-                      onClick={() => handleEdit(i)}
-                    >
-                      Edit
-                    </button>
-
-                    {/* Delete */}
-                    {localTransactions.length === 1 ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
-                            X
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                          <div className="h-7 bg-[#BB2325] rounded-t-lg" />
-                          <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                            <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                              <FaExclamation color="white" size={60} />
-                            </div>
-                            <AlertDialogTitle className="!font-bold text-[#2D317F] text-2xl mx-2">
-                              Cannot Delete Last Entry
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-sm px-2">
-                              This is the only remaining entry in this stock book. You cannot delete it.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                            <AlertDialogAction className="!bg-[#2D317F] text-white hover:bg-[#1a1f5e] px-5 py-4.5">
-                              Okay
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    ) : (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
-                            X
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                          <div className="h-7 bg-[#BB2325] rounded-t-lg" />
-                          <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                            <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                              <FaExclamation color="white" size={60} />
-                            </div>
-                            <AlertDialogTitle className="!font-bold text-[#2D317F] text-2xl mx-2">
-                              Delete Entry {i + 1}?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-sm px-2">
-                              Are you sure you want to delete this entry? This cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-5">
-                            <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5"
-                              onClick={() => handleDelete(i)}
-                            >
-                              Yes, Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
-                </div>
-
-                {/* card body */}
-                <div className="grid grid-cols-3 gap-y-2 text-sm text-[#2d317f]">
-                  <div>
-                    <p className="text-gray-400 text-xs">{doc.label}</p>
-                    <p className="font-medium">{doc.value || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Bags</p>
-                    <p className="font-medium">{t.rBags || t.iBags || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">NKG</p>
-                    <p className="font-medium">{t.rNkg || t.iNkg || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Transaction</p>
-                    <p className="font-medium">{t.transaction || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">GKG</p>
-                    <p className="font-medium">{t.rGkg || t.iGkg || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Condition</p>
-                    <p className="font-medium">{t.rCondition || t.iCondition || "—"}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── bottom buttons ── */}
-        <div className="flex justify-end gap-3 px-5 pb-5 flex-shrink-0 border-t border-[#cfd6e0] pt-4">
-
-          {/* Cancel → go back to form */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer">
-                Cancel
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-              <div className="h-7 bg-[#BB2325] rounded-t-lg" />
-              <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                  <FaExclamation color="white" size={60} />
-                </div>
-                <AlertDialogTitle className="!font-bold text-[#2D317F] text-2xl mx-2">
-                  Go Back to Form?
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-sm px-2">
-                  Your entries are still saved. You will be taken back to the form to continue editing.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
-                <AlertDialogAction
-                  className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-15 py-4.5"
-                  onClick={handleGoBack}
+              return (
+                <div
+                  key={t.id ?? i}
+                  className={`border border-[#cfd6e0] rounded-md p-4 bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] h-43 transition-opacity ${isDeleting ? "opacity-40 pointer-events-none" : ""}`}
                 >
-                  Yes, Go Back
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  {/* card header */}
+                  <div className="flex items-center justify-between mb-3 border-b pb-2">
+                    <span className="font-semibold text-[#2D317F]">Entry {i + 1}</span>
+                    <div className="flex gap-5">
 
-          {/* Submit All → mark Under Review */}
-          <button
-            className="px-[18px] py-2 bg-[#3E7A43] text-white rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleSubmitAll}
-            disabled={submitting || localTransactions.length === 0}
-          >
-            {submitting ? "Submitting..." : `Submit All (${localTransactions.length})`}
-          </button>
+                      {/* Edit button */}
+                      <button
+                        className="text-sm px-3 py-1 border border-[#2D317F] text-[#2D317F] rounded cursor-pointer hover:bg-[#2D317F] hover:text-white transition-colors"
+                        onClick={() => handleEdit(i)}
+                      >
+                        Edit
+                      </button>
+
+                      {/* Delete */}
+                      {localTransactions.length === 1 ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
+                              X
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                            <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                            <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                              <div className="rounded-full px-5 py-5 bg-[#BB2325]">
+                                <FaExclamation color="white" size={60} />
+                              </div>
+                              <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                Cannot Delete Last Entry
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-sm px-2">
+                                This is the only remaining entry in this stock book. You cannot delete it.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                              <AlertDialogAction className="!bg-[#2D317F] text-white hover:bg-[#1a1f5e] px-5 py-4.5">
+                                Okay
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
+                              X
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                            <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                            <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                              <div className="rounded-full px-5 py-5 bg-[#BB2325]">
+                                <FaExclamation color="white" size={60} />
+                              </div>
+                              <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                Delete Entry {i + 1}?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="text-sm px-2">
+                                Are you sure you want to delete this entry? This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-5">
+                              <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5"
+                                onClick={() => handleDelete(i)}
+                              >
+                                Yes, Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* card body */}
+                  <div className="grid grid-cols-3 gap-y-2 text-sm text-[#2d317f]">
+                    <div>
+                      <p className="text-gray-400 text-xs">{doc.label}</p>
+                      <p className="font-medium">{doc.value || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Bags</p>
+                      <p className="font-medium">{t.rBags || t.iBags || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">NKG</p>
+                      <p className="font-medium">{t.rNkg || t.iNkg || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Transaction</p>
+                      <p className="font-medium">{t.transaction || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">GKG</p>
+                      <p className="font-medium">{t.rGkg || t.iGkg || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-xs">Condition</p>
+                      <p className="font-medium">{t.rCondition || t.iCondition || "—"}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── bottom buttons ── */}
+          <div className="flex justify-end gap-3 px-5 pb-5 flex-shrink-0 border-t border-[#cfd6e0] pt-4">
+
+            {/* Cancel → go back to form */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer">
+                  Cancel
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                  <div className="rounded-full px-5 py-5 bg-[#BB2325]">
+                    <FaExclamation color="white" size={60} />
+                  </div>
+                  <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                    Go Back to Form?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm px-2">
+                    Your entries are still saved. You will be taken back to the form to continue editing.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                  <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-15 py-4.5"
+                    onClick={handleGoBack}
+                  >
+                    Yes, Go Back
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Submit All → mark Under Review */}
+            <button
+              className="px-[18px] py-2 bg-[#3E7A43] text-white rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSubmitAll}
+              disabled={submitting || localTransactions.length === 0}
+            >
+              {submitting ? "Submitting..." : `Submit All (${localTransactions.length})`}
+            </button>
+          </div>
         </div>
-      </div>
 
-    </div>
+      </div>   
+    </>
   );
 }

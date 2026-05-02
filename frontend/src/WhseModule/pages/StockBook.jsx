@@ -5,19 +5,18 @@ import { IoClose } from "react-icons/io5";
 import { TbProgress, TbFileSearch } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { CiImport } from "react-icons/ci";
-import { LuPenLine } from "react-icons/lu";
-import { RiPenNibFill } from "react-icons/ri";
+import { FaSearch, FaBars } from "react-icons/fa";
 
 // shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 // react
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Header from '../../components/Header'
 
 // api
 import api from "@/api/axios";
@@ -45,8 +44,6 @@ const formatDate = (dateStr) => {
 
 const CEREAL_LABEL = { WD1G50: "Palay", PD1350: "Rice" };
 
-const EMPTY_SIGNATORY = { abm: "", accountant: "", bm: "" };
-
 export default function StockBook() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,7 +63,6 @@ export default function StockBook() {
     };
   }, []);
 
-  // us
   const [stockReports, setStockReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,18 +70,16 @@ export default function StockBook() {
   const [selectedCereal, setSelectedCereal] = useState("All Cereal Type");
   const [selectedType, setSelectedType] = useState("");
 
+  const [selectedDay, setSelectedDay] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
 
-  const [signatory, setSignatory] = useState(EMPTY_SIGNATORY);
-  const [editingStock, setEditingStock] = useState(null); 
-
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [signatoryDialogOpen, setSignatoryDialogOpen] = useState(false);
-  const [flow, setFlow] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
-  const [unsubmitting, setUnsubmitting] = useState(null); 
+  const [unsubmitting, setUnsubmitting] = useState(null);
+
+  const [search, setSearch] = useState("");
 
   const fetchStocks = async () => {
     try {
@@ -99,111 +93,50 @@ export default function StockBook() {
     }
   };
 
-  // get the last signatory details from the previous stock book
-  const lastSignatory = () => {
-    if (!stockReports.length) return EMPTY_SIGNATORY;
-    const sorted = [...stockReports].sort((a, b) => b.report_id - a.report_id);
-    const last = sorted[0];
-    return {
-      abm: last.Assist_BM  || "",
-      accountant: last.Account_II || "",
-      bm: last.Branch_M   || "",
-    };
-  };
-
   // filter
   const filteredReports = selectedCereal === "All Cereal Type"
     ? stockReports
-    : stockReports.filter((r) => {
-        return r.CerealType === selectedCereal;
-      });
+    : stockReports.filter((r) => r.CerealType === selectedCereal);
 
   // add report
   const handleAddReportClick = () => {
     setSelectedType("");
-    setEditingStock(null);
-    const hasExisting = stockReports.length > 0;
-    setFlow(hasExisting ? "not-first-time" : "first-time");
+    setSelectedYear("");
+    setSelectedMonth("");
     setAddDialogOpen(true);
   };
 
-  // signatory button
-  const handleSignatoryClick = () => {
-    setFlow("signatory-only");
-    setSignatory(lastSignatory());
-    setSignatoryDialogOpen(true);
+  const getDaysInMonth = (year, month) => {
+    if (!month) return 31;
+    return new Date(year || 2024, Number(month), 0).getDate();
   };
 
-  // edit button
-  const handleEditClick = (stock) => {
-    setEditingStock(stock);
-    setFlow("edit");
-    setSignatory({
-      abm:        stock.Assist_BM  || "",
-      accountant: stock.Account_II || "",
-      bm:         stock.Branch_M   || "",
-    });
-    setSignatoryDialogOpen(true);
-  };
-
-  // cereal modal
-  const handleCerealNext = () => {
+  // cereal modal next → create directly
+  const handleCerealNext = async () => {
     if (!selectedType) { alert("Please select a cereal type"); return; }
-    if (!selectedYear || !selectedMonth) { alert("Please enter year and month"); return; }
-    if (flow === "first-time") {
-      setAddDialogOpen(false);
-      setSignatory(EMPTY_SIGNATORY);
-      setSignatoryDialogOpen(true);
-    } else {
-      setAddDialogOpen(false);
-      setSignatory(lastSignatory());
-      setSignatoryDialogOpen(true);
-    }
-  };
-
-  // signatory modal submit
-  const handleSignatorySubmit = async () => {
-    if (flow === "signatory-only") {
-      setSignatoryDialogOpen(false);
+    if (!selectedYear || !selectedMonth || !selectedDay) {
+      alert("Please fill in all date fields (year, month, and day)");
       return;
     }
 
-    if (flow === "edit" && editingStock) {
-      try {
-        setSubmitting(true);
-        await api.put(`/reports/stocks/upd/${editingStock.report_id}`, {
-          Assist_BM:  signatory.abm,
-          Account_II: signatory.accountant,
-          Branch_M:   signatory.bm,
-        });
-        await fetchStocks();
-        setSignatoryDialogOpen(false);
-        navigate(`/whse/edit/${editingStock.report_id}`, {
-          state: { stockBook: { ...editingStock, Assist_BM: signatory.abm, Account_II: signatory.accountant, Branch_M: signatory.bm }, mode: "edit" },
-        });
-      } catch (err) {
-        alert(err.response?.data?.error || "Failed to update signatory.");
-      } finally {
-        setSubmitting(false);
+    const yearNum = parseInt(selectedYear);
+      if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
+        alert("Please enter a valid year (e.g. 2026)");
+        return;
       }
-      return;
-    }
 
-    // create flow — first-time or not-first-time
     try {
       setSubmitting(true);
       const month = String(selectedMonth).padStart(2, "0");
-      const date = `${selectedYear}-${month}-01`;
+      const day = String(selectedDay).padStart(2, "0");
+      const date = `${selectedYear}-${month}-${day}`;
       const res = await api.post("/reports/stocks/create/", {
-        CerealType:  selectedType,
-        Assist_BM:   signatory.abm,
-        Account_II:  signatory.accountant,
-        Branch_M:    signatory.bm,
-        Date:        date,
+        CerealType: selectedType,
+        Date: date,
       });
       const newStock = res.data;
       await fetchStocks();
-      setSignatoryDialogOpen(false);
+      setAddDialogOpen(false);
       navigate(`/whse/create/${newStock.report_id}`, {
         state: { stockBook: newStock, mode: "create" },
       });
@@ -214,7 +147,14 @@ export default function StockBook() {
     }
   };
 
-  // unsubmitting button
+  // edit button
+  const handleEditClick = (stock) => {
+    navigate(`/whse/create/${stock.report_id}`, {
+      state: { stockBook: stock, mode: "edit" },
+    });
+  };
+
+  // unsubmit button
   const handleUnsubmit = async (stock) => {
     if (!window.confirm(`Unsubmit Report #${stock.report_id}? It will go back to In Progress.`)) return;
     try {
@@ -233,71 +173,69 @@ export default function StockBook() {
   };
 
   return (
-    <div className="m-7.5 flex flex-col h-[calc(100vh-160px)]">
+    <>
+      <Header
+        pageTitle="Stock Book"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
 
-      {/* Top controls */}
-      <div className="flex justify-between items-center mb-4 pt-2">
-        <button className="bg-[#1D8104] p-2 rounded text-white">
-          <CiImport size={20} />
-        </button>
+      <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
 
-        <div className="flex items-center gap-6">
-          <Select value={selectedCereal} onValueChange={setSelectedCereal}>
-            <SelectTrigger className="w-44 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F]">
-              <SelectValue placeholder="All Cereal Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem className="p-2" value="All Cereal Type">All Cereal Type</SelectItem>
-              <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
-              <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Top controls */}
+        <div className="flex justify-between items-center mb-4 pt-2 mx-3">
+          {/* search */}
+          <div className='mt-4'>
+            <div className="bg-white border border-[#2D317F] rounded-full py-1 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
+              <FaBars color={'#2D317F'} size={18} className="shrink-0" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search Report"
+                  className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
+                />
+              <FaSearch className="text-[#2D317F] shrink" size={20}/>
+            </div>
+          </div>
 
-          <Button
-            onClick={handleSignatoryClick}
-            className="bg-[#2D317F] text-white rounded-xl px-5 py-5.5 w-35 font-semibold hover:bg-[#1f2360]"
-          >
-            <RiPenNibFill /> Signatory
-          </Button>
-          <Button
-            onClick={handleAddReportClick}
-            className="bg-[#2D317F] text-white rounded-xl px-5 py-5.5 w-35 font-semibold hover:bg-[#1f2360]"
-          >
-            + Add Report
-          </Button>
+          <div className="flex items-center gap-6 mt-3.5">
+            <Select value={selectedCereal} onValueChange={setSelectedCereal}>
+              <SelectTrigger className="w-40 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
+                <SelectValue placeholder="All Cereal Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem className="p-2" value="All Cereal Type">All Cereal Type</SelectItem>
+                <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
+                <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <button className="bg-[#1D8104] px-5 py-3 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold">
+              <div className="flex gap-2 items-center">
+                <CiImport size={20} />
+                <p className="text-sm">Import</p>
+              </div>
+            </button>
+
+            <Button
+              onClick={handleAddReportClick}
+              className="bg-[#2D317F] text-white rounded-md py-5.5 w-35 font-semibold hover:bg-[#1f2360] shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]"
+            >
+              + Add Report
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white flex-1 overflow-hidden flex flex-col">
-        {loading ? (
-          <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
-        ) : (
-          <>
-            {/* header */}
-            <table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-[15%]" />
-                <col className="w-[20%]" />
-                <col className="w-[20%]" />
-                <col className="w-[20%]" />
-                <col className="w-[25%]" />
-              </colgroup>
-              <thead>
-                <tr className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Stock Book ID</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
-                  <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Action</th>
-                </tr>
-              </thead>
-            </table>
-
-            {/* Scrollable body */}
-            <div className="overflow-y-auto flex-1">
+        {/* Table */}
+        <div className="flex flex-col h-90">
+          {loading ? (
+            <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
+          ) : (
+            <>
+              {/* header */}
               <table className="w-full table-fixed">
                 <colgroup>
                   <col className="w-[15%]" />
@@ -306,212 +244,192 @@ export default function StockBook() {
                   <col className="w-[20%]" />
                   <col className="w-[25%]" />
                 </colgroup>
-                <tbody>
-                  {filteredReports.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center text-gray-400 py-10">
-                        No stock books found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredReports.map((r) => (
-                      <tr key={r.report_id} className="border-b border-gray-100">
-                        <td className="text-center text-[#2D317F] py-3 text-sm">{formatDate(r.Date)}</td>
-                        <td className="text-center text-[#2D317F] py-3 text-sm">R-{String(r.report_id).padStart(3, "0")}</td>
-                        <td className="text-center text-[#2D317F] py-3 text-sm">{CEREAL_LABEL[r.CerealType] || r.CerealType}</td>
-                        <td className="text-center py-3">
-                          <span className={getStatusStyle(r.Status)}>
-                            {getStatusIcon(r.Status)}
-                            {r.Status}
-                          </span>
-                        </td>
-                        <td className="text-center py-3">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleViewReport(r)}
-                              className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
-                            >
-                              <GoLinkExternal size={14} /> View
-                            </button>
-                            <button
-                              disabled={r.Status === "Completed"}
-                              onClick={() => handleEditClick(r)}
-                              className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
-                            >
-                              <FiEdit size={14} /> Edit
-                            </button>
-                            {r.Status === "Under Review" && (
-                              <button
-                                onClick={() => handleUnsubmit(r)}
-                                disabled={unsubmitting === r.report_id}
-                                className="flex items-center border border-red-500 text-red-500 rounded px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500 disabled:opacity-50"
-                              >
-                                <IoClose size={18} />
-                              </button>
-                            )}
-                          </div>
+                <thead>
+                  <tr className="bg-[#E2EBFF] border-b border-gray-200 h-12 ">
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Stock Book ID</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Action</th>
+                  </tr>
+                </thead>
+              </table>
+
+              {/* table body */}
+              <div className="">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[15%]" />
+                    <col className="w-[20%]" />
+                    <col className="w-[20%]" />
+                    <col className="w-[20%]" />
+                    <col className="w-[25%]" />
+                  </colgroup>
+                  <tbody>
+                    {filteredReports.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center text-gray-400 py-10">
+                          No stock books found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredReports.map((r) => (
+                        <tr key={r.report_id} className="border-b border-gray-100">
+                          <td className="text-center text-[#2D317F] py-3 text-sm">{formatDate(r.Date)}</td>
+                          <td className="text-center text-[#2D317F] py-3 text-sm">R-{String(r.report_id).padStart(3, "0")}</td>
+                          <td className="text-center text-[#2D317F] py-3 text-sm">{CEREAL_LABEL[r.CerealType] || r.CerealType}</td>
+                          <td className="text-center py-3">
+                            <span className={getStatusStyle(r.Status)}>
+                              {getStatusIcon(r.Status)}
+                              {r.Status}
+                            </span>
+                          </td>
+                          <td className="text-center py-3">
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={() => handleViewReport(r)}
+                                className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
+                              >
+                                <GoLinkExternal size={14} /> View
+                              </button>
+                              <button
+                                disabled={r.Status === "Completed"}
+                                onClick={() => handleEditClick(r)}
+                                className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
+                              >
+                                <FiEdit size={14} /> Edit
+                              </button>
+                              {r.Status === "Under Review" && (
+                                <button
+                                  onClick={() => handleUnsubmit(r)}
+                                  disabled={unsubmitting === r.report_id}
+                                  className="flex items-center border border-red-500 text-red-500 rounded px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500 disabled:opacity-50"
+                                >
+                                  <IoClose size={18} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Add Report modal */}
+        <Dialog open={addDialogOpen} onOpenChange={(open) => {
+          setAddDialogOpen(open);
+          if (!open) {
+            setSelectedType("");
+            setSelectedYear("");
+            setSelectedMonth("");
+            setSelectedDay("");
+          }
+        }}>
+          <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
+            <div className="bg-[#2D317F] h-8 rounded-t-lg" />
+            <div className="px-5 pb-5">
+              <DialogHeader className="mb-3">
+                <DialogTitle className="text-[#2D317F] font-bold py-2">Cereal Type</DialogTitle>
+              </DialogHeader>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold py-5">
+                  <SelectValue placeholder="Select cereal type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
+                  <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* date */}
+              <div className="flex gap-3 mt-3">
+
+                {/* year */}
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-[#2D317F]">Year</label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="2026"
+                    value={selectedYear}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      setSelectedYear(val);
+                    }}
+                    className="bg-white border-[#2D317F] text-[#2D317F] mt-1"
+                  />
+                </div>
+
+                {/* month */}
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-[#2D317F]">Month</label>
+                  <Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val)}>
+                    <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold mt-1">
+                      <SelectValue placeholder="May" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem className="p-2" value="1">January</SelectItem>
+                      <SelectItem className="p-2" value="2">February</SelectItem>
+                      <SelectItem className="p-2" value="3">March</SelectItem>
+                      <SelectItem className="p-2" value="4">April</SelectItem>
+                      <SelectItem className="p-2" value="5">May</SelectItem>
+                      <SelectItem className="p-2" value="6">June</SelectItem>
+                      <SelectItem className="p-2" value="7">July</SelectItem>
+                      <SelectItem className="p-2" value="8">August</SelectItem>
+                      <SelectItem className="p-2" value="9">September</SelectItem>
+                      <SelectItem className="p-2" value="10">October</SelectItem>
+                      <SelectItem className="p-2" value="11">November</SelectItem>
+                      <SelectItem className="p-2" value="12">December</SelectItem>
+                    </SelectContent>
+                  </Select> 
+                </div>
+
+                {/* day */}
+                <div className="w-20">
+                  <label className="text-sm font-semibold text-[#2D317F]">Day</label>
+                  <Select value={selectedDay} onValueChange={setSelectedDay}>
+                    <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold mt-1">
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from(
+                        { length: getDaysInMonth(selectedYear, selectedMonth) },
+                        (_, i) => i + 1
+                      ).map((d) => (
+                        <SelectItem key={d} className="p-2" value={String(d)}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={() => setAddDialogOpen(false)}
+                  className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCerealNext}
+                  disabled={!selectedType || submitting}
+                  className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Creating..." : "Create"}
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          </DialogContent>
+        </Dialog>
+
       </div>
-
-      {/* Add Report modal — cereal type selection */}
-      <Dialog open={addDialogOpen} onOpenChange={(open) => {
-        setAddDialogOpen(open);
-        if (!open) {
-          setSelectedType("");
-          setSelectedYear("");
-          setSelectedMonth("");
-        }
-      }}>
-        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[340px] [&>button]:hidden bg-[#DDE4F3]">
-          <div className="bg-[#2D317F] h-8 rounded-t-lg" />
-          <div className="px-5 pb-5">
-            <DialogHeader className="mb-3">
-              <DialogTitle className="text-[#2D317F] font-bold py-2">Cereal Type</DialogTitle>
-            </DialogHeader>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold py-5">
-                <SelectValue placeholder="Select cereal type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
-                <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
-              </SelectContent>
-            </Select>
-            {/* year and month */}
-            <div className="flex gap-3 mt-3">
-              <div className="flex-1">
-                <label className="text-sm font-semibold text-[#2D317F]">Year</label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 2026"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="bg-white border-[#2D317F] text-[#2D317F] mt-1"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-sm font-semibold text-[#2D317F]">Month</label>
-                <Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val)}>
-                  <SelectTrigger className="w-full bg-white border-[#2D317F] text-[#2D317F] font-semibold mt-1">
-                    <SelectValue placeholder="Select month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem className="p-2" value="1">January</SelectItem>
-                    <SelectItem className="p-2" value="2">February</SelectItem>
-                    <SelectItem className="p-2" value="3">March</SelectItem>
-                    <SelectItem className="p-2" value="4">April</SelectItem>
-                    <SelectItem className="p-2" value="5">May</SelectItem>
-                    <SelectItem className="p-2" value="6">June</SelectItem>
-                    <SelectItem className="p-2" value="7">July</SelectItem>
-                    <SelectItem className="p-2" value="8">August</SelectItem>
-                    <SelectItem className="p-2" value="9">September</SelectItem>
-                    <SelectItem className="p-2" value="10">October</SelectItem>
-                    <SelectItem className="p-2" value="11">November</SelectItem>
-                    <SelectItem className="p-2" value="12">December</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={() => { setAddDialogOpen(false); setSelectedType(""); }}
-                className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCerealNext}
-                disabled={!selectedType}
-                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* signatory modal */}
-      <Dialog open={signatoryDialogOpen} onOpenChange={setSignatoryDialogOpen}>
-        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden !max-w-[500px] [&>button]:hidden bg-[#E6EEF6]">
-          <div className="bg-[#2D317F] h-8 rounded-t-lg" />
-          <div className="px-5 pb-5">
-            <DialogHeader className="mb-3 flex flex-col items-center">
-              <div className="w-[90px] h-[90px] flex items-center justify-center bg-[#ADCEFF] rounded-full">
-                <LuPenLine color={"#2D317F"} size={45} />
-              </div>
-              <DialogTitle className="text-[#2D317F] font-extrabold text-center mt-2 mb-2 text-2xl">
-                Signatory Details
-              </DialogTitle>
-            </DialogHeader>
-            <div className="bg-white p-4 m-4 rounded">
-              <FieldSet>
-                <FieldGroup className="text-[#2D317F]">
-                  <Field>
-                    <FieldLabel className="font-bold" htmlFor="abm">Assistant Branch Manager</FieldLabel>
-                    <Input
-                      id="abm"
-                      autoComplete="off"
-                      placeholder="Assistant Branch Manager..."
-                      value={signatory.abm}
-                      onChange={(e) => setSignatory((prev) => ({ ...prev, abm: e.target.value }))}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="font-bold" htmlFor="accountant">Accountant II</FieldLabel>
-                    <Input
-                      id="accountant"
-                      autoComplete="off"
-                      placeholder="Accountant II..."
-                      value={signatory.accountant}
-                      onChange={(e) => setSignatory((prev) => ({ ...prev, accountant: e.target.value }))}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel className="font-bold" htmlFor="bm">Branch Manager</FieldLabel>
-                    <Input
-                      id="bm"
-                      autoComplete="off"
-                      placeholder="Branch Manager..."
-                      value={signatory.bm}
-                      onChange={(e) => setSignatory((prev) => ({ ...prev, bm: e.target.value }))}
-                    />
-                  </Field>
-                </FieldGroup>
-              </FieldSet>
-            </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={() => setSignatoryDialogOpen(false)}
-                className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSignatorySubmit}
-                disabled={submitting}
-                className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting
-                  ? "Saving..."
-                  : flow === "signatory-only"
-                  ? "Save"
-                  : flow === "edit"
-                  ? "Save & Edit"
-                  : "Create"}
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </>
   );
 }

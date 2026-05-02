@@ -6,7 +6,7 @@ import Header from './Header'
 import { FaRegCalendarAlt, FaSearch, FaBars } from "react-icons/fa";
 
 // react
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 // shadcn
 import {
@@ -58,9 +58,26 @@ export default function AuditLogs() {
     setShowEndCalendar(false);
   }
 
-  const totalPages = Math.ceil(sampleAudit.length / ITEMS_PER_PAGE);
+  // Search filter — matches any column value
+  const filteredAudit = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return sampleAudit;
+    return sampleAudit.filter((row) =>
+      Object.values(row).some((val) =>
+        String(val).toLowerCase().includes(query)
+      )
+    );
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredAudit.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedAudit = sampleAudit.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedAudit = filteredAudit.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
   return (
     <>
@@ -129,7 +146,7 @@ export default function AuditLogs() {
                 <FaBars color={'#2D317F'} size={18} className="shrink-0" />
                   <Input
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={handleSearchChange}
                     placeholder="Search Report"
                     className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
                   />

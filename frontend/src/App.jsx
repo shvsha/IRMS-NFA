@@ -26,10 +26,6 @@ function App() {
       <Route path="/whse" element={<ProtectedRoute allowedRoles={['Warehouse Supervisor']}> <WhseSpvsorLayout /> </ProtectedRoute>
         }>
         {WhseRoute}
-      </Route>
-
-      {/* create/edit/view report layout for whse (stock book) */}
-      <Route path="/whse" element={<ProtectedRoute allowedRoles={['Warehouse Supervisor']}><CreateReportLayout /></ProtectedRoute>}>
         {WhseReportRoute}
       </Route>
 
