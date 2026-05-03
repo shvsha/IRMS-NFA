@@ -9,10 +9,10 @@ BACKEND:
 1. Open the terminal for backend and check the requirements.txt file
 2. Run this commands one by one;
    
-3. python -m venv myenv
-4. myenv\Scripts\activate
-5. pip install -r requirements.txt
+- python -m venv myenv
+- myenv\Scripts\activate
+-  pip install -r requirements.txt
     
-6. This should install all the dependencies you need for the backend
-7. Test it by running django manage.py runserver
+3. This should install all the dependencies you need for the backend
+4. Test it by running django manage.py runserver
 
