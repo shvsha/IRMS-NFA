@@ -12,7 +12,6 @@ import api from '../../api/axios'
 // icons
 import { FaExclamation } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa6";
-import { Eye, EyeOff } from "lucide-react"
 import { CiUser } from "react-icons/ci"
 
 // components
@@ -38,23 +37,17 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     mI: isEdit ? employeeData?.mI : "",
     lname: isEdit ? employeeData?.lname : "",
     email: isEdit ? employeeData?.email : "",
-    user_level: isEdit ? employeeData?.user_level : "Warehouse Supervisor",
+    user_level: "Warehouse Supervisor",
     dept: isEdit ? employeeData?.dept : "Quality Assurance",
-    position: isEdit ? employeeData?.position : "Warehouse Supervisor",
+    position:   "Warehouse Supervisor",  
     WHCode: isEdit ? employeeData?.WHCode : "010501A",
     Office_id: isEdit ? employeeData?.Office_id : "",
     username: isEdit ? employeeData?.username : "",
   })
 
   // dropdown for form
-  const [selectedUserLevel, setSelectedUserLevel] = useState(
-    isEdit ? employeeData?.user_level : "Warehouse Supervisor"  // changed
-  )
   const [selectedDepartment, setSelectedDepartment] = useState(
     isEdit ? employeeData?.dept : "Quality Assurance"
-  )
-  const [selectedPosition, setSelectedPosition] = useState(
-    isEdit ? employeeData?.position : "Warehouse Supervisor"
   )
   const [selectedWhseCode, setSelectedWhseCode] = useState(
     isEdit ? employeeData?.WHCode : "010501A"
@@ -65,13 +58,6 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     setFormData( prev => ({
       ...prev,
       dept: val
-    }));
-  }
-  const handlePosChange = (val) => { 
-    setSelectedPosition(val); 
-    setFormData( prev => ({
-      ...prev,
-      position: val
     }));
   }
   const handleWhseCodeChange = (val) => { 
@@ -107,19 +93,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
         await api.post('api/users/', formData);
       }
       addToast(isEdit ? 'Employee successfully updated.' : 'New employee successfully added.')
+      setTimeout(() => onCancel(), 3000)
 
-      if (!isEdit) {
-        setFormData({
-          fname: "", mI: "", lname: "", email: "",
-          user_level: "Warehouse Supervisor",
-          dept: "Quality Assurance", position: "Warehouse Supervisor",
-          WHCode: "010501A", Office_id: "", username: "",
-        })
-        setSelectedUserLevel("Warehouse Supervisor")
-        setSelectedDepartment("Quality Assurance")
-        setSelectedPosition("Warehouse Supervisor")
-        setSelectedWhseCode("010501A")
-      }
     } catch (error) {
       const errors = error.response?.data;
       if (errors) {
@@ -134,7 +109,7 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
   return (
     <>
      <Header
-        pageTitle="Users"
+        pageTitle="Supervisor"
         notifTo="/admin/notif"
         unreadCount={5}
         userName="Raph Nigos"
@@ -158,71 +133,59 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 </span>
               </div>
               <div className="flex items-center justify-between mb-4 text-sm text-[#2D317F]">
-                <p>Fill in the details below to create a new account</p>
+                <p>Fill in the details below for the supervisor account.</p>
                 <span>Office ID: {isEdit ? employeeData?.Office_id : '-----'}</span>
               </div>
 
               {/* personal information */}
               <div className="mb-3">
-                <p className="text-xs font-semibold tracking-widest mb-2">PERSONAL INFORMATION</p>
+                <p className="text-xs text-[#2D317F] font-semibold tracking-widest mb-2">PERSONAL INFORMATION</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
                   {/* name */}
                   <div className="flex flex-row gap-4 mb-3">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="firstName">First Name</FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="firstName" name="fname" value={formData.fname} onChange={handleChange} type="text" placeholder="e.g. Febrose" />
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="firstName">First Name<span className="text-red-500">*</span></FieldLabel>
+                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="firstName" name="fname" value={formData.fname} onChange={handleChange} type="text" placeholder="e.g. Febrose" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="middleInitial">Middle Initial</FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="middleInitial" name="mI" value={formData.mI} onChange={handleChange} type="text" placeholder="e.g. C" />
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="middleInitial">Middle Initial</FieldLabel>
+                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="middleInitial" name="mI" value={formData.mI} onChange={handleChange} type="text" placeholder="e.g. C" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="lastName">Last Name</FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="lastName" name="lname" value={formData.lname} onChange={handleChange} type="text" placeholder="e.g. Valenzuela" />
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="lastName">Last Name<span className="text-red-500">*</span></FieldLabel>
+                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="lastName" name="lname" value={formData.lname} onChange={handleChange} type="text" placeholder="e.g. Valenzuela" />
                     </Field>
                   </div>
 
                   {/* email */}
                   <div className="flex flex-row gap-4">
                     <Field className="flex gap-1.5 flex-col w-[320px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="email">Email</FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph" />
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="email">Email <span className="text-red-500">*</span></FieldLabel>
+                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph" />
                     </Field>
                   </div>
                 </div>
               </div>
 
               {/* department & assignment */}
-              <div className="mb-3">
+              <div className="mb-3 text-[#2D317F]">
                 <p className="text-xs font-semibold tracking-widest mb-2">DEPARTMENT & ASSIGNMENT</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
                   <div className="flex flex-row gap-4 flex-wrap">
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[150px]">
-                      <FieldLabel className="text-sm font-medium " htmlFor="department">Department</FieldLabel>
+                      <FieldLabel className="text-sm font-medium">Department <span className="text-red-500">*</span></FieldLabel>
                       <Select value={selectedDepartment} onValueChange={handleDeptChange}>
                         <SelectTrigger className="!font-normal bg-white rounded border-gray-300">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem className='p-2' value="Quality Assurance">Quality Assurance</SelectItem>
-                          <SelectItem className='p-2' value="Buffer Stock Management">Buffer Stock Management</SelectItem>
-                          <SelectItem className='p-2' value="Accounting">Accounting</SelectItem>
+                          <SelectItem className='text-[#2D317F] p-2' value="Quality Assurance">Quality Assurance</SelectItem>
+                          <SelectItem className='text-[#2D317F] p-2' value="Buffer Stock Management">Buffer Stock Management</SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[150px]">
-                      <FieldLabel className="text-sm font-medium " htmlFor="position">Position</FieldLabel>
-                      <Select value={selectedPosition} onValueChange={handlePosChange}>
-                        <SelectTrigger className="!font-normal bg-white rounded border-gray-300">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem className='p-2' value="Warehouse Supervisor">Warehouse Supervisor</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    <Field className="flex gap-1.5 flex-col flex-1 min-w-[150px]">
-                      <FieldLabel className="text-sm font-medium " htmlFor="whsecode">Warehouse Code</FieldLabel>
+                      <FieldLabel className="text-sm font-medium">Warehouse Code <span className="text-red-500">*</span></FieldLabel>
                       <Select value={selectedWhseCode} onValueChange={handleWhseCodeChange}>
                         <SelectTrigger className="!font-normal bg-white rounded border-gray-300">
                           <SelectValue placeholder="Select" />
@@ -234,20 +197,20 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                       </Select>
                     </Field>
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[120px]">
-                      <FieldLabel className="text-sm font-medium " htmlFor="officeId">Office ID</FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="officeId" name="Office_id" value={formData.Office_id} onChange={handleChange} type="text" placeholder="e.g. 645328" />
+                      <FieldLabel className="text-sm font-medium">Office ID <span className="text-red-500">*</span></FieldLabel>
+                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" name="Office_id" value={formData.Office_id} onChange={handleChange} type="text" placeholder="e.g. 645328" />
                     </Field>
                   </div>
                 </div>
               </div>
 
               {/* login credentials */}
-              <div className="mb-3">
+              <div className="mb-3 text-[#2D317F]">
                 <p className="text-xs font-semibold tracking-widest mb-2">LOGIN CREDENTIALS</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
                   <div className="flex flex-row gap-4 flex-wrap">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="username">Username</FieldLabel>
+                      <FieldLabel className="text-sm font-medium" htmlFor="username">Username <span className="text-red-500">*</span></FieldLabel>
                       <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="username" name="username" value={formData.username} onChange={handleChange} type="text" placeholder="e.g. FebValenzuela" />
                     </Field>
                   </div>
@@ -296,7 +259,7 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
       </div>
 
       {/* toasts */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
         {toasts.map(toast => (
           <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px] border-l-4 border-[#3E7A43]">
             <div className="rounded-full p-1.5 flex-shrink-0 bg-[#3E7A43]">

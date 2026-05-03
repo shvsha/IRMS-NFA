@@ -46,6 +46,7 @@ export default function UserManagement() {
   }, [refreshKey])
 
   const filteredUsers = users
+    .filter(u => u.user_level === 'Warehouse Supervisor')
     .filter(u => u.status === userStatus)
     .filter(u => `${u.fname} ${u.lname}`.toLowerCase().includes(search.toLowerCase()))
 
@@ -80,7 +81,7 @@ export default function UserManagement() {
   return (
     <>
       <Header
-          pageTitle="Users"
+          pageTitle="Supervisor"
           notifTo="/admin/notif"
           unreadCount={5}
           userName="Raph Nigos"
@@ -91,7 +92,7 @@ export default function UserManagement() {
         {/* Top bar */}
         <div className="flex justify-between items-center py-4 pt-1">
           <div className=''>
-            <p className="text-[#2D317F] font-semibold text-xl">User Management</p>
+            <p className="text-[#2D317F] font-semibold text-xl">Supervisor Management</p>
           </div>
 
           <div className="flex items-center gap-8">

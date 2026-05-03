@@ -7,6 +7,7 @@ import { MdDashboard, MdPeople, MdHistory } from 'react-icons/md'
 import { TbReportAnalytics, TbReportSearch } from 'react-icons/tb'
 import { FaClipboardList } from 'react-icons/fa'
 import { LuLogOut } from 'react-icons/lu'
+import { FaUserCheck } from "react-icons/fa";
 
 // logo
 import NFALogo from '../../assets/NFA-logo.png'
@@ -22,7 +23,8 @@ import api from '../../api/axios'
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: <MdDashboard size={18} /> },
-  { to: '/admin/users', label: 'Users', icon: <MdPeople size={18} /> },
+  { to: '/admin/ws', label: 'Supervisor', icon: <MdPeople size={18} /> },
+  { to: '/admin/signa', label: 'Signatory', icon: <FaUserCheck size={18} /> },
   { to: '/admin/evaluation', label: 'Evaluation', icon: <TbReportAnalytics size={18} /> },
   { to: '/admin/summarization', label: 'Summarization', icon: <TbReportSearch size={18} /> },
   { to: '/admin/history', label: 'History Records', icon: <MdHistory size={18} /> },

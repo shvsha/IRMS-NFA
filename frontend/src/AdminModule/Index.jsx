@@ -3,7 +3,8 @@ import { Route } from "react-router-dom"
 
 // pages
 import Dashboard from "./pages/Dashboard"
-import UserManagement from "./pages/UserManagement"
+import WSManagement from "./pages/WSManagement"
+import SignaManagement from "./pages/SignaManagement"
 import ReportEvaluation from "./pages/ReportEvaluation"
 import ReportHistory from "./pages/ReportHistory"
 
@@ -20,7 +21,8 @@ import SummaryReport from '@/components/Reports/SummaryReport'
 const AdminRoute = (
   <>
     <Route path="dashboard" element={<Dashboard />} />
-    <Route path="users" element={<UserManagement />} />
+    <Route path="ws" element={<WSManagement />} />
+    <Route path="signa" element={<SignaManagement />} />
     <Route path="evaluation" element={<ReportEvaluation />} />
     <Route path="summarization" element={<ReportSummarization />} />
     <Route path="history" element={<ReportHistory />} />
