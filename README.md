@@ -5,7 +5,7 @@ FRONTEND:
 2. You should see the node_modules folder being added
 3. Test it by running, npm run dev
 
-BACKEND:
+BACKEND: ayusin mo toh nigos !! AWHWHAB
 1. Open the terminal for backend and check the requirements.txt file
 2. Run this commands one by one;
    
