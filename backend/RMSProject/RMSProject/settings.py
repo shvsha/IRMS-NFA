@@ -170,8 +170,22 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'nigosivan619@gmail.com'
-EMAIL_HOST_PASSWORD = 'eqpxyqybdnveggbj'
+EMAIL_HOST_PASSWORD = 'liwghdlytoxrrhob'
 DEFAULT_FROM_EMAIL = 'nigosivan619@gmail.com'
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}

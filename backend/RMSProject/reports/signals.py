@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from .models import StockBook, WSRReport, WSIReport, Summary, Transaction
 import logging
 logger = logging.getLogger(__name__)
+_recomputing = set()
 
 @receiver(post_save, sender=StockBook)
 def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
@@ -105,34 +106,47 @@ def carry_previous_balance(sender, instance, created, **kwargs):
 
 # update or delete the balance data
 def recompute_stockbook_balance(stockbook):
-    from decimal import Decimal
+    if stockbook.pk in _recomputing:
+        return
+    _recomputing.add(stockbook.pk)
+    try:
+        from decimal import Decimal
 
-    prev = StockBook.objects.filter(
-        CerealType=stockbook.CerealType,
-        Status='Completed'
-    ).exclude(pk=stockbook.pk).order_by('-Date').first()
+        prev = StockBook.objects.filter(
+            CerealType=stockbook.CerealType,
+            Status='Completed'
+        ).exclude(pk=stockbook.pk).order_by('-Date').first()
 
-    base_bags = prev.B_Bags if prev and prev.B_Bags else Decimal('0')
-    base_gkg  = prev.B_GKG  if prev and prev.B_GKG  else Decimal('0')
-    base_nkg  = prev.B_NKG  if prev and prev.B_NKG  else Decimal('0')
+        base_bags = prev.B_Bags if prev and prev.B_Bags else Decimal('0')
+        base_gkg  = prev.B_GKG  if prev and prev.B_GKG  else Decimal('0')
+        base_nkg  = prev.B_NKG  if prev and prev.B_NKG  else Decimal('0')
 
-    txns = stockbook.transactions.all()
+        txns = stockbook.transactions.all()
 
-    total_r_bags = sum(t.R_Bags or 0 for t in txns if t.R_Bags)
-    total_r_gkg  = sum(t.R_GKG  or 0 for t in txns if t.R_GKG)
-    total_r_nkg  = sum(t.R_NKG  or 0 for t in txns if t.R_NKG)
+        total_r_bags = sum(t.R_Bags or 0 for t in txns if t.R_Bags)
+        total_r_gkg  = sum(t.R_GKG  or 0 for t in txns if t.R_GKG)
+        total_r_nkg  = sum(t.R_NKG  or 0 for t in txns if t.R_NKG)
 
-    total_i_bags = sum(t.I_Bags or 0 for t in txns if t.I_Bags)
-    total_i_gkg  = sum(t.I_GKG  or 0 for t in txns if t.I_GKG)
-    total_i_nkg  = sum(t.I_NKG  or 0 for t in txns if t.I_NKG)
+        total_i_bags = sum(t.I_Bags or 0 for t in txns if t.I_Bags)
+        total_i_gkg  = sum(t.I_GKG  or 0 for t in txns if t.I_GKG)
+        total_i_nkg  = sum(t.I_NKG  or 0 for t in txns if t.I_NKG)
 
-    stockbook.B_Bags = base_bags + total_r_bags - total_i_bags
-    stockbook.B_GKG  = base_gkg  + total_r_gkg  - total_i_gkg
-    stockbook.B_NKG  = base_nkg  + total_r_nkg  - total_i_nkg
-    stockbook.save(update_fields=['B_Bags', 'B_GKG', 'B_NKG'])
+        stockbook.B_Bags = base_bags + total_r_bags - total_i_bags
+        stockbook.B_GKG  = base_gkg  + total_r_gkg  - total_i_gkg
+        stockbook.B_NKG  = base_nkg  + total_r_nkg  - total_i_nkg
+        stockbook.save(update_fields=['B_Bags', 'B_GKG', 'B_NKG'])
+
+    finally:
+        _recomputing.discard(stockbook.pk)
 
 
 @receiver(post_save, sender=Transaction)
 @receiver(post_delete, sender=Transaction)
 def update_balance_on_transaction_change(sender, instance, **kwargs):
-    recompute_stockbook_balance(instance.stockbook)
+    try:
+        recompute_stockbook_balance(instance.stockbook)
+    except Exception as e:
+        import traceback
+        logger.error(f"SIGNAL ERROR in update_balance_on_transaction_change: {e}")
+        logger.error(traceback.format_exc())
+        raise

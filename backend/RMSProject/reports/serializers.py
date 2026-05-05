@@ -4,13 +4,36 @@ from .models import StockBook, Transaction, WSRReport, WSIReport, Summary
 class TransactionSerializer(serializers.ModelSerializer):
     user_full_name = serializers.ReadOnlyField()
     user_WHCode    = serializers.ReadOnlyField()
-    Assist_BM      = serializers.ReadOnlyField()
-    Account_II     = serializers.ReadOnlyField()
-    Branch_M       = serializers.ReadOnlyField()
+    Assist_BM      = serializers.SerializerMethodField(read_only=True)
+    Account_II     = serializers.SerializerMethodField(read_only=True)
+    Branch_M       = serializers.SerializerMethodField(read_only=True)
+
+    def get_Assist_BM(self, obj):
+        try:
+            return obj.Assist_BM.pk if obj.Assist_BM else None
+        except Exception:
+            return None
+
+    def get_Account_II(self, obj):
+        try:
+            return obj.Account_II.pk if obj.Account_II else None
+        except Exception:
+            return None
+
+    def get_Branch_M(self, obj):
+        try:
+            return obj.Branch_M.pk if obj.Branch_M else None
+        except Exception:
+            return None
 
     class Meta:
         model  = Transaction
         fields = '__all__'
+        read_only_fields = [
+            'user_full_name', 'user_WHCode',
+            'Assist_BM', 'Account_II', 'Branch_M',
+            'wsr_report', 'wsi_report',
+        ]
 
 class WSRReportSerializer(serializers.ModelSerializer):
     transactions  = TransactionSerializer(many=True, read_only=True)
@@ -29,6 +52,12 @@ class WSIReportSerializer(serializers.ModelSerializer):
     class Meta:
         model  = WSIReport
         fields = '__all__'
+
+class StockBookListSerializer(serializers.ModelSerializer):
+    """For listing — no nested data"""
+    class Meta:
+        model  = StockBook
+        fields = ['report_id', 'CerealType', 'Status', 'Date', 'B_Bags', 'B_GKG', 'B_NKG']
 
 class StockBookSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(many=True, read_only=True)

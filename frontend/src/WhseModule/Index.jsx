@@ -10,7 +10,6 @@ import StockBook from "./pages/StockBook"
 // general pages
 import ReportSummarization from "@/components/ReportSummarization"
 import Notifications from "@/components/Notifications"
-import AuditLogs from "@/components/AuditLogs"
 
 // reports
 import SummaryReport from '@/components/Reports/SummaryReport'
@@ -33,7 +32,7 @@ const WhseRoute = (
 export const WhseReportRoute = (
   <>
     <Route path="create/:id" element={<CreateReport />}/>
-    <Route path='create/:id/review/' element={<ReviewTransaction/>}/>
+    <Route path='create/:id/review' element={<ReviewTransaction/>}/>
     <Route path="view/:id" element={<ViewReport />} />
     <Route path="edit/:id" element={<CreateReport />} />
   </>

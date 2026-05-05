@@ -5,7 +5,8 @@ from rest_framework import status
 from .models import StockBook, Transaction, WSRReport, WSIReport, Summary
 from .serializers import (
     StockBookSerializer, TransactionSerializer,
-    WSRReportSerializer, WSIReportSerializer, SummarySerializer
+    WSRReportSerializer, WSIReportSerializer, SummarySerializer,
+    StockBookListSerializer
 )
 
 def get_user_from_token(request):
@@ -26,8 +27,7 @@ def get_user_from_token(request):
 # Stockbook
 @api_view(['GET'])
 def get_stock(request):
-    stocks = StockBook.objects.all()
-    return Response(StockBookSerializer(stocks, many=True).data)
+    return Response(StockBookListSerializer(StockBook.objects.all(), many=True).data)
 
 
 @api_view(['POST'])
@@ -38,14 +38,22 @@ def create_stock(request):
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     if user.user_level != 'Warehouse Supervisor':
-        return Response(
-            {'error': 'Only Warehouse Supervisor can create StockBooks'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({'error': 'Only Warehouse Supervisor can create StockBooks'}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = StockBookSerializer(data=request.data)
     if serializer.is_valid():
-        instance = serializer.save(name=user)
+        from users.models import User
+
+        assist_bm  = User.objects.filter(user_level='Signatory', signatory_role='Asst. Branch Manager', status='Active').first()
+        account_ii = User.objects.filter(user_level='Signatory', signatory_role='Accountant 3', status='Active').first()
+        branch_m   = User.objects.filter(user_level='Signatory', signatory_role='Branch Manager', status='Active').first()
+
+        instance = serializer.save(
+            name=user,
+            Assist_BM=assist_bm,
+            Account_II=account_ii,
+            Branch_M=branch_m,
+        )
         full = StockBook.objects.get(pk=instance.report_id)
         return Response(StockBookSerializer(full).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -162,6 +170,8 @@ def create_transaction(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+import traceback
+
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([AllowAny])
 def upd_transaction(request, pk):
@@ -178,18 +188,30 @@ def upd_transaction(request, pk):
         if not user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Block edits if locked
         if txn.stockbook.Status in ['Under Review', 'Completed']:
             return Response(
                 {'error': 'Cannot edit transaction. StockBook is locked.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = TransactionSerializer(txn, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            safe_data = {k: v for k, v in request.data.items() 
+                        if k not in ['Assist_BM', 'Account_II', 'Branch_M', 
+                                      'user_full_name', 'user_WHCode',
+                                      'wsr_report', 'wsi_report']}
+
+            serializer = TransactionSerializer(txn, data=safe_data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # This will now return JSON instead of HTML so you can see the real error
+            return Response(
+                {'error': str(e), 'trace': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     elif request.method == 'DELETE':
         user = get_user_from_token(request)

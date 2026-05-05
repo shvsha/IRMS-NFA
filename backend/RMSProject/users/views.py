@@ -32,6 +32,25 @@ def admin_required(request):
         return None, Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
     return user, None
 
+class CreateAdminView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # Only allow if NO admin exists yet
+        if User.objects.filter(user_level='Admin').exists():
+            return Response(
+                {'error': 'Admin already exists. Use the normal login flow.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = request.data.copy()
+        data['user_level'] = 'Admin'
+
+        serializer = UserSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):
     permission_classes = [AllowAny]

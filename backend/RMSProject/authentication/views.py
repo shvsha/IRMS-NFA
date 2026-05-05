@@ -54,6 +54,7 @@ class LogoutView(APIView):
         except Exception:
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
         
+
 # change password
 class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]

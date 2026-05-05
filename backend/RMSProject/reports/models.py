@@ -11,26 +11,26 @@ class StockBook(models.Model):
         ('Completed', 'Completed'),
     ]
 
-    report_id  = models.AutoField(primary_key=True)
-    name       = models.ForeignKey(
+    report_id = models.AutoField(primary_key=True)
+    name = models.ForeignKey(
         'users.User',
         on_delete=models.CASCADE,
         related_name='stockbooks',
         blank=True, null=True
     )
     CerealType = models.CharField(max_length=10, blank=True, null=True)
-    Status     = models.CharField(max_length=20, choices=STATUS_CHOICES, default='In Progress')
-    Date       = models.DateField(blank=True, null=True)
+    Status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='In Progress')
+    Date = models.DateField(blank=True, null=True)
 
     # Balances
-    B_Bags     = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    B_GKG      = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    B_NKG      = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    B_Bags = models.DecimalField(max_digits=15, decimal_places=3, default=1000.000)
+    B_GKG = models.DecimalField(max_digits=15, decimal_places=3, default=1500000.000)
+    B_NKG = models.DecimalField(max_digits=15, decimal_places=3, default=2300000.000)
 
     # Signatories
-    Assist_BM  = models.CharField(max_length=50, blank=True, null=True)
-    Account_II = models.CharField(max_length=50, blank=True, null=True)
-    Branch_M   = models.CharField(max_length=50, blank=True, null=True)
+    Assist_BM = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assist_bm_stockbooks')
+    Account_II = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='account_ii_stockbooks')
+    Branch_M = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='branch_m_stockbooks')
 
     @property
     def user_full_name(self):
@@ -51,6 +51,13 @@ class WSRReport(models.Model):
         ('Rejected', 'Rejected'),
         ('Archive',  'Archive'),
     ]
+    STAGE_CHOICES = [
+        ('admin',     'Admin'),
+        ('asst_bm',   'Asst. Branch Manager'),
+        ('accountant','Accountant 3'),
+        ('branch_m',  'Branch Manager'),
+        ('done',      'Done'),
+    ]
 
     wsr_report_id = models.AutoField(primary_key=True)
     stockbook     = models.OneToOneField(
@@ -67,6 +74,12 @@ class WSRReport(models.Model):
         related_name='reviewed_wsr_reports'
     )
 
+    current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
+    admin_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    asst_bm_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    accountant_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    branch_m_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+
     def __str__(self):
         return f"WSRReport #{self.wsr_report_id} → {self.stockbook}"
 
@@ -78,21 +91,35 @@ class WSIReport(models.Model):
         ('Rejected', 'Rejected'),
         ('Archive',  'Archive'),
     ]
+    STAGE_CHOICES = [
+        ('admin',     'Admin'),
+        ('asst_bm',   'Asst. Branch Manager'),
+        ('accountant','Accountant 3'),
+        ('branch_m',  'Branch Manager'),
+        ('done',      'Done'),
+    ]
 
     wsi_report_id = models.AutoField(primary_key=True)
-    stockbook     = models.OneToOneField(
+    stockbook = models.OneToOneField(
         'StockBook',
         on_delete=models.CASCADE,
         related_name='wsi_report'
     )
-    Evaluation    = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    Reason        = models.TextField(blank=True, null=True)
-    reviewed_by   = models.ForeignKey(
+    Evaluation = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    Reason = models.TextField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(
         'users.User',
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='reviewed_wsi_reports'
     )
+
+    current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
+    admin_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    asst_bm_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    accountant_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    branch_m_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+
 
     def __str__(self):
         return f"WSIReport #{self.wsi_report_id} → {self.stockbook}"
@@ -125,39 +152,39 @@ class Transaction(models.Model):
         null=True, blank=True,
         related_name='transactions'
     )
-    type            = models.CharField(max_length=5, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=5, choices=TYPE_CHOICES)
 
     # Delivery & Vehicle
-    Particulars     = models.CharField(max_length=100, blank=True, null=True)
-    Plate_Number    = models.CharField(max_length=20,  blank=True, null=True)
-    Batch_No        = models.IntegerField(blank=True, null=True)
-    AI_Number       = models.IntegerField(blank=True, null=True)
-    OR_Number       = models.IntegerField(blank=True, null=True)
+    Particulars = models.CharField(max_length=100, blank=True, null=True)
+    Plate_Number = models.CharField(max_length=20,  blank=True, null=True)
+    Batch_No = models.CharField(max_length=2,  blank=True, null=True)
+    AI_Number = models.CharField(max_length=8,  blank=True, null=True)
+    OR_Number = models.CharField(max_length=8,  blank=True, null=True)
     Transaction_ref = models.CharField(max_length=20,  blank=True, null=True)
 
     # Document numbers
-    WTS_no          = models.IntegerField(blank=True, null=True)
-    WSR_no          = models.IntegerField(blank=True, null=True)
-    WSI_no          = models.IntegerField(blank=True, null=True)
+    WTS_no = models.CharField(max_length=8,  blank=True, null=True)
+    WSR_no = models.CharField(max_length=8,  blank=True, null=True)
+    WSI_no = models.CharField(max_length=8,  blank=True, null=True)
 
     # Quality Metrics
-    Age             = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Age = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     Moisture_Content= models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Classifier      = models.CharField(max_length=50, blank=True, null=True)
-    Pile_No         = models.IntegerField(blank=True, null=True)
-    Fillers         = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Classifier = models.CharField(max_length=50, blank=True, null=True)
+    Pile_No  = models.CharField(max_length=10, blank=True, null=True)
+    Fillers  = models.CharField(max_length=255, blank=True, null=True)
 
     # Receipts (WSR + WTS)
-    R_Bags          = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_GKG           = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_NKG           = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Cond_R          = models.CharField(max_length=5, blank=True, null=True)
+    R_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    R_GKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    R_NKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Cond_R = models.CharField(max_length=5, blank=True, null=True)
 
     # Issues (WSI + WTS)
-    I_Bags          = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    I_GKG           = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    I_NKG           = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Cond_I          = models.CharField(max_length=5, blank=True, null=True)
+    I_Bags  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    I_GKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    I_NKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Cond_I  = models.CharField(max_length=5, blank=True, null=True)
 
     @property
     def user_full_name(self):

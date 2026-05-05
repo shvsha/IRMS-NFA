@@ -25,7 +25,7 @@ const getStatusStyle = (status) => {
   const base = "px-3 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 w-30 pl-4";
   if (status === "In Progress")  return `${base} bg-[#FFF3CD] text-[#856404]`;
   if (status === "Completed")    return `${base} bg-[#D4EDDA] text-[#155724]`;
-  if (status === "Under Review") return `${base} bg-[#D6E4FF] text-[#1D3A8A]`;
+  if (status === "Under Review") return `${base} bg-[#D6E4FF] text-[#1D3A8A] text-[10px]`;
   return base;
 };
 
@@ -94,9 +94,16 @@ export default function StockBook() {
   };
 
   // filter
-  const filteredReports = selectedCereal === "All Cereal Type"
-    ? stockReports
-    : stockReports.filter((r) => r.CerealType === selectedCereal);
+  const filteredReports = stockReports
+    .filter(r => selectedCereal === "All Cereal Type" || r.CerealType === selectedCereal)
+    .filter(r => {
+      const term = search.toLowerCase();
+      return (
+        String(r.report_id).includes(term) ||
+        (r.CerealType || '').toLowerCase().includes(term) ||
+        (r.Date || '').includes(term)
+      );
+    });
 
   // add report
   const handleAddReportClick = () => {
@@ -159,7 +166,7 @@ export default function StockBook() {
     if (!window.confirm(`Unsubmit Report #${stock.report_id}? It will go back to In Progress.`)) return;
     try {
       setUnsubmitting(stock.report_id);
-      await api.post(`/reports/stocks/unsubmit/${stock.report_id}`);
+      await api.post(`/reports/stocks/unsubmit/${stock.report_id}/`);
       await fetchStocks();
     } catch (err) {
       alert(err.response?.data?.error || "Failed to unsubmit.");
@@ -293,7 +300,7 @@ export default function StockBook() {
                                 <GoLinkExternal size={14} /> View
                               </button>
                               <button
-                                disabled={r.Status === "Completed"}
+                                disabled={r.Status === "Completed" || r.Status === "Under Review"}
                                 onClick={() => handleEditClick(r)}
                                 className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
                               >

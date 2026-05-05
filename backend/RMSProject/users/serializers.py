@@ -4,11 +4,11 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password        = serializers.CharField(write_only=True, required=False)
+    password  = serializers.CharField(write_only=True, required=False)
     confirmPassword = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        model  = User
+        model = User
         fields = '__all__'
 
     def validate(self, data):
@@ -37,7 +37,7 @@ class SignatorySerializer(serializers.ModelSerializer):
     Used for creating and updating signatory accounts.
     e_signature is required on create, optional on update.
     """
-    password        = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False)
     confirmPassword = serializers.CharField(write_only=True, required=False)
     e_signature_url = serializers.SerializerMethodField()
 
