@@ -368,8 +368,22 @@ def unsubmit_stock(request, pk):
             {'error': 'Only reports Under Review can be unsubmitted'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+    stock.transactions.all().update(wsr_report=None, wsi_report=None)
+
+    try:
+        stock.wsr_report.delete()
+    except WSRReport.DoesNotExist:
+        pass
+
+    try:
+        stock.wsi_report.delete()
+    except WSIReport.DoesNotExist:
+        pass
 
     stock.Status = 'In Progress'
     stock.save(update_fields=['Status'])
+
+    stock.refresh_from_db()
 
     return Response(StockBookSerializer(stock).data)

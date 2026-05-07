@@ -39,6 +39,18 @@ class WSRReportSerializer(serializers.ModelSerializer):
     transactions  = TransactionSerializer(many=True, read_only=True)
     stockbook_date    = serializers.DateField(source='stockbook.Date', read_only=True)
     stockbook_cereal  = serializers.CharField(source='stockbook.CerealType', read_only=True)
+    asst_bm_name      = serializers.CharField(source='stockbook.Assist_BM.full_name', read_only=True, default='—')
+    accountant_name   = serializers.CharField(source='stockbook.Account_II.full_name', read_only=True, default='—')
+    branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
+
+    debug_signatories = serializers.SerializerMethodField()
+
+    def get_debug_signatories(self, obj):
+        return {
+            'assist_bm_id':   obj.stockbook.Assist_BM_id,
+            'account_ii_id':  obj.stockbook.Account_II_id,
+            'branch_m_id':    obj.stockbook.Branch_M_id,
+    }
 
     class Meta:
         model  = WSRReport
@@ -48,6 +60,9 @@ class WSIReportSerializer(serializers.ModelSerializer):
     transactions  = TransactionSerializer(many=True, read_only=True)
     stockbook_date    = serializers.DateField(source='stockbook.Date', read_only=True)
     stockbook_cereal  = serializers.CharField(source='stockbook.CerealType', read_only=True)
+    asst_bm_name      = serializers.CharField(source='stockbook.Assist_BM.full_name', read_only=True, default='—')
+    accountant_name   = serializers.CharField(source='stockbook.Account_II.full_name', read_only=True, default='—')
+    branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
 
     class Meta:
         model  = WSIReport

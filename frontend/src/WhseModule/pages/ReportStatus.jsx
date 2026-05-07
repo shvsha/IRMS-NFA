@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { GoLinkExternal } from "react-icons/go";
-import { TbProgress } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
-import Header from '../../components/Header'
+import { TbInfoCircle } from "react-icons/tb";
+import Header from '../../components/Header';
+import { useNavigate } from "react-router-dom";
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // api
 import api from "@/api/axios";
@@ -28,20 +30,35 @@ const getStatusStyle = (status) => {
 };
 
 const getStatusIcon = (status) => {
-  if (status === "Pending")  return <TbProgress size={15} />;
+  if (status === "Pending") return (
+    <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+  );
   if (status === "Approved") return <FaRegCircleCheck size={15} />;
   if (status === "Rejected") return <MdOutlineCancel size={15} />;
   return null;
 };
 
+// Route map — matches the routes in ReportEvaluation
+const REPORT_ROUTES = {
+  "Statement of Receipts":  "/ws/report/receipt",
+  "Statement of Issuance":  "/ws/report/issue",
+};
+
 export default function ReportStatus() {
-  const [reports, setReports]               = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [error, setError]                   = useState(null);
+  const navigate = useNavigate();
+
+  const [reports, setReports]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type");
   const [selectedReportType, setSelectedReportType] = useState("All Report Type");
   const [selectedStatus, setSelectedStatus]         = useState("All Status");
+
+  // Reject reason dialog
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason]         = useState("");
+  const [selectedReport, setSelectedReport]     = useState(null);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -53,31 +70,27 @@ export default function ReportStatus() {
         ]);
 
         const wsrMapped = wsrRes.data.map((r) => ({
-          id:         r.wsr_report_id,
-          reportId:   `R-${String(r.stockbook).padStart(3, "0")}`,
+          id:          r.wsr_report_id,
+          _type:       "WSR",
+          reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
           stockbookId: r.stockbook,
-          date:       formatDate(r.stockbook_date ?? r.date),
-          reportType: "Statement of Receipts",
-          cereal:     r.cereal_type ?? r.CerealType ?? "—",
-          status:     r.Evaluation ?? "Pending",
-          reason:     r.Reason ?? "",
-          date:   formatDate(r.stockbook_date),
-          cereal: r.stockbook_cereal ?? "—",
-          raw:        r,
+          date:        formatDate(r.stockbook_date),
+          reportType:  "Statement of Receipts",
+          cereal:      r.stockbook_cereal ?? "—",
+          status:      r.Evaluation ?? "Pending",
+          reason:      r.Reason ?? "",
         }));
 
         const wsiMapped = wsiRes.data.map((r) => ({
-          id:         r.wsi_report_id,
-          reportId:   `R-${String(r.stockbook).padStart(3, "0")}`,
+          id:          r.wsi_report_id,
+          _type:       "WSI",
+          reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
           stockbookId: r.stockbook,
-          date:       formatDate(r.stockbook_date ?? r.date),
-          reportType: "Statement of Issuance",
-          cereal:     r.cereal_type ?? r.CerealType ?? "—",
-          status:     r.Evaluation ?? "Pending",
-          reason:     r.Reason ?? "",
-          date:   formatDate(r.stockbook_date),
-          cereal: r.stockbook_cereal ?? "—",
-          raw:        r,
+          date:        formatDate(r.stockbook_date),
+          reportType:  "Statement of Issuance",
+          cereal:      r.stockbook_cereal ?? "—",
+          status:      r.Evaluation ?? "Pending",
+          reason:      r.Reason ?? "",
         }));
 
         setReports([...wsrMapped, ...wsiMapped]);
@@ -91,11 +104,40 @@ export default function ReportStatus() {
     fetchReports();
   }, []);
 
+  const handleView = (report) => {
+    const route = REPORT_ROUTES[report.reportType];
+    if (!route) return;
+    navigate(route, {
+      state: {
+        reportId:    report.id,
+        reportType:  report._type,
+        stockbookId: report.stockbookId,
+      },
+    });
+  };
+
+  const handleViewReason = (report) => {
+    setSelectedReport(report);
+    setRejectReason(report.reason || "No reason provided.");
+    setRejectDialogOpen(true);
+  };
+
+  const handleEditRejected = () => {
+    if (!selectedReport) return;
+    setRejectDialogOpen(false);
+    navigate(`/whse/create/${selectedReport.stockbookId}`, {
+      state: {
+        mode:         'edit',
+        rejectedType: selectedReport._type, // 'WSR' or 'WSI'
+      },
+    });
+  };
+
   // filters
   const filteredReports = reports.filter((r) => {
-    const matchCereal = selectedCerealType === "All Cereal Type" || r.cereal === selectedCerealType;
+    const matchCereal = selectedCerealType === "All Cereal Type" || r.cereal     === selectedCerealType;
     const matchReport = selectedReportType === "All Report Type" || r.reportType === selectedReportType;
-    const matchStatus = selectedStatus      === "All Status"     || r.status    === selectedStatus;
+    const matchStatus = selectedStatus     === "All Status"      || r.status     === selectedStatus;
     return matchCereal && matchReport && matchStatus;
   });
 
@@ -107,9 +149,9 @@ export default function ReportStatus() {
         unreadCount={5}
         userName="Raph Nigos"
       />
-      
+
       <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[650px]">
-      
+
         {/* Filters */}
         <div className="flex justify-end gap-3 pt-2 pb-3 mx-3">
           <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
@@ -155,15 +197,15 @@ export default function ReportStatus() {
             <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
           ) : (
             <>
-              {/* Fixed header table */}
+              {/* Fixed header */}
               <table className="w-full table-fixed">
                 <colgroup>
-                  <col className="w-[15%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[25%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[15%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[26%]" />
                 </colgroup>
                 <thead>
                   <tr className="bg-[#E2EBFF] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
@@ -181,12 +223,12 @@ export default function ReportStatus() {
               <div className="overflow-y-auto flex-1">
                 <table className="w-full table-fixed">
                   <colgroup>
-                    <col className="w-[15%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[25%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[15%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[22%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[26%]" />
                   </colgroup>
                   <tbody>
                     {filteredReports.length === 0 ? (
@@ -197,7 +239,10 @@ export default function ReportStatus() {
                       </tr>
                     ) : (
                       filteredReports.map((report, i) => (
-                        <tr key={`${report.reportType}-${report.id}-${i}`} className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]">
+                        <tr
+                          key={`${report.reportType}-${report.id}-${i}`}
+                          className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]"
+                        >
                           <td className="text-center">{report.date}</td>
                           <td className="text-center">{report.reportId}</td>
                           <td className="text-center">{report.reportType}</td>
@@ -209,10 +254,26 @@ export default function ReportStatus() {
                             </span>
                           </td>
                           <td className="text-center">
-                            <div className="flex justify-center">
-                              <button className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white">
+                            <div className="flex justify-center items-center gap-2">
+
+                              {/* View button */}
+                              <button
+                                onClick={() => handleView(report)}
+                                className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white"
+                              >
                                 <GoLinkExternal size={15} /> View
                               </button>
+
+                              {/* Reject reason button — only shown when Rejected */}
+                              {report.status === "Rejected" && (
+                                <button
+                                  onClick={() => handleViewReason(report)}
+                                  className="border border-[#FF595C] text-[#FF595C] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#BB2325] hover:text-white"
+                                >
+                                  <MdOutlineCancel size={15} /> Reject Reason
+                                </button>
+                              )}
+
                             </div>
                           </td>
                         </tr>
@@ -225,6 +286,43 @@ export default function ReportStatus() {
           )}
         </div>
       </div>
+
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[460px] bg-[#E6EEF6] [&>button]:hidden">
+          <div className="h-7 bg-[#BB2325]" />
+          <DialogHeader className="p-5 text-center items-center pb-2">
+            <div className="rounded-full p-4 bg-[#BB2325] w-fit">
+              <MdOutlineCancel size={48} color="white" />
+            </div>
+            <DialogTitle className="font-bold text-[#BB2325] text-xl mt-2">
+              Rejection Reason
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 px-2 mt-1">
+              This report was rejected for the following reason:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-2">
+            <div className="w-full border bg-white rounded-md p-3 text-sm min-h-[80px] text-[#333]">
+              {rejectReason}
+            </div>
+          </div>
+          <div className="px-6 pb-6 pt-3 flex justify-end gap-3">
+            <button
+              onClick={() => setRejectDialogOpen(false)}
+              className="px-6 py-2 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] hover:bg-gray-300 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={handleEditRejected}
+              className="px-6 py-2 rounded-md text-sm font-medium bg-[#BB2325] text-white hover:bg-red-800 transition-colors"
+            >
+              Edit Report
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

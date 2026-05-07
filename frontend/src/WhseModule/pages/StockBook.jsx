@@ -23,14 +23,16 @@ import api from "@/api/axios";
 
 const getStatusStyle = (status) => {
   const base = "px-3 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 w-30 pl-4";
-  if (status === "In Progress")  return `${base} bg-[#FFF3CD] text-[#856404]`;
-  if (status === "Completed")    return `${base} bg-[#D4EDDA] text-[#155724]`;
+  if (status === "In Progress")  return `${base} bg-[#F0E48B] text-[#856404]`;
+  if (status === "Completed")    return `${base} bg-[#8BF093] text-[#3E7A43]`;
   if (status === "Under Review") return `${base} bg-[#D6E4FF] text-[#1D3A8A] text-[10px]`;
   return base;
 };
 
 const getStatusIcon = (status) => {
-  if (status === "In Progress")  return <TbProgress size={16} />;
+  if (status === "In Progress")  return (
+    <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+  );
   if (status === "Completed")    return <FaRegCircleCheck size={16} />;
   if (status === "Under Review") return <TbFileSearch size={16} />;
   return null;
@@ -295,14 +297,14 @@ export default function StockBook() {
                             <div className="flex justify-center gap-2">
                               <button
                                 onClick={() => handleViewReport(r)}
-                                className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
+                                className="flex items-center gap-1.5 border border-gray-300 rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
                               >
                                 <GoLinkExternal size={14} /> View
                               </button>
                               <button
                                 disabled={r.Status === "Completed" || r.Status === "Under Review"}
                                 onClick={() => handleEditClick(r)}
-                                className="flex items-center gap-1.5 border border-gray-300 rounded px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
+                                className="flex items-center gap-1.5 border border-gray-300 rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
                               >
                                 <FiEdit size={14} /> Edit
                               </button>
@@ -310,9 +312,10 @@ export default function StockBook() {
                                 <button
                                   onClick={() => handleUnsubmit(r)}
                                   disabled={unsubmitting === r.report_id}
-                                  className="flex items-center border border-red-500 text-red-500 rounded px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500 disabled:opacity-50"
+                                  className="flex items-center border border-red-500 text-red-500 text-sm rounded-full px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500 disabled:opacity-50"
                                 >
                                   <IoClose size={18} />
+                                  Unsubmit
                                 </button>
                               )}
                             </div>

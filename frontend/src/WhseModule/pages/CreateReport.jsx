@@ -149,15 +149,26 @@ const txnHasData = (txn) =>
     .filter(([k]) => k !== 'id')
     .some(([, v]) => String(v).trim() !== '');
 
-// component 
+// Guard helper
+const isTransactionLocked = (txn, rejectedType) => {
+  if (!rejectedType) return false;          // no rejection context → all editable
+  const txnType = getTransactionType(txn);
+  if (txnType === 'WTS') return false;      // WTS always editable
+  if (txnType === 'WSR' && rejectedType === 'WSI') return true;
+  if (txnType === 'WSI' && rejectedType === 'WSR') return true;
+  return false;
+};
+
+// component
 
 export default function CreateReport() {
   const { id }   = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const mode       = location.state?.mode ?? 'edit';
-  const isEditMode = mode === 'edit';
+  const mode         = location.state?.mode         ?? 'edit';
+  const rejectedType = location.state?.rejectedType ?? null; // 'WSR' | 'WSI' | null
+  const isEditMode   = mode === 'edit';
 
   // US
   const [stockBook,    setStockBook]    = useState(null);
@@ -167,7 +178,7 @@ export default function CreateReport() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving,       setSaving]       = useState(false);
 
-  // Refs (never stale inside timeouts / unmount) 
+  // Refs (never stale inside timeouts / unmount)
   const transactionsSeeded = useRef(false);
   const debounceTimer      = useRef(null);
   const transactionsRef    = useRef(transactions);
@@ -178,7 +189,7 @@ export default function CreateReport() {
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { stockBookRef.current    = stockBook;    }, [stockBook]);
 
-  // Fetch stockBook (always fresh from API)
+  // Fetch stockBook
   useEffect(() => {
     if (!id) {
       setLoadError("No report ID found in URL.");
@@ -215,12 +226,18 @@ export default function CreateReport() {
   const isFirstTransaction = currentIndex === 0;
   const isLastTransaction  = currentIndex === transactions.length - 1;
 
+  // Is the ENTIRE current transaction read-only due to rejection guard?
+  const txnLocked = isTransactionLocked(currentTransaction, rejectedType);
+
   const saveTransaction = useCallback(async (snapshot, idxToSave) => {
     const stockbookId = stockBookRef.current?.report_id;
     if (!stockbookId) return snapshot;
 
     const current = snapshot[idxToSave];
     if (!txnHasData(current)) return snapshot;
+
+    // Don't save locked (non-rejected) transactions
+    if (isTransactionLocked(current, rejectedType)) return snapshot;
 
     try {
       setSaving(true);
@@ -246,11 +263,12 @@ export default function CreateReport() {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [rejectedType]);
 
-  // Auto-save debounce (watches individual fields — no stale closure) 
+  // Auto-save debounce
   useEffect(() => {
     if (!txnHasData(currentTransaction)) return;
+    if (txnLocked) return; // don't debounce-save locked transactions
 
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
@@ -270,10 +288,10 @@ export default function CreateReport() {
     currentTransaction.rNkg,           currentTransaction.rCondition,
     currentTransaction.iBags,          currentTransaction.iGkg,
     currentTransaction.iNkg,           currentTransaction.iCondition,
-    saveTransaction,
+    saveTransaction, txnLocked,
   ]);
 
-  // Save on unmount (catches navigate-away before debounce fires)
+  // Save on unmount
   useEffect(() => {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -283,10 +301,12 @@ export default function CreateReport() {
 
   // Custom Handlers
 
-  const setField = (field, value) =>
+  const setField = (field, value) => {
+    if (txnLocked) return; // guard: don't mutate locked transactions
     setTransactions(prev =>
       prev.map((t, i) => i === currentIndexRef.current ? { ...t, [field]: value } : t)
     );
+  };
 
   const handleChange       = (field) => (e) => setField(field, e.target.value);
 
@@ -371,8 +391,12 @@ export default function CreateReport() {
   const whseUser    = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Class helpers
-  const lockedClass = 'bg-gray-100 border-0 rounded h-8 w-full cursor-not-allowed opacity-50';
-  const inputClass  = 'bg-[#E6EEF6] border-0 rounded h-7 w-full';
+  const lockedClass    = 'bg-gray-100 border-0 rounded h-8 w-full cursor-not-allowed opacity-50';
+  const inputClass     = 'bg-[#E6EEF6] border-0 rounded h-7 w-full';
+  const readOnlyClass  = 'bg-gray-100 border-0 rounded h-7 w-full cursor-not-allowed opacity-60';
+
+  // When txnLocked, swap inputClass for readOnlyClass everywhere
+  const fieldClass = txnLocked ? readOnlyClass : inputClass;
 
   // UI
   return (
@@ -401,6 +425,19 @@ export default function CreateReport() {
           </div>
         </div>
 
+        {/* Locked transaction toast */}
+        {txnLocked && (
+          <div className="shadow-2xl fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 bg-white border-l-4 border-[#856404] rounded-lg shadow-2xl px-5 py-3 min-w-[320px] pointer-events-none">
+            <div className="rounded-full bg-[#F0E48B] px-2 py-1 my-1 flex-shrink-0">
+              <span className="text-[#856404] text-base font-bold">⚠</span>
+            </div>
+            <div>
+              <p className="font-bold text-sm text-[#856404]">Read Only</p>
+              <p className="text-xs text-gray-500">This transaction was not rejected and cannot be edited.</p>
+            </div>
+          </div>
+        )}
+
         {/* Form sections */}
         <div className="mt-2 overflow-x-auto w-full flex gap-3 bg-[#F5F9F9] py-2 px-2 rounded-lg border border-black/5 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
 
@@ -417,7 +454,8 @@ export default function CreateReport() {
                     value={currentTransaction.particulars}
                     onChange={handleChange('particulars')}
                     placeholder="Particulars"
-                    className="bg-[#E6EEF6] border-0 rounded h-12 w-full" />
+                    readOnly={txnLocked}
+                    className={`border-0 rounded h-12 w-full ${txnLocked ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-[#E6EEF6]'}`} />
                 </Field>
                 <div className="flex gap-4">
                   <Field className="flex-col flex-1">
@@ -427,7 +465,8 @@ export default function CreateReport() {
                       onChange={(e) => setField('plateNo', e.target.value.slice(0, 6))}
                       maxLength={6}
                       placeholder="ABC123"
-                      className="bg-[#E6EEF6] border-0 rounded h-7" />
+                      readOnly={txnLocked}
+                      className={`border-0 rounded h-7 ${txnLocked ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-[#E6EEF6]'}`} />
                   </Field>
                   <Field className="flex-col flex-1">
                     <FieldLabel className="text-sm font-semibold text-[#2D317F]">Batch No.</FieldLabel>
@@ -436,7 +475,8 @@ export default function CreateReport() {
                       onChange={handleNumericInput('batchNo', 2)}
                       maxLength={2}
                       placeholder="01"
-                      className="bg-[#E6EEF6] border-0 rounded h-7" />
+                      readOnly={txnLocked}
+                      className={`border-0 rounded h-7 ${txnLocked ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-[#E6EEF6]'}`} />
                   </Field>
                 </div>
               </div>
@@ -453,7 +493,8 @@ export default function CreateReport() {
                       value={currentTransaction.age}
                       onChange={handleAgeInput}
                       placeholder="0.000"
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                   <Field className="flex-col w-full">
                     <FieldLabel className="text-sm font-semibold text-[#2D317F]">Moisture Content (%)</FieldLabel>
@@ -461,7 +502,8 @@ export default function CreateReport() {
                       value={currentTransaction.moistureContent}
                       onChange={handleMoistureInput}
                       placeholder="10.01"
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                 </div>
                 <div className="flex flex-col flex-1 gap-3">
@@ -471,7 +513,8 @@ export default function CreateReport() {
                       value={currentTransaction.classifier}
                       onChange={handleTextOnly('classifier')}
                       placeholder="Classifier"
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                   <Field className="flex-col w-full">
                     <FieldLabel className="text-sm font-semibold text-[#2D317F]">Pile No.</FieldLabel>
@@ -480,7 +523,8 @@ export default function CreateReport() {
                       onChange={handlePileNoInput}
                       placeholder="1A – 15B"
                       maxLength={3}
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                 </div>
               </div>
@@ -495,11 +539,12 @@ export default function CreateReport() {
                   value={currentTransaction.fillers}
                   onChange={handleChange('fillers')}
                   placeholder="Fillers Description"
-                  className="bg-[#E6EEF6] border-0 rounded h-12 w-full" />
+                  readOnly={txnLocked}
+                  className={`border-0 rounded h-12 w-full ${txnLocked ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-[#E6EEF6]'}`} />
               </Field>
             </div>
 
-          </div>{/* end LEFT COLUMN */}
+          </div>
 
           {/* RIGHT COLUMN */}
           <div className="flex flex-col gap-3 flex-1">
@@ -517,8 +562,8 @@ export default function CreateReport() {
                       value={currentTransaction.wts}
                       onChange={handleNumericInput('wts', 8)}
                       placeholder="WTS #"
-                      disabled={lockedDocs.wts}
-                      className={lockedDocs.wts ? lockedClass : inputClass} />
+                      disabled={lockedDocs.wts || txnLocked}
+                      className={(lockedDocs.wts || txnLocked) ? lockedClass : inputClass} />
                   </Field>
                   <Field className="flex-col w-full">
                     <FieldLabel className="text-base font-semibold text-[#2D317F]">AI #</FieldLabel>
@@ -526,7 +571,8 @@ export default function CreateReport() {
                       value={currentTransaction.aiNo}
                       onChange={handleNumericInput('aiNo', 8)}
                       placeholder="AI #"
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                 </div>
 
@@ -538,8 +584,8 @@ export default function CreateReport() {
                       value={currentTransaction.wsr}
                       onChange={handleNumericInput('wsr', 8)}
                       placeholder="WSR #"
-                      disabled={lockedDocs.wsr}
-                      className={lockedDocs.wsr ? lockedClass : inputClass} />
+                      disabled={lockedDocs.wsr || txnLocked}
+                      className={(lockedDocs.wsr || txnLocked) ? lockedClass : inputClass} />
                   </Field>
                   <Field className="flex-col w-full">
                     <FieldLabel className="text-base font-semibold text-[#2D317F]">OR #</FieldLabel>
@@ -547,7 +593,8 @@ export default function CreateReport() {
                       value={currentTransaction.orNo}
                       onChange={handleNumericInput('orNo', 8)}
                       placeholder="OR #"
-                      className={inputClass} />
+                      readOnly={txnLocked}
+                      className={fieldClass} />
                   </Field>
                 </div>
 
@@ -559,16 +606,17 @@ export default function CreateReport() {
                       value={currentTransaction.wsi}
                       onChange={handleNumericInput('wsi', 8)}
                       placeholder="WSI #"
-                      disabled={lockedDocs.wsi}
-                      className={lockedDocs.wsi ? lockedClass : inputClass} />
+                      disabled={lockedDocs.wsi || txnLocked}
+                      className={(lockedDocs.wsi || txnLocked) ? lockedClass : inputClass} />
                   </Field>
                   <Field className="flex-col w-full">
                     <FieldLabel className="text-base font-semibold text-[#2D317F]">Transaction</FieldLabel>
                     <Select
                       value={currentTransaction.transaction}
                       onValueChange={(val) => setField('transaction', val)}
+                      disabled={txnLocked}
                     >
-                      <SelectTrigger className={`${inputClass} px-2 text-sm`}>
+                      <SelectTrigger className={`${fieldClass} px-2 text-sm`}>
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -587,7 +635,7 @@ export default function CreateReport() {
             <div className="flex gap-3 flex-1">
 
               {/* Receipt */}
-              <div className={`bg-white py-3 px-4 shadow-[0_0_8px_rgba(0,0,0,0.25)] rounded-lg flex-1 ${sectionLock.receipt ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`bg-white py-3 px-4 shadow-[0_0_8px_rgba(0,0,0,0.25)] rounded-lg flex-1 ${(sectionLock.receipt || txnLocked) ? 'opacity-50 pointer-events-none' : ''}`}>
                 <p className="font-bold text-[#2D317F] border-b border-b-[#8fa3c1] pb-1 mb-1.5 text-center">Receipts</p>
                 <div className="flex flex-col gap-3">
                   <Field className="flex-col w-full">
@@ -615,7 +663,7 @@ export default function CreateReport() {
               </div>
 
               {/* Issue */}
-              <div className={`bg-white py-3 px-4 shadow-[0_0_8px_rgba(0,0,0,0.25)] rounded-lg flex-1 ${sectionLock.issue ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`bg-white py-3 px-4 shadow-[0_0_8px_rgba(0,0,0,0.25)] rounded-lg flex-1 ${(sectionLock.issue || txnLocked) ? 'opacity-50 pointer-events-none' : ''}`}>
                 <p className="font-bold text-[#2D317F] border-b border-b-[#8fa3c1] pb-1 mb-1.5 text-center">Issues</p>
                 <div className="flex flex-col gap-3">
                   <Field className="flex-col w-full">
@@ -643,9 +691,9 @@ export default function CreateReport() {
               </div>
 
             </div>
-          </div>{/* end RIGHT COLUMN */}
+          </div>
 
-        </div>{/* end Form sections */}
+        </div>
 
         {/* Bottom buttons */}
         <div className="flex-shrink-0 mt-[15px] flex items-center justify-between gap-2.5">
