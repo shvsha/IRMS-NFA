@@ -21,8 +21,6 @@ import { Input } from "@/components/ui/input"
 
 const ITEMS_PER_PAGE = 4
 
-const sampleSummaryReports = []
-
 const TABLE_HEADERS = [
   { label: "Date" },
   { label: "Cereal Type" },
@@ -54,18 +52,32 @@ export default function ReportSummarization() {
     const fetchSummaries = async () => {
       setLoading(true)
       try {
-        const response = await api.get('/reports/summary/')
-        const mapped = response.data.map((item) => ({
-          ...item,
-          date: item.date_covered || item.Date || '—',
-          cerealtype: item.CerealType || '—',
-          cond: item.Condition || '—',
-          whse: item.WHCode || '—',
-          beginbalance: item.prev_B_NKG != null ? Number(item.prev_B_NKG).toLocaleString() : '0',
-          receipts: item.total_R_NKG != null ? Number(item.total_R_NKG).toLocaleString() : '0',
-          issues: item.total_I_NKG != null ? Number(item.total_I_NKG).toLocaleString() : '0',
-          balance: item.ending_B_NKG != null ? Number(item.ending_B_NKG).toLocaleString() : '0',
-        }))
+        const [summaryRes, stocksRes] = await Promise.all([
+          api.get('/reports/summary/'),
+          api.get('/reports/stocks/'),
+        ])
+
+        const archivedIds = new Set(
+          stocksRes.data
+            .filter(s => s.Status === 'Archived')
+            .map(s => s.report_id)
+        )
+
+        const mapped = summaryRes.data
+          .filter(item => !archivedIds.has(item.stockbook))
+          .map((item) => ({
+            ...item,
+            date:         item.date_covered || '—',
+            cerealtype:   item.CerealType   || '—',
+            cond:         item.Condition    || '—',
+            whse:         item.WHCode       || '—',
+            beginbalance: item.prev_B_NKG   != null ? Number(item.prev_B_NKG).toLocaleString() : '0',
+            receipts:     item.total_R_NKG  != null ? Number(item.total_R_NKG).toLocaleString() : '0',
+            issues:       item.total_I_NKG  != null ? Number(item.total_I_NKG).toLocaleString() : '0',
+            balance:      item.ending_B_NKG != null ? Number(item.ending_B_NKG).toLocaleString() : '0',
+          }))
+          .sort((a, b) => b.summary_id - a.summary_id)
+
         setReports(mapped)
       } catch (err) {
         console.error('Failed to load summarized reports:', err)
@@ -180,10 +192,19 @@ export default function ReportSummarization() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedReports.length === 0 ? (
-                  <TableRow>
+                {loading ? (
+                  <TableRow className='border-0'>
+                    <TableCell colSpan={9} className="text-center py-16">
+                      <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                        <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-medium">Loading summary reports...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedReports.length === 0 ? (
+                  <TableRow className='border-0'>
                     <TableCell colSpan={9} className="text-center text-gray-400 py-10">
-                      No records found.
+                      No summary reports found.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -203,7 +224,9 @@ export default function ReportSummarization() {
                       <TableCell className="text-center px-4 border-0">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => navigate(`${basePath}/summarization/summary`)}
+                            onClick={() => navigate(`${basePath}/summarization/summary`, {
+                              state: { summaryId: report.summary_id }
+                            })}
                             className="inline-flex items-center gap-[5px] px-[14px] py-[6px] border-[1.5px] border-[#2d317f] rounded-full bg-white text-[#2d317f] text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2d317f] hover:text-white"
                           >
                             <GoLinkExternal size={14} /> View
@@ -213,7 +236,7 @@ export default function ReportSummarization() {
                               inline-flex items-center gap-[5px] rounded-full border
                               border-[#1D8104] px-[14px] py-[6px]
                               text-[13px] font-semibold text-[#1D8104]
-                              transition-colors hover:border-[#1D8104] hover:bg-[#1D8104]
+                              transition-colors hover:border-[#1D8104] hover:bg-[#1D8104] hover:text-white
                             "
                           >
                             <CiExport size={17} />Export

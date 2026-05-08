@@ -13,6 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // react
 import { useState, useEffect } from "react";
@@ -88,7 +97,8 @@ export default function StockBook() {
     try {
       setLoading(true);
       const res = await api.get("/reports/stocks/");
-      setStockReports(res.data);
+      const sorted = [...res.data].sort((a, b) => b.report_id - a.report_id)
+      setStockReports(sorted)
     } catch (err) {
       setError("Failed to load stock books.");
     } finally {
@@ -98,6 +108,7 @@ export default function StockBook() {
 
   // filter
   const filteredReports = stockReports
+    .filter(r => r.Status !== 'Archived')
     .filter(r => selectedCereal === "All Cereal Type" || r.CerealType === selectedCereal)
     .filter(r => {
       const term = search.toLowerCase();
@@ -239,9 +250,16 @@ export default function StockBook() {
         {/* Table */}
         <div className="flex flex-col h-90">
           {loading ? (
-            <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
+            <TableRow className='border-0 flex justify-center items-center h-full'>
+              <TableCell className="text-center py-16">
+                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Loading stock book...</span>
+                </div>
+              </TableCell>
+            </TableRow>
           ) : error ? (
-            <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
+            <div className="flex items-center justify-center h-40 text-gray-400">No Stockbook found.</div>
           ) : (
             <>
               {/* header */}

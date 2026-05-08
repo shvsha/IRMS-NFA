@@ -2,6 +2,6 @@ import React from 'react'
 
 export default function PileLayout() {
   return (
-    <div>PileLayout</div>
+    <div className='flex justify-center items-center h-full text-2xl'>Pile Layout</div>
   )
 }

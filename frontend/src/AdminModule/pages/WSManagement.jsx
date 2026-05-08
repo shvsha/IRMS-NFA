@@ -144,14 +144,14 @@ export default function UserManagement() {
                   <TableCell colSpan={8} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3 text-[#2D317F]">
                       <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                      <span className="text-sm font-medium">Loading users...</span>
+                      <span className="text-sm font-medium">Loading warehouse supervisors...</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-10 text-gray-400 text-sm">
-                    No {userStatus.toLowerCase()} users found.
+                    No {userStatus.toLowerCase()} warehouse supervisors found.
                   </TableCell>
                 </TableRow>
               ) : (

@@ -2,13 +2,21 @@ import { useState, useEffect } from "react";
 import { GoLinkExternal } from "react-icons/go";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
-import { TbInfoCircle } from "react-icons/tb";
 import Header from '../../components/Header';
 import { useNavigate } from "react-router-dom";
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // api
 import api from "@/api/axios";
@@ -40,9 +48,9 @@ const getStatusIcon = (status) => {
 
 // Route map — matches the routes in ReportEvaluation
 const REPORT_ROUTES = {
-  "Statement of Receipts":  "/ws/report/receipt",
-  "Statement of Issuance":  "/ws/report/issue",
-};
+  "Statement of Receipts": "/whse/status/receipt",
+  "Statement of Issuance": "/whse/status/issue",
+}
 
 export default function ReportStatus() {
   const navigate = useNavigate();
@@ -69,7 +77,9 @@ export default function ReportStatus() {
           api.get("/reports/wsi-reports/"),
         ]);
 
-        const wsrMapped = wsrRes.data.map((r) => ({
+        const wsrMapped = wsrRes.data
+        .filter(r => r.Evaluation !== 'Archive') 
+        .map((r) => ({
           id:          r.wsr_report_id,
           _type:       "WSR",
           reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
@@ -81,7 +91,9 @@ export default function ReportStatus() {
           reason:      r.Reason ?? "",
         }));
 
-        const wsiMapped = wsiRes.data.map((r) => ({
+        const wsiMapped = wsiRes.data
+        .filter(r => r.Evaluation !== 'Archive') 
+        .map((r) => ({
           id:          r.wsi_report_id,
           _type:       "WSI",
           reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
@@ -93,7 +105,7 @@ export default function ReportStatus() {
           reason:      r.Reason ?? "",
         }));
 
-        setReports([...wsrMapped, ...wsiMapped]);
+        setReports([...wsrMapped, ...wsiMapped].sort((a, b) => b.id - a.id))
       } catch (err) {
         setError("Failed to load reports.");
       } finally {
@@ -112,6 +124,7 @@ export default function ReportStatus() {
         reportId:    report.id,
         reportType:  report._type,
         stockbookId: report.stockbookId,
+        pageTitle:   'Report Status',
       },
     });
   };
@@ -192,9 +205,16 @@ export default function ReportStatus() {
         {/* Table */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {loading ? (
-            <div className="flex items-center justify-center h-40 text-[#2D317F]">Loading...</div>
+            <TableRow className='border-0 flex justify-center items-center h-full'>
+              <TableCell className="text-center py-16">
+                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Loading reports...</span>
+                </div>
+              </TableCell>
+            </TableRow>
           ) : error ? (
-            <div className="flex items-center justify-center h-40 text-red-500">{error}</div>
+            <div className="flex items-center justify-center h-40 text-gray-400">No reports found.</div>
           ) : (
             <>
               {/* Fixed header */}

@@ -1,9 +1,15 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.utils import timezone
+from datetime import timedelta
 from .models import StockBook, WSRReport, WSIReport, Summary, Transaction
 import logging
 logger = logging.getLogger(__name__)
 _recomputing = set()
+
+# ⚠️ TESTING: 5 minutes
+# ✅ PRODUCTION: change to timedelta(days=1)
+ARCHIVE_AFTER = timedelta(minutes=5)
 
 @receiver(post_save, sender=StockBook)
 def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
@@ -82,7 +88,11 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
         elif current_eval == 'Rejected':
             stockbook.Status = 'In Progress'
 
-    stockbook.save(update_fields=['Status'])
+    if stockbook.Status == 'Completed' and not stockbook.completed_at:
+        stockbook.completed_at = timezone.now()
+        stockbook.save(update_fields=['Status', 'completed_at'])
+    else:
+        stockbook.save(update_fields=['Status'])
 
     summary = stockbook.summaries.first()
     if not summary and stockbook.Status == 'Completed':
@@ -173,3 +183,30 @@ def update_balance_on_transaction_change(sender, instance, **kwargs):
         logger.error(f"SIGNAL ERROR in update_balance_on_transaction_change: {e}")
         logger.error(traceback.format_exc())
         raise
+
+# archive approved reports and summary 
+def auto_archive_completed():
+    cutoff = timezone.now() - ARCHIVE_AFTER
+
+    stockbooks = StockBook.objects.filter(
+        Status='Completed',
+        completed_at__lte=cutoff
+    )
+
+    for stockbook in stockbooks:
+        stockbook.Status = 'Archived'
+        stockbook.save(update_fields=['Status'])
+
+        try:
+            if stockbook.wsr_report.Evaluation == 'Approved':
+                stockbook.wsr_report.Evaluation = 'Archive'
+                stockbook.wsr_report.save(update_fields=['Evaluation'])
+        except WSRReport.DoesNotExist:
+            pass
+
+        try:
+            if stockbook.wsi_report.Evaluation == 'Approved':
+                stockbook.wsi_report.Evaluation = 'Archive'
+                stockbook.wsi_report.save(update_fields=['Evaluation'])
+        except WSIReport.DoesNotExist:
+            pass

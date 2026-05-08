@@ -9,6 +9,8 @@ from .serializers import (
     StockBookListSerializer
 )
 
+from .signals import auto_archive_completed
+
 def get_user_from_token(request):
     from rest_framework_simplejwt.tokens import AccessToken
     from users.models import User
@@ -27,6 +29,7 @@ def get_user_from_token(request):
 # Stockbook
 @api_view(['GET'])
 def get_stock(request):
+    auto_archive_completed() 
     return Response(StockBookListSerializer(StockBook.objects.all(), many=True).data)
 
 
@@ -412,6 +415,7 @@ def upd_wsi_report(request, pk):
 # Summary
 @api_view(['GET'])
 def get_summary(request):
+    auto_archive_completed() 
     summaries = Summary.objects.all()
     return Response(SummarySerializer(summaries, many=True).data)
 

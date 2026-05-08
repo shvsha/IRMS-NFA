@@ -32,9 +32,14 @@ const AdminRoute = (
     <Route path="notif" element={<Notifications role="admin" />} />
 
     {/* Generated Receipt Report Route */}
-    <Route path = "evaluation/receipt" element={<ReceiptReport/>}/>
-    <Route path = "evaluation/issue" element={<IssuesReport/>}/>
-    <Route path = "summarization/summary" element={<SummaryReport/>}/>
+    <Route path="evaluation/receipt" element={<ReceiptReport />} />
+    <Route path="evaluation/issue" element={<IssuesReport />} />
+
+    <Route path="summarization/summary" element={<SummaryReport />} />
+
+    <Route path="history/receipt" element={<ReceiptReport />} />
+    <Route path="history/issue" element={<IssuesReport />} />
+    <Route path="history/summary" element={<SummaryReport />} />
   </>
 )
 

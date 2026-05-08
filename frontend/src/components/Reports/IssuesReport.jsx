@@ -22,7 +22,7 @@ export default function WarehouseIssuesForm() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { reportId, stockbookId } = location.state ?? {};
+  const { reportId, stockbookId, pageTitle  } = location.state ?? {};
 
   const [report,  setReport]  = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,7 @@ export default function WarehouseIssuesForm() {
   return (
     <>
       <Header
-        pageTitle="Evaluation"
+        pageTitle={pageTitle ?? 'Evaluation'}
         notifTo="/admin/notif"
         unreadCount={5}
         userName="Raph Nigos"
@@ -299,7 +299,7 @@ export default function WarehouseIssuesForm() {
 
           {/* Signature Block */}
           <div
-            className="flex justify-between flex-wrap mt-[clamp(12px,2vw,24px)]"
+            className="flex justify-between flex-wrap mt-8 mb-4"
             style={{ gap: "clamp(8px,2vw,16px)" }}
           >
             {signatories.map((sig, i) => (

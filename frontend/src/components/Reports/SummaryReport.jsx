@@ -10,6 +10,7 @@ export default function NFAWarehouseReceipt() {
   // Accept a summaryId or stockbookId from navigation state
   const summaryId    = location.state?.summaryId    ?? null;
   const stockbookId  = location.state?.stockbookId  ?? null;
+  const pageTitle   = location.state?.pageTitle   ?? 'Summary';
 
   const [summary,  setSummary]  = useState(null);
   const [loading,  setLoading]  = useState(true);
@@ -103,7 +104,7 @@ export default function NFAWarehouseReceipt() {
 
   return (
     <>
-      <Header pageTitle="Summary" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header pageTitle={pageTitle} notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
 
       <div
         className="shadow-2xl border border-black/10 !min-h-[650px] mx-4 my-4 overflow-auto p-3 xl:p-5"
@@ -132,8 +133,8 @@ export default function NFAWarehouseReceipt() {
               <div>Accountable Officer<span className="ml-2">: </span><span className={metaClass}>{wsName}</span></div>
             </div>
             <div className="leading-[1.8] px-10 text-left">
-              <div>Warehouse Name<span className="ml-2">: </span><span className={metaClass}>—</span></div>
-              <div>Warehouse Address<span className="ml-2">: </span><span className={metaClass}>—</span></div>
+              <div>Warehouse Name<span className="ml-2">: </span><span className={metaClass}>San Juan GID 2A</span></div>
+              <div>Warehouse Address<span className="ml-2">: </span><span className={metaClass}>San Juan, La Union</span></div>
               <div>Warehouse Code<span className="ml-2">: </span><span className={metaClass}>{whCode}</span></div>
             </div>
           </div>
@@ -189,9 +190,9 @@ export default function NFAWarehouseReceipt() {
           </div>
 
           {/* Signatures */}
-          <div className="flex justify-between flex-wrap mt-15 text-[11px] text-black" style={{ gap: 16 }}>
+          <div className="flex justify-between flex-wrap mt-23 text-[11px] text-black" style={{ gap: 16 }}>
             {SIGNATURES.map((sig, i) => (
-              <div key={i} className="text-center w-[22%] min-w-25">
+              <div key={i} className="text-center w-[22%] mb-7 min-w-25">
                 <div className="text-[#555] mb-1">{sig.label}</div>
                 <div className="font-bold underline mb-0.5 uppercase">{sig.name}</div>
                 <div className="text-[11px] text-[#444]">{sig.title}</div>

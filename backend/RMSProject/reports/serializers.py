@@ -69,10 +69,12 @@ class WSIReportSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class StockBookListSerializer(serializers.ModelSerializer):
-    """For listing — no nested data"""
+    user_WHCode    = serializers.ReadOnlyField()
+    user_full_name = serializers.ReadOnlyField()
+
     class Meta:
         model  = StockBook
-        fields = ['report_id', 'CerealType', 'Status', 'Date', 'B_Bags', 'B_GKG', 'B_NKG']
+        fields = ['report_id', 'CerealType', 'Status', 'Date', 'B_Bags', 'B_GKG', 'B_NKG', 'user_WHCode', 'user_full_name']
 
 class StockBookSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(many=True, read_only=True)

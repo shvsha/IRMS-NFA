@@ -29,8 +29,8 @@ export default function WarehouseReceiptsForm() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  // passed from ReportEvaluation via navigate(..., { state })
-  const { reportId, stockbookId } = location.state ?? {};
+  // passed from ReportEvaluation via navigate
+  const { reportId, stockbookId, pageTitle } = location.state ?? {};
 
   const [report,  setReport]  = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,11 +52,9 @@ export default function WarehouseReceiptsForm() {
   }, [reportId]);
 
   // derived data
-  const stockbook    = report?.stockbook_data ?? null; // if serializer nests it
+  const stockbook    = report?.stockbook_data ?? null; 
   const transactions = report?.transactions   ?? [];
 
-  // Accountable officer = the WS user who owns the stockbook
-  // The TransactionSerializer exposes user_full_name & user_WHCode on each txn
   const firstTxn       = transactions[0] ?? {};
   const accountOfficer = firstTxn.user_full_name ?? "—";
   const whseCode       = firstTxn.user_WHCode    ?? "—";
@@ -70,9 +68,6 @@ export default function WarehouseReceiptsForm() {
 
   const cerealVariety = getVarietyCode(report?.stockbook_cereal);
 
-  // Signatories — fetched ids are on firstTxn (Assist_BM, Account_II, Branch_M)
-  // The backend returns PKs; we surface names from the stockbook nested users if available.
-  // For now we surface what the serializer returns; you can extend if you add name fields.
   const signatories = [
     { label: "Certified Correct:", name: accountOfficer,                     role: "Warehouse Supervisor"  },
     { label: "Verified Correct:",  name: report?.asst_bm_name  ?? "—",       role: "Asst. Branch Manager"  },
@@ -100,7 +95,7 @@ export default function WarehouseReceiptsForm() {
   return (
     <>
       <Header
-        pageTitle="Evaluation"
+        pageTitle={pageTitle ?? 'Evaluation'} 
         notifTo="/admin/notif"
         unreadCount={5}
         userName="Raph Nigos"
@@ -302,7 +297,7 @@ export default function WarehouseReceiptsForm() {
 
           {/* Signature Block */}
           <div
-            className="flex justify-between flex-wrap mt-[clamp(12px,2vw,24px)]"
+            className="flex justify-between flex-wrap mt-8 mb-4"
             style={{ gap: "clamp(8px,2vw,16px)" }}
           >
             {signatories.map((sig, i) => (

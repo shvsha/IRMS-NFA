@@ -9,6 +9,7 @@ class StockBook(models.Model):
         ('In Progress', 'In Progress'),
         ('Under Review', 'Under Review'),
         ('Completed', 'Completed'),
+        ('Archived', 'Archived'),
     ]
 
     report_id = models.AutoField(primary_key=True)
@@ -31,6 +32,8 @@ class StockBook(models.Model):
     Assist_BM = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assist_bm_stockbooks')
     Account_II = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='account_ii_stockbooks')
     Branch_M = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='branch_m_stockbooks')
+
+    completed_at = models.DateTimeField(blank=True, null=True) 
 
     @property
     def user_full_name(self):

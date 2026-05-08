@@ -13,6 +13,8 @@ import Notifications from "@/components/Notifications"
 import PileLayout from "@/components/PileLayout"
 
 // reports
+import ReceiptReport from '@/components/Reports/ReceiptReport'
+import IssueReport from '@/components/Reports/IssuesReport'
 import SummaryReport from '@/components/Reports/SummaryReport'
 
 import React from 'react'
@@ -25,7 +27,11 @@ const WhseRoute = (
     <Route path="pile" element={<PileLayout />} />
 
     {/* report */}
-    <Route path = "summarization/summary" element={<SummaryReport/>}/>
+    <Route path="status/receipt" element={<ReceiptReport />} />    {/* ← own routes */}
+    <Route path="status/issue" element={<IssueReport />} />
+
+    <Route path="summarization" element={<ReportSummarization />} />
+    <Route path="summarization/summary" element={<SummaryReport />} />
 
     <Route path="notif" element={<Notifications role="supervisor" />} />
   </>

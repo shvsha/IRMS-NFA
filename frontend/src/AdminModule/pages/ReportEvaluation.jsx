@@ -104,7 +104,7 @@ export default function ReportEvaluation() {
   const [rejectReason,        setRejectReason]        = useState('');
   const [rejecting,           setRejecting]           = useState(false);
 
-  // ── fetch both report lists on mount ──────────────────────────────────────
+  // fetch both report lists on mount 
   useEffect(() => {
     fetchReports();
   }, []);
@@ -128,8 +128,8 @@ export default function ReportEvaluation() {
         combined = combined.filter((report) => report.currentStage === userStage);
       }
 
-      // Sort newest date first
-      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+      // Sort newest id first
+      combined.sort((a, b) => b._id - a._id);
       setReports(combined);
     } catch (err) {
       console.error('Failed to fetch reports:', err);
@@ -162,7 +162,7 @@ export default function ReportEvaluation() {
     ));
   };
 
-  // ── approve ───────────────────────────────────────────────────────────────
+  // approve
   const handleApprove = (report) => {
     setSelectedReport(report);
     setApproveOpen(true);
@@ -234,11 +234,10 @@ export default function ReportEvaluation() {
     return matchSearch && matchStatus && matchCerealType && matchWarehouse;
   });
 
-  // ── derive unique filter options from live data ───────────────────────────
+  // derive unique filter options from live data
   const uniqueCerealTypes = [...new Set(reports.map(r => r.cerealType).filter(v => v && v !== '—'))];
   const uniqueWarehouses  = [...new Set(reports.map(r => r.whse).filter(v => v && v !== '—'))];
 
-  // ── status badge ──────────────────────────────────────────────────────────
   const getStatusBadge = (status) => {
     if (status === 'Pending') return (
       <span className="inline-flex items-center justify-center gap-3.5 px-4.5 py-1.5 rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#F0E48B', color: '#856404', border: '1px solid #FFE08A' }}>
@@ -261,10 +260,9 @@ export default function ReportEvaluation() {
     return null;
   };
 
-  // ── unique key per row ────────────────────────────────────────────────────
+  // unique key per row
   const rowKey = (r) => `${r._type}-${r._id}`;
 
-  // ─── UI ──────────────────────────────────────────────────────────────────
   return (
     <>
       <Header
@@ -347,7 +345,14 @@ export default function ReportEvaluation() {
         {/* table */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-48 text-[#2D317F]">Loading reports…</div>
+            <TableRow className='flex justify-center items-center h-full border-0'>
+              <TableCell colSpan={6} className="text-center py-16">
+                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Loading reports...</span>
+                </div>
+              </TableCell>
+            </TableRow>
           ) : (
             <Table>
               <TableHeader className='text-center'>
@@ -383,7 +388,7 @@ export default function ReportEvaluation() {
                             className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
                             onClick={() => navigate(
                               (reportRoutes[report.reportType] ?? '/admin/evaluation'),
-                              { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId } }
+                              { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId, pageTitle:   'Evaluation', } }
                             )}
                           >
                             <GoLinkExternal size={15} /> View
