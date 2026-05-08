@@ -1,6 +1,6 @@
 // react
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from '../../components/Header';
 
 // shadcn
@@ -167,7 +167,7 @@ export default function CreateReport() {
   const location = useLocation();
 
   const mode         = location.state?.mode         ?? 'edit';
-  const rejectedType = location.state?.rejectedType ?? null; // 'WSR' | 'WSI' | null
+  const initialRejectedType = location.state?.rejectedType ?? null; // 'WSR' | 'WSI' | null
   const isEditMode   = mode === 'edit';
 
   // US
@@ -177,6 +177,17 @@ export default function CreateReport() {
   const [transactions, setTransactions] = useState([{ ...emptyTransaction }]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving,       setSaving]       = useState(false);
+
+  const currentRejectedType = useMemo(() => {
+    if (initialRejectedType) return initialRejectedType;
+    if (!stockBook) return null;
+
+    const wsrRejected = stockBook.wsr_report?.Evaluation === 'Rejected';
+    const wsiRejected = stockBook.wsi_report?.Evaluation === 'Rejected';
+    if (wsrRejected && !wsiRejected) return 'WSR';
+    if (wsiRejected && !wsrRejected) return 'WSI';
+    return null;
+  }, [initialRejectedType, stockBook]);
 
   // Refs (never stale inside timeouts / unmount)
   const transactionsSeeded = useRef(false);
@@ -227,7 +238,7 @@ export default function CreateReport() {
   const isLastTransaction  = currentIndex === transactions.length - 1;
 
   // Is the ENTIRE current transaction read-only due to rejection guard?
-  const txnLocked = isTransactionLocked(currentTransaction, rejectedType);
+  const txnLocked = isTransactionLocked(currentTransaction, currentRejectedType);
 
   const saveTransaction = useCallback(async (snapshot, idxToSave) => {
     const stockbookId = stockBookRef.current?.report_id;
@@ -237,7 +248,7 @@ export default function CreateReport() {
     if (!txnHasData(current)) return snapshot;
 
     // Don't save locked (non-rejected) transactions
-    if (isTransactionLocked(current, rejectedType)) return snapshot;
+    if (isTransactionLocked(current, currentRejectedType)) return snapshot;
 
     try {
       setSaving(true);
@@ -263,7 +274,7 @@ export default function CreateReport() {
     } finally {
       setSaving(false);
     }
-  }, [rejectedType]);
+  }, [currentRejectedType]);
 
   // Auto-save debounce
   useEffect(() => {

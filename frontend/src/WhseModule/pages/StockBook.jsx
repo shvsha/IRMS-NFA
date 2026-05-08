@@ -1,8 +1,8 @@
 // icons
 import { GoLinkExternal } from "react-icons/go";
-import { FiEdit } from "react-icons/fi";
+import { FiEdit, FiRotateCcw } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
-import { TbProgress, TbFileSearch } from "react-icons/tb";
+import { TbFileSearch } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { CiImport } from "react-icons/ci";
 import { FaSearch, FaBars } from "react-icons/fa";
@@ -11,6 +11,7 @@ import { FaSearch, FaBars } from "react-icons/fa";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 
 // react
@@ -165,7 +166,6 @@ export default function StockBook() {
 
   // unsubmit button
   const handleUnsubmit = async (stock) => {
-    if (!window.confirm(`Unsubmit Report #${stock.report_id}? It will go back to In Progress.`)) return;
     try {
       setUnsubmitting(stock.report_id);
       await api.post(`/reports/stocks/unsubmit/${stock.report_id}/`);
@@ -309,14 +309,40 @@ export default function StockBook() {
                                 <FiEdit size={14} /> Edit
                               </button>
                               {r.Status === "Under Review" && (
-                                <button
-                                  onClick={() => handleUnsubmit(r)}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                 <button
                                   disabled={unsubmitting === r.report_id}
-                                  className="flex items-center border border-red-500 text-red-500 text-sm rounded-full px-2 py-1.5 bg-white hover:bg-red-500 hover:text-white transition-colors duration-500 disabled:opacity-50"
+                                  className="flex items-center border border-[#BB2325] text-[#BB2325] text-sm rounded-full px-2 py-1.5 bg-white hover:bg-[#BB2325] hover:text-white transition-colors duration-500 disabled:opacity-50"
                                 >
                                   <IoClose size={18} />
                                   Unsubmit
                                 </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                                  <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                                  <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                                    <div className="rounded-full px-5 py-5 bg-[#BB2325]">
+                                      <FiRotateCcw color="white" size={55} />
+                                    </div>
+                                    <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                      Unsubmit Stockbook?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-sm px-2">
+                                      Are you sure you want to unsubmit your stock book?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                                    <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="w-23 !bg-[#BB2325] text-white hover:bg-[#981416] px-10 py-4.5"
+                                      onClick={() => handleUnsubmit(r)}
+                                    >
+                                      Yes
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                               )}
                             </div>
                           </td>

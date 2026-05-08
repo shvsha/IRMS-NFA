@@ -2,11 +2,9 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 // icons
-import { MdOutlineMenuBook } from 'react-icons/md'
-import { TbReportSearch } from 'react-icons/tb'
-import { MdAssessment } from 'react-icons/md'
-import { LuLogOut } from 'react-icons/lu'
+import { TbReportAnalytics, TbReportSearch } from 'react-icons/tb'
 import { FiLayers } from "react-icons/fi";
+import { LuLogOut } from 'react-icons/lu'
 
 // logo
 import NFALogo from '../../assets/NFA-logo.png'
@@ -21,10 +19,10 @@ import { cn } from "@/lib/utils"
 import api from '../../api/axios'
 
 const navItems = [
-  { to: '/whse/management', label: 'Stock Book', icon: <MdOutlineMenuBook size={18} /> },
-  { to: '/whse/status', label: 'Report Status', icon: <MdAssessment size={18} /> },
-  { to: '/whse/summarization', label: 'Report Summarization', icon: <TbReportSearch size={18} /> },
-  { to: '/whse/pile', label: 'Pile Layout', icon: <FiLayers size={18} /> },
+  { to: '/signa/evaluation', label: 'Report Evaluation', icon: <TbReportAnalytics size={18} /> },
+  { to: '/signa/summarization', label: 'Summarization', icon: <TbReportSearch size={18} /> },
+  { to: '/signa/pile', label: 'Pile Layout', icon: <FiLayers size={18} /> },
+
 ]
 
 export default function NavBarWhse() {

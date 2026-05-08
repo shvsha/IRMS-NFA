@@ -8,11 +8,12 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 
 // react icons
 import { FaExclamation } from "react-icons/fa"
+import { IoSend } from "react-icons/io5";
 
 // api
 import api from "@/api/axios";
 
-// ─── same mapFromBackend helper as CreateReport ──────────────────────────────
+// same mapFromBackend helper as CreateReport 
 const mapFromBackend = (txn) => ({
   id:              txn.transaction_id,
   particulars:     txn.Particulars      || '',
@@ -335,7 +336,7 @@ export default function ReviewTransaction() {
           {/* bottom buttons */}
           <div className="flex justify-end gap-3 px-5 pb-5 flex-shrink-0 border-t border-[#cfd6e0] pt-4">
 
-            {/* Cancel → go back to form */}
+            {/* Cancel */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button className="px-[18px] py-2 border-none bg-[#d9d9d9] rounded-md cursor-pointer">
@@ -368,13 +369,39 @@ export default function ReviewTransaction() {
             </AlertDialog>
 
             {/* Submit All */}
-            <button
-              className="px-[18px] py-2 bg-[#3E7A43] text-white rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={handleSubmitAll}
-              disabled={submitting || localTransactions.length === 0}
-            >
-              {submitting ? "Submitting…" : `Submit All (${localTransactions.length})`}
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  className="px-[18px] py-2 bg-[#3E7A43] text-white rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={submitting || localTransactions.length === 0}
+                >
+                Submit All ({localTransactions.length})
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                <div className="h-7 bg-[#3E7A43] rounded-t-lg" />
+                <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                  <div className="rounded-full px-5 py-5 bg-[#3E7A43]">
+                    <IoSend color="white" size={55} />
+                  </div>
+                  <AlertDialogTitle className="!font-bold text-[#3E7A43] text-2xl mx-2">
+                    Submit Stockbook?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm px-2">
+                    Are you sure you want to submit your stock book?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                  <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="w-23 !bg-[#3E7A43] text-white hover:bg-[#28602c] px-10 py-4.5"
+                    onClick={handleSubmitAll}
+                  >
+                    Yes
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 

@@ -194,6 +194,26 @@ def upd_transaction(request, pk):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        if txn.type == 'WSR':
+            try:
+                if txn.stockbook.wsr_report.Evaluation == 'Approved':
+                    return Response(
+                        {'error': 'Cannot edit WSR transaction. Receipt is already approved.'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except WSRReport.DoesNotExist:
+                pass
+
+        if txn.type == 'WSI':
+            try:
+                if txn.stockbook.wsi_report.Evaluation == 'Approved':
+                    return Response(
+                        {'error': 'Cannot edit WSI transaction. Issue is already approved.'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except WSIReport.DoesNotExist:
+                pass 
+
         try:
             safe_data = {k: v for k, v in request.data.items() 
                         if k not in ['Assist_BM', 'Account_II', 'Branch_M', 
@@ -235,6 +255,13 @@ def get_wsr_reports(request):
     return Response(WSRReportSerializer(reports, many=True).data)
 
 
+STAGE_MAP = {
+    'admin':      ('Admin',      'admin_approval',       'asst_bm'),
+    'asst_bm':    ('Signatory',  'asst_bm_approval',     'accountant'),
+    'accountant': ('Signatory',  'accountant_approval',  'branch_m'),
+    'branch_m':   ('Signatory',  'branch_m_approval',    'done'),
+}
+
 @api_view(['GET', 'PUT'])
 @permission_classes([AllowAny])
 def upd_wsr_report(request, pk):
@@ -251,19 +278,58 @@ def upd_wsr_report(request, pk):
         if not user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if user.user_level != 'Admin':
-            return Response(
-                {'error': 'Only Admin can evaluate reports'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        evaluation = request.data.get('Evaluation')
+        reason     = request.data.get('Reason', '')
+        stage      = report.current_stage
 
-        serializer = WSRReportSerializer(report, data=request.data, partial=True)
-        if serializer.is_valid():
-            instance = serializer.save()
-            instance.reviewed_by = user
-            instance.save()
-            return Response(WSRReportSerializer(instance).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if stage not in STAGE_MAP:
+            return Response({'error': 'Report is already fully processed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        expected_level, approval_field, next_stage = STAGE_MAP[stage]
+
+        # Validate correct user is acting
+        if stage == 'admin' and user.user_level != 'Admin':
+            return Response({'error': 'Only Admin can act at this stage.'}, status=status.HTTP_403_FORBIDDEN)
+        if stage != 'admin' and user.user_level != 'Signatory':
+            return Response({'error': 'Only a Signatory can act at this stage.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate correct signatory role is acting
+        signatory_role_map = {
+            'asst_bm':    'Asst. Branch Manager',
+            'accountant': 'Accountant 3',
+            'branch_m':   'Branch Manager',
+        }
+        if stage in signatory_role_map:
+            required_role = signatory_role_map[stage]
+            if user.signatory_role != required_role:
+                return Response(
+                    {'error': f'Only {required_role} can act at this stage.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        if evaluation == 'Approved':
+            setattr(report, approval_field, 'Approved')
+            report.reviewed_by = user
+
+            if next_stage == 'done':
+                report.Evaluation     = 'Approved'
+                report.current_stage  = 'done'
+            else:
+                report.current_stage  = next_stage
+
+            report.save()
+            return Response(WSRReportSerializer(report).data)
+
+        elif evaluation == 'Rejected':
+            setattr(report, approval_field, 'Rejected')
+            report.Evaluation    = 'Rejected'
+            report.Reason        = reason
+            report.reviewed_by   = user
+            report.current_stage = stage
+            report.save()
+            return Response(WSRReportSerializer(report).data)
+
+        return Response({'error': 'Evaluation must be Approved or Rejected.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # WSIReport
@@ -289,19 +355,58 @@ def upd_wsi_report(request, pk):
         if not user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if user.user_level != 'Admin':
-            return Response(
-                {'error': 'Only Admin can evaluate reports'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        evaluation = request.data.get('Evaluation')
+        reason     = request.data.get('Reason', '')
+        stage      = report.current_stage
 
-        serializer = WSIReportSerializer(report, data=request.data, partial=True)
-        if serializer.is_valid():
-            instance = serializer.save()
-            instance.reviewed_by = user
-            instance.save()
-            return Response(WSIReportSerializer(instance).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if stage not in STAGE_MAP:
+            return Response({'error': 'Report is already fully processed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        expected_level, approval_field, next_stage = STAGE_MAP[stage]
+
+        # Validate correct user is acting
+        if stage == 'admin' and user.user_level != 'Admin':
+            return Response({'error': 'Only Admin can act at this stage.'}, status=status.HTTP_403_FORBIDDEN)
+        if stage != 'admin' and user.user_level != 'Signatory':
+            return Response({'error': 'Only a Signatory can act at this stage.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate correct signatory role is acting
+        signatory_role_map = {
+            'asst_bm':    'Asst. Branch Manager',
+            'accountant': 'Accountant 3',
+            'branch_m':   'Branch Manager',
+        }
+        if stage in signatory_role_map:
+            required_role = signatory_role_map[stage]
+            if user.signatory_role != required_role:
+                return Response(
+                    {'error': f'Only {required_role} can act at this stage.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        if evaluation == 'Approved':
+            setattr(report, approval_field, 'Approved')
+            report.reviewed_by = user
+
+            if next_stage == 'done':
+                report.Evaluation     = 'Approved'
+                report.current_stage  = 'done'
+            else:
+                report.current_stage  = next_stage
+
+            report.save()
+            return Response(WSIReportSerializer(report).data)
+
+        elif evaluation == 'Rejected':
+            setattr(report, approval_field, 'Rejected')
+            report.Evaluation    = 'Rejected'
+            report.Reason        = reason
+            report.reviewed_by   = user
+            report.current_stage = stage
+            report.save()
+            return Response(WSIReportSerializer(report).data)
+
+        return Response({'error': 'Evaluation must be Approved or Rejected.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Summary

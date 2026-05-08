@@ -36,6 +36,7 @@ const mapWSR = (r) => ({
   status:     r.Evaluation       ?? 'Pending',
   reason:     r.Reason           ?? '',
   stockbookId: r.stockbook,
+  currentStage: r.current_stage,
 });
 
 // Normalize WSIReport → display row
@@ -49,20 +50,44 @@ const mapWSI = (r) => ({
   status:     r.Evaluation       ?? 'Pending',
   reason:     r.Reason           ?? '',
   stockbookId: r.stockbook,
+  currentStage: r.current_stage,
 });
 
 // Route to view detail page
-const reportRoutes = {
-  'Statement of Receipt': '/admin/evaluation/receipt',
-  'Statement of Issue':   '/admin/evaluation/issue',
+const getBasePath = () => {
+  if (window.location.pathname.startsWith('/signa')) return '/signa';
+  if (window.location.pathname.startsWith('/whse')) return '/whse';
+  return '/admin';
+};
+
+const getReportRoutes = (basePath) => ({
+  'Statement of Receipt': `${basePath}/evaluation/receipt`,
+  'Statement of Issue':   `${basePath}/evaluation/issue`,
+});
+
+const getSignatoryStage = (user) => {
+  if (user?.user_level !== 'Signatory') return null;
+  if (user.signatory_role === 'Asst. Branch Manager') return 'asst_bm';
+  if (user.signatory_role === 'Accountant 3') return 'accountant';
+  if (user.signatory_role === 'Branch Manager') return 'branch_m';
+  return null;
 };
 
 // component
 
 export default function ReportEvaluation() {
   const navigate = useNavigate();
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || null;
+    } catch {
+      return null;
+    }
+  })();
+  const basePath = getBasePath();
+  const reportRoutes = getReportRoutes(basePath);
 
-  // US
+  // state
   const [reports,             setReports]             = useState([]);
   const [loading,             setLoading]             = useState(true);
   const [selectedStatus,      setSelectedStatus]      = useState('All Status');
@@ -79,7 +104,7 @@ export default function ReportEvaluation() {
   const [rejectReason,        setRejectReason]        = useState('');
   const [rejecting,           setRejecting]           = useState(false);
 
-  // fetch both report lists on mount
+  // ── fetch both report lists on mount ──────────────────────────────────────
   useEffect(() => {
     fetchReports();
   }, []);
@@ -91,10 +116,18 @@ export default function ReportEvaluation() {
         api.get('/reports/wsr-reports/'),
         api.get('/reports/wsi-reports/'),
       ]);
-      const combined = [
+      let combined = [
         ...wsrRes.data.map(mapWSR),
         ...wsiRes.data.map(mapWSI),
       ];
+
+      const userStage = getSignatoryStage(currentUser);
+      if (currentUser?.user_level === 'Admin') {
+        combined = combined.filter((report) => report.currentStage === 'admin');
+      } else if (userStage) {
+        combined = combined.filter((report) => report.currentStage === userStage);
+      }
+
       // Sort newest date first
       combined.sort((a, b) => new Date(b.date) - new Date(a.date));
       setReports(combined);
@@ -106,21 +139,21 @@ export default function ReportEvaluation() {
     }
   };
 
-  // ── close dropdown on outside click ──────────────────────────────────────
+  // close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = () => setOpenDropdown(null);
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // ── toast ─────────────────────────────────────────────────────────────────
+  // toast
   const addToast = (message, color) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, color }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   };
 
-  // ── optimistically update a single row's status in state ──────────────────
+  // optimistically update a single row's status in state
   const updateReportStatus = (type, id, newStatus, newReason = '') => {
     setReports(prev => prev.map(r =>
       r._type === type && r._id === id
@@ -129,7 +162,7 @@ export default function ReportEvaluation() {
     ));
   };
 
-  // approve
+  // ── approve ───────────────────────────────────────────────────────────────
   const handleApprove = (report) => {
     setSelectedReport(report);
     setApproveOpen(true);
@@ -146,10 +179,9 @@ export default function ReportEvaluation() {
       await api.put(endpoint, { Evaluation: 'Approved', Reason: null });
 
       updateReportStatus(selectedReport._type, selectedReport._id, 'Approved', '');
+      await fetchReports();
       setApproveOpen(false);
       addToast('Report has been approved!', '#3E7A43');
-
-      console.log(`Successful approve of ${selectedReport._id}`)
     } catch (err) {
       console.error('Approve failed:', err.response?.data || err);
       const msg = err.response?.data?.error ?? 'Failed to approve report.';
@@ -177,6 +209,7 @@ export default function ReportEvaluation() {
       await api.put(endpoint, { Evaluation: 'Rejected', Reason: rejectReason.trim() });
 
       updateReportStatus(selectedReport._type, selectedReport._id, 'Rejected', rejectReason.trim());
+      await fetchReports();
       setRejectDialogOpen(false);
       setRejectReason('');
       addToast('Report has been rejected.', '#BB2325');
@@ -201,11 +234,11 @@ export default function ReportEvaluation() {
     return matchSearch && matchStatus && matchCerealType && matchWarehouse;
   });
 
-  // derive unique filter options from live data
+  // ── derive unique filter options from live data ───────────────────────────
   const uniqueCerealTypes = [...new Set(reports.map(r => r.cerealType).filter(v => v && v !== '—'))];
   const uniqueWarehouses  = [...new Set(reports.map(r => r.whse).filter(v => v && v !== '—'))];
 
-  // status badge
+  // ── status badge ──────────────────────────────────────────────────────────
   const getStatusBadge = (status) => {
     if (status === 'Pending') return (
       <span className="inline-flex items-center justify-center gap-3.5 px-4.5 py-1.5 rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#F0E48B', color: '#856404', border: '1px solid #FFE08A' }}>
@@ -236,9 +269,9 @@ export default function ReportEvaluation() {
     <>
       <Header
         pageTitle="Evaluation"
-        notifTo="/admin/notif"
+        notifTo={`${basePath}/notif`}
         unreadCount={5}
-        userName="Raph Nigos"
+        userName={currentUser?.full_name || currentUser?.username || 'User'}
       />
 
       <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
@@ -359,7 +392,7 @@ export default function ReportEvaluation() {
                           {/* actions dropdown */}
                           <div className="relative">
                             <button
-                              className="font-medium rounded-full bg-transparent py-[2px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
                               disabled={report.status === 'Approved' || report.status === 'Rejected'}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -390,7 +423,7 @@ export default function ReportEvaluation() {
         </div>
       </div>
 
-      {/* approve modal */}
+      {/* ── approve modal ── */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[400px] shadow-2xl'>
           <div className='bg-[#3E7A43] py-3 rounded-t-lg' />
@@ -425,7 +458,7 @@ export default function ReportEvaluation() {
         </DialogContent>
       </Dialog>
 
-      {/* reject modal */}
+      {/* ── reject modal ── */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className='pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[540px] bg-[#E6EEF6] [&>button]:hidden'>
           <div className='h-7 bg-[#BB2325]' />
@@ -478,7 +511,7 @@ export default function ReportEvaluation() {
             </div>
             <div>
               <p className="font-bold text-sm" style={{ color: toast.color }}>
-                {toast.color === '#BB2325' ? 'Error' : 'Success!'}
+                {toast.color === '#BB2325' ? 'Rejected!' : 'Success!'}
               </p>
               <p className="text-gray-500 text-xs">{toast.message}</p>
             </div>
@@ -486,7 +519,7 @@ export default function ReportEvaluation() {
         ))}
       </div>
 
-      {/* dropdown portal */}
+      {/* dropdown */}
       {openDropdown && createPortal(
         <div
           className="fixed bg-white border border-gray-200 rounded-xl shadow-xl z-[9999] w-36 overflow-hidden"

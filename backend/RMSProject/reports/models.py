@@ -221,7 +221,7 @@ class Summary(models.Model):
     date_covered = models.DateField(blank=True, null=True)
     CerealType   = models.CharField(max_length=10, blank=True, null=True)
 
-    # Beginning balance (from previous summary)
+    # Beginning balance (from previous summary's ending balance)
     prev_B_Bags  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     prev_B_NKG   = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
@@ -236,6 +236,11 @@ class Summary(models.Model):
 
     @property
     def ending_B_Bags(self):
+        """
+        Ending balance = beginning + receipts - issues.
+        B_Bags on the stockbook already holds this computed value,
+        so we just return it directly.
+        """
         return self.stockbook.B_Bags
 
     @property
@@ -263,36 +268,38 @@ class Summary(models.Model):
         return self.stockbook.user_WHCode
 
     def compute_and_save(self):
-        self.CerealType  = self.stockbook.CerealType
+        from decimal import Decimal
+
+        self.CerealType   = self.stockbook.CerealType
         self.date_covered = self.stockbook.Date
 
         try:
             wsr_report = self.stockbook.wsr_report
             if wsr_report and wsr_report.Evaluation == 'Approved':
-                receipt_txns = wsr_report.transactions.filter(type__in=['WSR', 'WTS'])
-                self.total_R_Bags = sum(t.R_Bags or 0 for t in receipt_txns)
-                self.total_R_NKG  = sum(t.R_NKG  or 0 for t in receipt_txns)
+                receipt_txns      = wsr_report.transactions.filter(type__in=['WSR', 'WTS'])
+                self.total_R_Bags = sum(t.R_Bags or Decimal('0') for t in receipt_txns)
+                self.total_R_NKG  = sum(t.R_NKG  or Decimal('0') for t in receipt_txns)
             else:
-                self.total_R_Bags = 0
-                self.total_R_NKG  = 0
+                self.total_R_Bags = Decimal('0')
+                self.total_R_NKG  = Decimal('0')
         except Exception as e:
             logger.warning(f"Summary #{self.summary_id} - WSR fetch failed: {e}")
-            self.total_R_Bags = 0
-            self.total_R_NKG  = 0
+            self.total_R_Bags = Decimal('0')
+            self.total_R_NKG  = Decimal('0')
 
         try:
             wsi_report = self.stockbook.wsi_report
             if wsi_report and wsi_report.Evaluation == 'Approved':
-                issue_txns = wsi_report.transactions.filter(type__in=['WSI', 'WTS'])
-                self.total_I_Bags = sum(t.I_Bags or 0 for t in issue_txns)
-                self.total_I_NKG  = sum(t.I_NKG  or 0 for t in issue_txns)
+                issue_txns        = wsi_report.transactions.filter(type__in=['WSI', 'WTS'])
+                self.total_I_Bags = sum(t.I_Bags or Decimal('0') for t in issue_txns)
+                self.total_I_NKG  = sum(t.I_NKG  or Decimal('0') for t in issue_txns)
             else:
-                self.total_I_Bags = 0
-                self.total_I_NKG  = 0
+                self.total_I_Bags = Decimal('0')
+                self.total_I_NKG  = Decimal('0')
         except Exception as e:
             logger.warning(f"Summary #{self.summary_id} - WSI fetch failed: {e}")
-            self.total_I_Bags = 0
-            self.total_I_NKG  = 0
+            self.total_I_Bags = Decimal('0')
+            self.total_I_NKG  = Decimal('0')
 
         all_conditions = []
         try:
@@ -315,15 +322,25 @@ class Summary(models.Model):
         if all_conditions:
             self.Condition = Counter(all_conditions).most_common(1)[0][0]
 
-        if self.date_covered:
-            prev = Summary.objects.filter(
-                CerealType=self.stockbook.CerealType,
-                date_covered__lt=self.date_covered
-            ).order_by('-date_covered').first()
+        prev_summary = Summary.objects.filter(
+            CerealType=self.stockbook.CerealType,
+            date_covered__lt=self.stockbook.Date
+        ).order_by('-date_covered').first()
 
-            if prev:
-                self.prev_B_Bags = prev.ending_B_Bags
-                self.prev_B_NKG  = prev.ending_B_NKG
+        if prev_summary:
+            self.prev_B_Bags = prev_summary.ending_B_Bags
+            self.prev_B_NKG  = prev_summary.ending_B_NKG
+        else:
+            self.prev_B_Bags = (
+                self.stockbook.B_Bags
+                - (self.total_R_Bags or Decimal('0'))
+                + (self.total_I_Bags or Decimal('0'))
+            )
+            self.prev_B_NKG = (
+                self.stockbook.B_NKG
+                - (self.total_R_NKG or Decimal('0'))
+                + (self.total_I_NKG or Decimal('0'))
+            )
 
         self.save()
 

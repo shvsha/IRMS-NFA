@@ -12,6 +12,7 @@ import ReportHistory from "./pages/ReportHistory"
 import ReportSummarization from "@/components/ReportSummarization"
 import Notifications from "@/components/Notifications"
 import AuditLogs from "@/components/AuditLogs"
+import PileLayout from "@/components/PileLayout"
 
 // Reports
 import ReceiptReport from '@/components/Reports/ReceiptReport'
@@ -26,6 +27,7 @@ const AdminRoute = (
     <Route path="evaluation" element={<ReportEvaluation />} />
     <Route path="summarization" element={<ReportSummarization />} />
     <Route path="history" element={<ReportHistory />} />
+    <Route path="pile" element={<PileLayout />} />
     <Route path="audit" element={<AuditLogs />} />
     <Route path="notif" element={<Notifications role="admin" />} />
 

@@ -10,6 +10,7 @@ import StockBook from "./pages/StockBook"
 // general pages
 import ReportSummarization from "@/components/ReportSummarization"
 import Notifications from "@/components/Notifications"
+import PileLayout from "@/components/PileLayout"
 
 // reports
 import SummaryReport from '@/components/Reports/SummaryReport'
@@ -21,6 +22,7 @@ const WhseRoute = (
     <Route path="management" element={<StockBook />} />
     <Route path="status" element={<ReportStatus />} />
     <Route path="summarization" element={<ReportSummarization />} />
+    <Route path="pile" element={<PileLayout />} />
 
     {/* report */}
     <Route path = "summarization/summary" element={<SummaryReport/>}/>

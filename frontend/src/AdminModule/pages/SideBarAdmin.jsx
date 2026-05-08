@@ -5,9 +5,9 @@ import { useState } from 'react'
 // icons
 import { MdDashboard, MdPeople, MdHistory } from 'react-icons/md'
 import { TbReportAnalytics, TbReportSearch } from 'react-icons/tb'
-import { FaClipboardList } from 'react-icons/fa'
+import { FaClipboardList, FaUserCheck } from 'react-icons/fa'
 import { LuLogOut } from 'react-icons/lu'
-import { FaUserCheck } from "react-icons/fa";
+import { FiLayers } from "react-icons/fi";
 
 // logo
 import NFALogo from '../../assets/NFA-logo.png'
@@ -28,6 +28,7 @@ const navItems = [
   { to: '/admin/evaluation', label: 'Evaluation', icon: <TbReportAnalytics size={18} /> },
   { to: '/admin/summarization', label: 'Summarization', icon: <TbReportSearch size={18} /> },
   { to: '/admin/history', label: 'History Records', icon: <MdHistory size={18} /> },
+  { to: '/admin/pile', label: 'Pile Layout', icon: <FiLayers size={18} /> },
   { to: '/admin/audit', label: 'Audit Logs', icon: <FaClipboardList size={18} /> },
 ]
 

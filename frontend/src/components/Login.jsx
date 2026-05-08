@@ -76,6 +76,8 @@ export default function Login() {
         navigate("/admin/dashboard")
       } else if (userLevel === "Warehouse Supervisor") {
         navigate("/whse/management")
+      } else if (userLevel === "Signatory") {
+        navigate("/signa/evaluation")
       } else {
         alert('Unknown user level.')
       }

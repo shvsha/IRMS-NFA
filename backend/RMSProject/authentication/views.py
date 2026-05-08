@@ -31,6 +31,7 @@ class LoginView(APIView):
                     "id": user.user_id,
                     "username": user.username,
                     "user_level": user.user_level,
+                    "signatory_role": user.signatory_role,
                     "fname": user.fname,
                     "lname": user.lname,
                     "WHCode":     user.WHCode,

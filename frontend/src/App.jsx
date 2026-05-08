@@ -5,11 +5,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // layouts
 import AdminLayout from "./AdminModule/AdminLayout";
 import WhseSpvsorLayout from "./WhseModule/WhseSpvsorLayout";
-import CreateReportLayout from "./layouts/CreateReportLayout";
+import SignaLayout from './SignatoryModule/SignatoryLayout'
 
 // Routes
 import AdminRoute from './AdminModule/Index'
 import WhseRoute, { WhseReportRoute } from './WhseModule/Index'
+import SignaRoute from './SignatoryModule/Index'
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
         }>
         {WhseRoute}
         {WhseReportRoute}
+      </Route>
+
+      <Route path="/signa" element={<ProtectedRoute allowedRoles={['Signatory']}><SignaLayout /></ProtectedRoute>}>
+        {SignaRoute}
       </Route>
 
     </Routes>

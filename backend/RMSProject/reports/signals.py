@@ -21,11 +21,11 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
             stockbook=instance
         )
         if not created:
-
-            wsr_report.Evaluation = 'Pending'
-            wsr_report.Reason = None
-            wsr_report.reviewed_by = None
-            wsr_report.save()
+            if wsr_report.Evaluation == 'Rejected':
+                wsr_report.Evaluation = 'Pending'
+                wsr_report.Reason = None
+                wsr_report.reviewed_by = None
+                wsr_report.save()
 
         instance.transactions.filter(
             type__in=['WSR', 'WTS']
@@ -36,10 +36,11 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
             stockbook=instance
         )
         if not created:
-            wsi_report.Evaluation = 'Pending'
-            wsi_report.Reason = None
-            wsi_report.reviewed_by = None
-            wsi_report.save()
+            if wsi_report.Evaluation == 'Rejected':
+                wsi_report.Evaluation = 'Pending'
+                wsi_report.Reason = None
+                wsi_report.reviewed_by = None
+                wsi_report.save()
 
         instance.transactions.filter(
             type__in=['WSI', 'WTS']
@@ -84,12 +85,29 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
     stockbook.save(update_fields=['Status'])
 
     summary = stockbook.summaries.first()
+    if not summary and stockbook.Status == 'Completed':
+        summary = Summary.objects.create(stockbook=stockbook)
+
     if summary:
         summary.compute_and_save()
 
 # inherit the balance of the previous stock book
 @receiver(post_save, sender=StockBook)
 def carry_previous_balance(sender, instance, created, **kwargs):
+    if instance.Status != 'Completed':
+        return
+
+    next_stock = StockBook.objects.filter(
+        CerealType=instance.CerealType,
+        Date__gt=instance.Date
+    ).exclude(pk=instance.pk).order_by('Date').first()
+
+    if next_stock:
+        next_stock.B_Bags = instance.B_Bags
+        next_stock.B_GKG  = instance.B_GKG
+        next_stock.B_NKG  = instance.B_NKG
+        next_stock.save(update_fields=['B_Bags', 'B_GKG', 'B_NKG'])
+
     if not created:
         return
 
@@ -117,9 +135,14 @@ def recompute_stockbook_balance(stockbook):
             Status='Completed'
         ).exclude(pk=stockbook.pk).order_by('-Date').first()
 
-        base_bags = prev.B_Bags if prev and prev.B_Bags else Decimal('0')
-        base_gkg  = prev.B_GKG  if prev and prev.B_GKG  else Decimal('0')
-        base_nkg  = prev.B_NKG  if prev and prev.B_NKG  else Decimal('0')
+        if prev:
+            base_bags = prev.B_Bags or Decimal('0')
+            base_gkg  = prev.B_GKG  or Decimal('0')
+            base_nkg  = prev.B_NKG  or Decimal('0')
+        else:
+            base_bags = Decimal('1000.000')
+            base_gkg  = Decimal('1500000.000')
+            base_nkg  = Decimal('2300000.000')
 
         txns = stockbook.transactions.all()
 

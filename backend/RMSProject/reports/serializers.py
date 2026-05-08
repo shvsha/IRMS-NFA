@@ -86,11 +86,29 @@ class StockBookSerializer(serializers.ModelSerializer):
 class SummarySerializer(serializers.ModelSerializer):
     ending_B_Bags = serializers.ReadOnlyField()
     ending_B_NKG  = serializers.ReadOnlyField()
-    Assist_BM     = serializers.ReadOnlyField()
-    Account_II    = serializers.ReadOnlyField()
-    Branch_M      = serializers.ReadOnlyField()
+    Assist_BM     = serializers.SerializerMethodField()
+    Account_II    = serializers.SerializerMethodField()
+    Branch_M      = serializers.SerializerMethodField()
     Name          = serializers.ReadOnlyField()
     WHCode        = serializers.ReadOnlyField()
+
+    def get_Assist_BM(self, obj):
+        try:
+            return obj.stockbook.Assist_BM.full_name if obj.stockbook.Assist_BM else '—'
+        except Exception:
+            return '—'
+
+    def get_Account_II(self, obj):
+        try:
+            return obj.stockbook.Account_II.full_name if obj.stockbook.Account_II else '—'
+        except Exception:
+            return '—'
+
+    def get_Branch_M(self, obj):
+        try:
+            return obj.stockbook.Branch_M.full_name if obj.stockbook.Branch_M else '—'
+        except Exception:
+            return '—'
 
     class Meta:
         model  = Summary

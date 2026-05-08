@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import Header from '../components/Header'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Field } from "@/components/ui/field"
+import api from '@/api/axios'
 import {
   Table,
   TableBody,
@@ -20,12 +21,7 @@ import { Input } from "@/components/ui/input"
 
 const ITEMS_PER_PAGE = 4
 
-const sampleSummaryReports = [
-  { date: '30-Jan-26', whse: 'Warehouse 1', cerealtype: 'WD1G50', cond: 'GQ', receipts: '5,000', issues: '2,200', beginbalance: '10,000', balance: '2,800' },
-  { date: '28-Jan-26', whse: 'Warehouse 2', cerealtype: 'WD1G50', cond: 'TD', receipts: '4,000', issues: '3,200', beginbalance: '8,000', balance: '1,800' },
-  { date: '28-Jan-26', whse: 'Warehouse 1', cerealtype: 'PD1350', cond: 'TD', receipts: '4,000', issues: '3,200', beginbalance: '8,000', balance: '1,800' },
-  { date: '28-Jan-26', whse: 'Warehouse 2', cerealtype: 'PD1350', cond: 'TD', receipts: '4,000', issues: '3,200', beginbalance: '8,000', balance: '1,800' },
-]
+const sampleSummaryReports = []
 
 const TABLE_HEADERS = [
   { label: "Date" },
@@ -41,20 +37,53 @@ const TABLE_HEADERS = [
 
 export default function ReportSummarization() {
   const navigate = useNavigate();
+  const basePath = window.location.pathname.startsWith('/signa')
+    ? '/signa'
+    : window.location.pathname.startsWith('/whse')
+      ? '/whse'
+      : '/admin';
 
+  const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [currentPage, setCurrentPage] = useState(1)
   const [search, setSearch] = useState('')
 
-  const filteredReports = sampleSummaryReports.filter((report) => {
+  useEffect(() => {
+    const fetchSummaries = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get('/reports/summary/')
+        const mapped = response.data.map((item) => ({
+          ...item,
+          date: item.date_covered || item.Date || '—',
+          cerealtype: item.CerealType || '—',
+          cond: item.Condition || '—',
+          whse: item.WHCode || '—',
+          beginbalance: item.prev_B_NKG != null ? Number(item.prev_B_NKG).toLocaleString() : '0',
+          receipts: item.total_R_NKG != null ? Number(item.total_R_NKG).toLocaleString() : '0',
+          issues: item.total_I_NKG != null ? Number(item.total_I_NKG).toLocaleString() : '0',
+          balance: item.ending_B_NKG != null ? Number(item.ending_B_NKG).toLocaleString() : '0',
+        }))
+        setReports(mapped)
+      } catch (err) {
+        console.error('Failed to load summarized reports:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSummaries()
+  }, [])
+
+  const filteredReports = reports.filter((report) => {
     const matchesCerealType = selectedCerealType === "All Cereal Type" || report.cerealtype === selectedCerealType
     const matchesWarehouse = selectedWarehouse === "All Warehouses" || report.whse === selectedWarehouse
     const matchesSearch = search === '' ||
-      report.date.toLowerCase().includes(search.toLowerCase()) ||
-      report.cerealtype.toLowerCase().includes(search.toLowerCase()) ||
-      report.whse.toLowerCase().includes(search.toLowerCase()) ||
-      report.cond.toLowerCase().includes(search.toLowerCase())
+      report.date?.toString().toLowerCase().includes(search.toLowerCase()) ||
+      report.cerealtype?.toString().toLowerCase().includes(search.toLowerCase()) ||
+      report.whse?.toString().toLowerCase().includes(search.toLowerCase()) ||
+      report.cond?.toString().toLowerCase().includes(search.toLowerCase())
     return matchesCerealType && matchesWarehouse && matchesSearch
   })
 
@@ -70,7 +99,7 @@ export default function ReportSummarization() {
     <div>
       <Header
         pageTitle="Summary"
-        notifTo="/admin/notif"
+        notifTo={`${basePath}/notif`}
         unreadCount={5}
         userName="Raph Nigos"
       />
@@ -174,7 +203,7 @@ export default function ReportSummarization() {
                       <TableCell className="text-center px-4 border-0">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => navigate("/admin/summarization/summary")}
+                            onClick={() => navigate(`${basePath}/summarization/summary`)}
                             className="inline-flex items-center gap-[5px] px-[14px] py-[6px] border-[1.5px] border-[#2d317f] rounded-full bg-white text-[#2d317f] text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2d317f] hover:text-white"
                           >
                             <GoLinkExternal size={14} /> View
