@@ -29,41 +29,32 @@ export default function WarehouseIssuesForm() {
   const [error,   setError]   = useState(null);
 
   useEffect(() => {
-    if (!reportId) {
-      setError("No report ID provided.");
-      setLoading(false);
-      return;
+    if (!stockbookId) {
+      setError("No stockbook ID provided.")
+      setLoading(false)
+      return
     }
-    api.get(`/reports/wsi-reports/upd/${reportId}/`)
+    api.get(`/reports/stocks/wsi-grouped/${stockbookId}/`)
       .then(res => setReport(res.data))
-      .catch(err => {
-        console.error(err);
-        setError("Failed to load report.");
-      })
-      .finally(() => setLoading(false));
-  }, [reportId]);
+      .catch(err => { console.error(err); setError("Failed to load report.") })
+      .finally(() => setLoading(false))
+  }, [stockbookId])
 
-  // derived data
-  const transactions = report?.transactions ?? [];
-  const firstTxn     = transactions[0] ?? {};
-
-  const accountOfficer = firstTxn.user_full_name ?? "—";
-  const whseCode       = firstTxn.user_WHCode    ?? "—";
-
-  const reportDate = report?.stockbook_date
-    ? new Date(report.stockbook_date).toLocaleDateString("en-US", {
-        month: "long", day: "2-digit", year: "numeric",
+  const transactions   = report?.transactions   ?? []
+  const accountOfficer = report?.user_full_name ?? '—'
+  const whseCode       = report?.user_WHCode    ?? '—'
+  const reportDate     = report?.date
+    ? new Date(report.date + 'T00:00:00').toLocaleDateString('en-US', {
+        month: 'long', day: '2-digit', year: 'numeric'
       }).toUpperCase()
-    : "—";
-
-  const cerealVariety = getVarietyCode(report?.stockbook_cereal);
-
+    : '—'
+  const cerealVariety  = report?.cereal ?? '—'
   const signatories = [
-    { label: "Certified Correct:", name: accountOfficer,               role: "Warehouse Supervisor" },
-    { label: "Verified Correct:",  name: report?.asst_bm_name  ?? "—", role: "Asst. Branch Manager" },
-    { label: "Verified Correct:",  name: report?.accountant_name ?? "—", role: "Accountant II"       },
-    { label: "Noted by:",          name: report?.branch_m_name  ?? "—", role: "Branch Manager"       },
-  ];
+    { label: 'Certified Correct:', name: accountOfficer,               role: 'Warehouse Supervisor' },
+    { label: 'Verified Correct:',  name: report?.asst_bm_name  ?? '—', role: 'Asst. Branch Manager' },
+    { label: 'Verified Correct:',  name: report?.accountant_name ?? '—', role: 'Accountant II'      },
+    { label: 'Noted by:',          name: report?.branch_m_name  ?? '—', role: 'Branch Manager'      },
+  ]
 
   // render states
   if (loading) return (

@@ -26,11 +26,14 @@ export default function NFAWarehouseReceipt() {
           const res = await api.get(`/reports/summary/upd/${summaryId}/`);
           data = res.data;
         } else if (stockbookId) {
-          // Find summary by stockbook
           const res = await api.get('/reports/summary/');
-          data = res.data.find(s => s.stockbook === stockbookId) ?? null;
+          const id = Number(stockbookId);
+          data = res.data.find(s =>
+            Array.isArray(s.stockbooks)
+              ? s.stockbooks.includes(id)
+              : s.stockbook === id
+          ) ?? null;
         } else {
-          // Fallback: get latest summary
           const res = await api.get('/reports/summary/');
           data = res.data[res.data.length - 1] ?? null;
         }
@@ -73,15 +76,6 @@ export default function NFAWarehouseReceipt() {
   const cerealType = summary.CerealType ?? '—';
   const condition  = summary.Condition  ?? '—';
 
-  const beginBags   = summary.prev_B_Bags  ?? 0;
-  const beginNkg    = summary.prev_B_NKG   ?? 0;
-  const receiptBags = summary.total_R_Bags ?? 0;
-  const receiptNkg  = summary.total_R_NKG  ?? 0;
-  const issueBags   = summary.total_I_Bags ?? 0;
-  const issueNkg    = summary.total_I_NKG  ?? 0;
-  const endBags     = summary.ending_B_Bags ?? (parseFloat(beginBags) + parseFloat(receiptBags) - parseFloat(issueBags));
-  const endNkg      = summary.ending_B_NKG  ?? (parseFloat(beginNkg)  + parseFloat(receiptNkg)  - parseFloat(issueNkg));
-
   // Signatories from summary
   const SIGNATURES = [
     { label: 'Certified Correct:', name: summary.Name      ?? '—', title: 'Warehouse Supervisor' },
@@ -90,13 +84,38 @@ export default function NFAWarehouseReceipt() {
     { label: 'Noted by:',          name: summary.Branch_M  ?? '—', title: 'Branch Manager' },
   ];
 
-  // Pad rows to at least 8
-  const dataRow = { cerealType, condition, beginBags, beginNkg, receiptBags, receiptNkg, issueBags, issueNkg, endBags, endNkg };
-  const rows = [dataRow, ...Array(7).fill(null).map(() => ({
-    cerealType: '', condition: '', beginBags: '', beginNkg: '',
-    receiptBags: '', receiptNkg: '', issueBags: '', issueNkg: '',
-    endBags: '', endNkg: '',
-  }))];
+  const MIN_ROWS = 8
+  const dataRows = (summary.rows ?? []).map(row => ({
+    cerealType:  row.cerealType,
+    condition:   row.condition,
+    beginBags:   row.beginBags,
+    beginNkg:    row.beginNkg,
+    receiptBags: row.R_Bags,
+    receiptNkg:  row.R_NKG,
+    issueBags:   row.I_Bags,
+    issueNkg:    row.I_NKG,
+    endBags:     row.endBags,
+    endNkg:      row.endNkg,
+  }))
+
+  const fillerCount = Math.max(0, MIN_ROWS - dataRows.length)
+  const rows = [
+    ...dataRows,
+    ...Array(fillerCount).fill(null).map(() => ({
+      cerealType: '', condition: '', beginBags: '', beginNkg: '',
+      receiptBags: '', receiptNkg: '', issueBags: '', issueNkg: '',
+      endBags: '', endNkg: '',
+    }))
+  ]
+
+  const totalBeginBags   = dataRows.reduce((s, r) => s + parseFloat(r.beginBags   || 0), 0)
+  const totalBeginNkg    = dataRows.reduce((s, r) => s + parseFloat(r.beginNkg    || 0), 0)
+  const totalReceiptBags = dataRows.reduce((s, r) => s + parseFloat(r.receiptBags || 0), 0)
+  const totalReceiptNkg  = dataRows.reduce((s, r) => s + parseFloat(r.receiptNkg  || 0), 0)
+  const totalIssueBags   = dataRows.reduce((s, r) => s + parseFloat(r.issueBags   || 0), 0)
+  const totalIssueNkg    = dataRows.reduce((s, r) => s + parseFloat(r.issueNkg    || 0), 0)
+  const totalEndBags     = dataRows.reduce((s, r) => s + parseFloat(r.endBags     || 0), 0)
+  const totalEndNkg      = dataRows.reduce((s, r) => s + parseFloat(r.endNkg      || 0), 0)
 
   const thClass = "border border-black text-center bg-[#ADCEFF] font-bold text-[10.5px] py-1 px-[5px]";
   const tdClass = "border border-black text-center text-[11px] bg-white px-[5px]";
@@ -176,14 +195,14 @@ export default function NFAWarehouseReceipt() {
                 {/* Totals row */}
                 <tr className="font-bold text-[11px]">
                   <td className={tdClass} colSpan={2} style={{ height: 26 }}>TOTAL</td>
-                  <td className={tdClass}>{Number(beginBags).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(beginNkg).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(receiptBags).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(receiptNkg).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(issueBags).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(issueNkg).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(endBags).toLocaleString()}</td>
-                  <td className={tdClass}>{Number(endNkg).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalBeginBags).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalBeginNkg).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalReceiptBags).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalReceiptNkg).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalIssueBags).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalIssueNkg).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalEndBags).toLocaleString()}</td>
+                  <td className={tdClass}>{Number(totalEndNkg).toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>

@@ -24,4 +24,8 @@ class WSIReportAdmin(admin.ModelAdmin):
 
 @admin.register(Summary)
 class SummaryAdmin(admin.ModelAdmin):
-    list_display = ['summary_id', 'stockbook', 'CerealType', 'date_covered']
+    list_display = ['summary_id', 'get_stockbooks', 'CerealType', 'date_covered']
+
+    def get_stockbooks(self, obj):
+        return ', '.join([f"Report #{sb.report_id}" for sb in obj.stockbooks.all()])
+    get_stockbooks.short_description = 'Stockbooks'
