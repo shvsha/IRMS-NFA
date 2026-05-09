@@ -14,17 +14,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCaption,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table"
 
 // react
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from '../../components/Header'
 
@@ -93,6 +88,12 @@ export default function StockBook() {
 
   const [search, setSearch] = useState("");
 
+  const importFileRef = useRef(null)
+  const [importing, setImporting] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importedTransactions, setImportedTransactions] = useState([])
+  const [importedFileName, setImportedFileName] = useState('')
+
   const fetchStocks = async () => {
     try {
       setLoading(true);
@@ -126,6 +127,14 @@ export default function StockBook() {
     setSelectedMonth("");
     setAddDialogOpen(true);
   };
+
+  const handleImportClick = () => {
+    setSelectedType(""); 
+    setSelectedYear(""); 
+    setSelectedMonth(""); 
+    setSelectedDay("")
+    setImportDialogOpen(true)
+  }
 
   const getDaysInMonth = (year, month) => {
     if (!month) return 31;
@@ -192,6 +201,88 @@ export default function StockBook() {
     navigate(`/whse/view/${stock.report_id}`, { state: { stockBook: stock } });
   };
 
+  // import stockbook
+  const handleImportStockbook = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    try {
+      setImporting(true)
+      const { parseStockbookExcel } = await import('@/utils/importToExcel')
+      const imported = await parseStockbookExcel(file)
+      setImportedTransactions(imported)
+      setImportedFileName(file.name)
+    } catch (err) {
+      alert(err.message || 'Import failed.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // create the imported stock book
+  const handleImportCreate = async () => {
+    if (!selectedType) { alert('Please select a cereal type.'); return }
+    if (!selectedYear || !selectedMonth || !selectedDay) { alert('Please fill in all date fields.'); return }
+    if (importedTransactions.length === 0) { alert('Please select an Excel file first.'); return }
+
+    try {
+      setSubmitting(true)
+      const month = String(selectedMonth).padStart(2, '0')
+      const day   = String(selectedDay).padStart(2, '0')
+      const date  = `${selectedYear}-${month}-${day}`
+
+      const res = await api.post('/reports/stocks/create/', {
+        CerealType: selectedType,
+        Date: date,
+      })
+      const newStock = res.data
+
+      // Save all imported transactions
+      for (const txn of importedTransactions) {
+        await api.post('/reports/transactions/create/', {
+          stockbook:        newStock.report_id,
+          type:             txn.wts ? 'WTS' : txn.wsr ? 'WSR' : 'WSI',
+          Particulars:      txn.particulars     || null,
+          Plate_Number:     txn.plateNo         || null,
+          Batch_No:         txn.batchNo         || null,
+          AI_Number:        txn.aiNo            || null,
+          OR_Number:        txn.orNo            || null,
+          Transaction_ref:  txn.transaction     || null,
+          WTS_no:           txn.wts             || null,
+          WSR_no:           txn.wsr             || null,
+          WSI_no:           txn.wsi             || null,
+          Age:              txn.age             || null,
+          Moisture_Content: txn.moistureContent || null,
+          Classifier:       txn.classifier      || null,
+          Pile_No:          txn.pileNo          || null,
+          Fillers:          txn.fillers         || null,
+          R_Bags:           txn.rBags           || null,
+          R_GKG:            txn.rGkg            || null,
+          R_NKG:            txn.rNkg            || null,
+          Cond_R:           txn.rCondition      || null,
+          I_Bags:           txn.iBags           || null,
+          I_GKG:            txn.iGkg            || null,
+          I_NKG:            txn.iNkg            || null,
+          Cond_I:           txn.iCondition      || null,
+        })
+      }
+
+      await fetchStocks()
+      setImportDialogOpen(false)
+      setImportedTransactions([])
+      setImportedFileName('')
+
+      navigate(`/whse/create/${newStock.report_id}`, {
+        state: { stockBook: newStock, mode: 'edit' }
+      })
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to create stock book.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <>
       <Header
@@ -231,7 +322,10 @@ export default function StockBook() {
               </SelectContent>
             </Select>
 
-            <button className="bg-[#1D8104] px-5 py-3 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold">
+            <button
+              onClick={handleImportClick}
+              className="bg-[#1D8104] px-5 py-3 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold"
+            >
               <div className="flex gap-2 items-center">
                 <CiImport size={20} />
                 <p className="text-sm">Import</p>
@@ -471,6 +565,7 @@ export default function StockBook() {
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={handleCerealNext}
                   disabled={!selectedType || submitting}
@@ -483,7 +578,130 @@ export default function StockBook() {
           </DialogContent>
         </Dialog>
 
+        {/* for import modal */}
+        <Dialog open={importDialogOpen} onOpenChange={(open) => {
+          setImportDialogOpen(open)
+          if (!open) {
+            setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay("")
+            setImportedTransactions([])
+            setImportedFileName('')
+          }
+        }}>
+          <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
+            <div className="bg-[#1D8104] h-8 rounded-t-lg" />
+            <div className="px-5 pb-5">
+              <DialogHeader className="mb-3">
+                <DialogTitle className="text-[#1D8104] font-bold py-2">Import Stockbook</DialogTitle>
+              </DialogHeader>
+
+              {/* Same cereal + date fields */}
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold py-5">
+                  <SelectValue placeholder="Select cereal type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem className="p-2" value="WD1G50">Palay</SelectItem>
+                  <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex gap-3 mt-3">
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-[#1D8104]">Year</label>
+                  <Input
+                    type="text" inputMode="numeric" placeholder="2026"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    className="bg-white border-[#1D8104] text-[#1D8104] mt-1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-[#1D8104]">Month</label>
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['January','February','March','April','May','June',
+                        'July','August','September','October','November','December']
+                        .map((m, i) => (
+                          <SelectItem key={i} className="p-2" value={String(i + 1)}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-20">
+                  <label className="text-sm font-semibold text-[#1D8104]">Day</label>
+                  <Select value={selectedDay} onValueChange={setSelectedDay}>
+                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1">
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1)
+                        .map(d => <SelectItem key={d} className="p-2" value={String(d)}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* File upload area */}
+              <div
+                onClick={() => {
+                  if (!selectedType || !selectedYear || !selectedMonth || !selectedDay) {
+                    alert('Please select cereal type and date first.')
+                    return
+                  }
+                  importFileRef.current?.click()
+                }}
+                className="mt-4 border-2 border-dashed border-[#1D8104] rounded-lg p-6 text-center cursor-pointer hover:bg-green-50 transition-colors"
+              >
+                <CiImport size={32} className="mx-auto text-[#1D8104] mb-2" />
+                {importing ? (
+                  <p className="text-sm font-semibold text-[#1D8104]">Parsing file...</p>
+                ) : importedFileName ? (
+                  <>
+                    <p className="text-sm font-semibold text-[#1D8104]">✓ {importedFileName}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {importedTransactions.length} transaction(s) ready — click Create to proceed
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-[#1D8104]">Click to select Excel file</p>
+                    <p className="text-xs text-gray-400 mt-1">.xlsx or .xls</p>
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setImportDialogOpen(false)}
+                  className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportCreate}
+                  disabled={submitting || importedTransactions.length === 0}
+                  className="bg-[#1D8104] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#166303] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {submitting ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
+
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".xlsx,.xls"
+        className="hidden"
+        onChange={handleImportStockbook}
+      />
     </>
   );
 }

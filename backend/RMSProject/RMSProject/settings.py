@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     'authentication',
     'reports',
     'notification',
-    'audit'
+    'audit',
+
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [
@@ -139,7 +141,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 

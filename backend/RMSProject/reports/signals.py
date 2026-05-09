@@ -7,15 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 _recomputing = set()
 
-# ⚠️ TESTING: 5 minutes
-# ✅ PRODUCTION: change to timedelta(days=1)
-ARCHIVE_AFTER = timedelta(minutes=5)
-
 @receiver(post_save, sender=StockBook)
 def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
     if update_fields and 'Status' in update_fields and len(update_fields) == 1:
         return
-
     if instance.Status != 'Under Review':
         return
 
@@ -23,82 +18,81 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
     has_wsi = instance.transactions.filter(type__in=['WSI', 'WTS']).exists()
 
     if has_wsr:
-        wsr_report, created = WSRReport.objects.get_or_create(
-            stockbook=instance
+        wsr_report, _ = WSRReport.objects.get_or_create(
+            date_covered=instance.Date,
+            defaults={'Evaluation': 'Pending', 'current_stage': 'admin'},
         )
-        if not created:
-            if wsr_report.Evaluation == 'Rejected':
-                wsr_report.Evaluation = 'Pending'
-                wsr_report.Reason = None
-                wsr_report.reviewed_by = None
-                wsr_report.save()
-
+        wsr_report.stockbooks.add(instance)
+        if not wsr_report.stockbook:
+            wsr_report.stockbook = instance
+            wsr_report.save(update_fields=['stockbook'])
         instance.transactions.filter(
             type__in=['WSR', 'WTS']
         ).update(wsr_report=wsr_report)
 
     if has_wsi:
-        wsi_report, created = WSIReport.objects.get_or_create(
-            stockbook=instance
+        wsi_report, _ = WSIReport.objects.get_or_create(
+            date_covered=instance.Date,
+            defaults={'Evaluation': 'Pending', 'current_stage': 'admin'},
         )
-        if not created:
-            if wsi_report.Evaluation == 'Rejected':
-                wsi_report.Evaluation = 'Pending'
-                wsi_report.Reason = None
-                wsi_report.reviewed_by = None
-                wsi_report.save()
-
+        wsi_report.stockbooks.add(instance)
+        if not wsi_report.stockbook:
+            wsi_report.stockbook = instance
+            wsi_report.save(update_fields=['stockbook'])
         instance.transactions.filter(
             type__in=['WSI', 'WTS']
         ).update(wsi_report=wsi_report)
 
 
-# Recompute Summary
 @receiver(post_save, sender=WSRReport)
 @receiver(post_save, sender=WSIReport)
 def recompute_summary_on_approval(sender, instance, **kwargs):
     if instance.Evaluation not in ['Approved', 'Rejected']:
         return
 
-    stockbook = instance.stockbook
+    linked_stockbooks = instance.stockbooks.all()
+    if not linked_stockbooks.exists():
+        return
 
-    wsr_eval = None
-    wsi_eval = None
+    for stockbook in linked_stockbooks:
+        wsr_report = WSRReport.objects.filter(
+            date_covered=stockbook.Date,
+        ).first()
+        wsi_report = WSIReport.objects.filter(
+            date_covered=stockbook.Date,
+        ).first()
 
-    try:
-        wsr_eval = stockbook.wsr_report.Evaluation
-    except: pass
+        wsr_eval = wsr_report.Evaluation if wsr_report else None
+        wsi_eval = wsi_report.Evaluation if wsi_report else None
 
-    try:
-        wsi_eval = stockbook.wsi_report.Evaluation
-    except: pass
+        both_exist = wsr_eval is not None and wsi_eval is not None
+        one_exists = wsr_eval is not None or wsi_eval is not None
 
-    both_exist = wsr_eval is not None and wsi_eval is not None
-    one_exists = wsr_eval is not None or wsi_eval is not None
+        if both_exist:
+            if wsr_eval == 'Approved' and wsi_eval == 'Approved':
+                stockbook.Status = 'Completed'
+            elif 'Rejected' in [wsr_eval, wsi_eval]:
+                stockbook.Status = 'In Progress'
+        elif one_exists:
+            current_eval = wsr_eval or wsi_eval
+            if current_eval == 'Approved':
+                stockbook.Status = 'Completed'
+            elif current_eval == 'Rejected':
+                stockbook.Status = 'In Progress'
 
-    if both_exist:
-        if wsr_eval == 'Approved' and wsi_eval == 'Approved':
-            stockbook.Status = 'Completed'
-        elif 'Rejected' in [wsr_eval, wsi_eval]:
-            stockbook.Status = 'In Progress'
-    elif one_exists:
-        current_eval = wsr_eval or wsi_eval
-        if current_eval == 'Approved':
-            stockbook.Status = 'Completed'
-        elif current_eval == 'Rejected':
-            stockbook.Status = 'In Progress'
+        if stockbook.Status == 'Completed' and not stockbook.completed_at:
+            stockbook.completed_at = timezone.now()
+            stockbook.save(update_fields=['Status', 'completed_at'])
+        else:
+            stockbook.save(update_fields=['Status'])
 
-    if stockbook.Status == 'Completed' and not stockbook.completed_at:
-        stockbook.completed_at = timezone.now()
-        stockbook.save(update_fields=['Status', 'completed_at'])
-    else:
-        stockbook.save(update_fields=['Status'])
-
-    summary = stockbook.summaries.first()
-    if not summary and stockbook.Status == 'Completed':
-        summary = Summary.objects.create(stockbook=stockbook)
-
-    if summary:
+    if instance.Evaluation == 'Approved':
+        ref = linked_stockbooks.first()
+        summary, _ = Summary.objects.get_or_create(
+            date_covered=ref.Date,
+        )
+        for stockbook in linked_stockbooks.filter(Status='Completed'):
+            summary.stockbooks.add(stockbook)
         summary.compute_and_save()
 
 # inherit the balance of the previous stock book
@@ -183,30 +177,3 @@ def update_balance_on_transaction_change(sender, instance, **kwargs):
         logger.error(f"SIGNAL ERROR in update_balance_on_transaction_change: {e}")
         logger.error(traceback.format_exc())
         raise
-
-# archive approved reports and summary 
-def auto_archive_completed():
-    cutoff = timezone.now() - ARCHIVE_AFTER
-
-    stockbooks = StockBook.objects.filter(
-        Status='Completed',
-        completed_at__lte=cutoff
-    )
-
-    for stockbook in stockbooks:
-        stockbook.Status = 'Archived'
-        stockbook.save(update_fields=['Status'])
-
-        try:
-            if stockbook.wsr_report.Evaluation == 'Approved':
-                stockbook.wsr_report.Evaluation = 'Archive'
-                stockbook.wsr_report.save(update_fields=['Evaluation'])
-        except WSRReport.DoesNotExist:
-            pass
-
-        try:
-            if stockbook.wsi_report.Evaluation == 'Approved':
-                stockbook.wsi_report.Evaluation = 'Archive'
-                stockbook.wsi_report.save(update_fields=['Evaluation'])
-        except WSIReport.DoesNotExist:
-            pass

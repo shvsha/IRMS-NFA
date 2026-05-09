@@ -5,11 +5,9 @@ from rest_framework import status
 from .models import StockBook, Transaction, WSRReport, WSIReport, Summary
 from .serializers import (
     StockBookSerializer, TransactionSerializer,
-    WSRReportSerializer, WSIReportSerializer, SummarySerializer,
+    WSRReportGroupedSerializer, WSIReportGroupedSerializer, SummarySerializer,
     StockBookListSerializer
 )
-
-from .signals import auto_archive_completed
 
 def get_user_from_token(request):
     from rest_framework_simplejwt.tokens import AccessToken
@@ -29,7 +27,6 @@ def get_user_from_token(request):
 # Stockbook
 @api_view(['GET'])
 def get_stock(request):
-    auto_archive_completed() 
     return Response(StockBookListSerializer(StockBook.objects.all(), many=True).data)
 
 
@@ -199,23 +196,33 @@ def upd_transaction(request, pk):
 
         if txn.type == 'WSR':
             try:
-                if txn.stockbook.wsr_report.Evaluation == 'Approved':
+                wsr = WSRReport.objects.filter(
+                    date_covered=txn.stockbook.Date,
+                    CerealType=txn.stockbook.CerealType,
+                    Evaluation='Approved'
+                ).first()
+                if wsr:
                     return Response(
                         {'error': 'Cannot edit WSR transaction. Receipt is already approved.'},
                         status=status.HTTP_403_FORBIDDEN
                     )
-            except WSRReport.DoesNotExist:
+            except Exception:
                 pass
 
         if txn.type == 'WSI':
             try:
-                if txn.stockbook.wsi_report.Evaluation == 'Approved':
+                wsi = WSIReport.objects.filter(
+                    date_covered=txn.stockbook.Date,
+                    CerealType=txn.stockbook.CerealType,
+                    Evaluation='Approved'
+                ).first()
+                if wsi:
                     return Response(
                         {'error': 'Cannot edit WSI transaction. Issue is already approved.'},
                         status=status.HTTP_403_FORBIDDEN
                     )
-            except WSIReport.DoesNotExist:
-                pass 
+            except Exception:
+                pass
 
         try:
             safe_data = {k: v for k, v in request.data.items() 
@@ -255,7 +262,7 @@ def upd_transaction(request, pk):
 @api_view(['GET'])
 def get_wsr_reports(request):
     reports = WSRReport.objects.all()
-    return Response(WSRReportSerializer(reports, many=True).data)
+    return Response(WSRReportGroupedSerializer(reports, many=True).data)
 
 
 STAGE_MAP = {
@@ -274,7 +281,7 @@ def upd_wsr_report(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        return Response(WSRReportSerializer(report).data)
+        return Response(WSRReportGroupedSerializer(report).data)
 
     elif request.method == 'PUT':
         user = get_user_from_token(request)
@@ -321,7 +328,7 @@ def upd_wsr_report(request, pk):
                 report.current_stage  = next_stage
 
             report.save()
-            return Response(WSRReportSerializer(report).data)
+            return Response(WSRReportGroupedSerializer(report).data)
 
         elif evaluation == 'Rejected':
             setattr(report, approval_field, 'Rejected')
@@ -330,7 +337,7 @@ def upd_wsr_report(request, pk):
             report.reviewed_by   = user
             report.current_stage = stage
             report.save()
-            return Response(WSRReportSerializer(report).data)
+            return Response(WSRReportGroupedSerializer(report).data)
 
         return Response({'error': 'Evaluation must be Approved or Rejected.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -339,7 +346,7 @@ def upd_wsr_report(request, pk):
 @api_view(['GET'])
 def get_wsi_reports(request):
     reports = WSIReport.objects.all()
-    return Response(WSIReportSerializer(reports, many=True).data)
+    return Response(WSIReportGroupedSerializer(reports, many=True).data)
 
 
 @api_view(['GET', 'PUT'])
@@ -351,7 +358,7 @@ def upd_wsi_report(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        return Response(WSIReportSerializer(report).data)
+        return Response(WSIReportGroupedSerializer(report).data)
 
     elif request.method == 'PUT':
         user = get_user_from_token(request)
@@ -398,7 +405,7 @@ def upd_wsi_report(request, pk):
                 report.current_stage  = next_stage
 
             report.save()
-            return Response(WSIReportSerializer(report).data)
+            return Response(WSIReportGroupedSerializer(report).data)
 
         elif evaluation == 'Rejected':
             setattr(report, approval_field, 'Rejected')
@@ -407,7 +414,7 @@ def upd_wsi_report(request, pk):
             report.reviewed_by   = user
             report.current_stage = stage
             report.save()
-            return Response(WSIReportSerializer(report).data)
+            return Response(WSIReportGroupedSerializer(report).data)
 
         return Response({'error': 'Evaluation must be Approved or Rejected.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -415,19 +422,24 @@ def upd_wsi_report(request, pk):
 # Summary
 @api_view(['GET'])
 def get_summary(request):
-    auto_archive_completed() 
     summaries = Summary.objects.all()
     return Response(SummarySerializer(summaries, many=True).data)
 
 
 @api_view(['POST'])
 def create_summary(request):
-    serializer = SummarySerializer(data=request.data)
-    if serializer.is_valid():
-        summary = serializer.save()
-        summary.compute_and_save()
-        return Response(SummarySerializer(summary).data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    date_covered = request.data.get('date_covered')
+    cereal_type  = request.data.get('CerealType')
+
+    if not date_covered or not cereal_type:
+        return Response({'error': 'date_covered and CerealType are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    summary, _ = Summary.objects.get_or_create(
+        date_covered=date_covered,
+        CerealType=cereal_type,
+    )
+    summary.compute_and_save()
+    return Response(SummarySerializer(summary).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -453,6 +465,7 @@ def upd_summary(request, pk):
         summary.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+
 # for unsubmitting the submitted reports
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -477,22 +490,91 @@ def unsubmit_stock(request, pk):
             {'error': 'Only reports Under Review can be unsubmitted'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     stock.transactions.all().update(wsr_report=None, wsi_report=None)
 
     try:
-        stock.wsr_report.delete()
+        wsr_report = WSRReport.objects.get(date_covered=stock.Date)
+        wsr_report.stockbooks.remove(stock)
+        if not wsr_report.stockbooks.exists():
+            wsr_report.delete()
     except WSRReport.DoesNotExist:
         pass
 
     try:
-        stock.wsi_report.delete()
+        wsi_report = WSIReport.objects.get(date_covered=stock.Date)
+        wsi_report.stockbooks.remove(stock)
+        if not wsi_report.stockbooks.exists():
+            wsi_report.delete()
     except WSIReport.DoesNotExist:
         pass
 
     stock.Status = 'In Progress'
     stock.save(update_fields=['Status'])
-
     stock.refresh_from_db()
 
     return Response(StockBookSerializer(stock).data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_wsr_by_stockbook(request, pk):
+    try:
+        stock = StockBook.objects.get(pk=pk)
+    except StockBook.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        wsr_report = WSRReport.objects.get(date_covered=stock.Date)
+    except WSRReport.DoesNotExist:
+        wsr_report = None
+    except WSRReport.MultipleObjectsReturned:
+        wsr_report = WSRReport.objects.filter(
+            date_covered=stock.Date
+        ).order_by('-wsr_report_id').first()
+
+    data = {
+        'date':            str(stock.Date),
+        'cereal':          stock.CerealType,
+        'user_full_name':  stock.user_full_name,
+        'user_WHCode':     stock.user_WHCode,
+        'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
+        'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
+        'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
+        'transactions': TransactionSerializer(
+            wsr_report.transactions.filter(type__in=['WSR', 'WTS']), many=True
+        ).data if wsr_report else [],
+    }
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_wsi_by_stockbook(request, pk):
+    try:
+        stock = StockBook.objects.get(pk=pk)
+    except StockBook.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        wsi_report = WSIReport.objects.get(date_covered=stock.Date)
+    except WSIReport.DoesNotExist:
+        wsi_report = None
+    except WSIReport.MultipleObjectsReturned:
+        wsi_report = WSIReport.objects.filter(
+            date_covered=stock.Date
+        ).order_by('-wsi_report_id').first()
+
+    data = {
+        'date':            str(stock.Date),
+        'cereal':          stock.CerealType,
+        'user_full_name':  stock.user_full_name,
+        'user_WHCode':     stock.user_WHCode,
+        'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
+        'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
+        'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
+        'transactions': TransactionSerializer(
+            wsi_report.transactions.filter(type__in=['WSI', 'WTS']), many=True
+        ).data if wsi_report else [],
+    }
+    return Response(data)

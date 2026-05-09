@@ -28,6 +28,8 @@ import {
 
 const ITEMS_PER_PAGE = 7
 
+import { exportWSRToExcel, exportWSIToExcel, exportSummaryToExcel } from '@/utils/exportToExcel'
+
 // Map API data into flat rows for the table
 function buildRows(stocks, wsrReports, wsiReports, summaries) {
   const rows = []
@@ -193,6 +195,72 @@ export default function ReportHistory() {
       navigate('/admin/history/issue', {
         state: { reportId: report.wsiId, reportType: 'WSI', stockbookId: report.stockbookId, pageTitle: 'History' }
       })
+    }
+  }
+  
+  const handleExport = async (report) => {
+    try {
+      if (report.reporttype === 'Statement of Receipts') {
+        const [wsrRes, stockRes] = await Promise.all([
+          api.get(`/reports/wsr-reports/upd/${report.wsrId}/`),
+          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
+        ])
+        const wsrReport = wsrRes.data
+        const stock     = stockRes.data
+        const firstTx   = wsrReport.transactions?.[0] ?? {}
+
+        exportWSRToExcel(
+          {
+            date:        stock.Date                        ?? '—',
+            region:      'Region 1',
+            province:    'La Union',
+            officer:     firstTx.user_full_name            ?? '—',
+            whName:      'San Juan GID 2A',
+            whAddress:   'San Juan, La Union',
+            whCode:      firstTx.user_WHCode               ?? '—',
+            cerealType:  stock.CerealType                  ?? '—',
+            wsrId:       `WSR-${report.wsrId}`,
+            certifiedBy: firstTx.user_full_name            ?? '—',
+            verifiedBy1: wsrReport.wsr_report?.asst_bm_name      ?? wsrReport.asst_bm_name      ?? '—',
+            verifiedBy2: wsrReport.wsr_report?.accountant_name   ?? wsrReport.accountant_name   ?? '—',
+            notedBy:     wsrReport.wsr_report?.branch_m_name     ?? wsrReport.branch_m_name     ?? '—',
+          },
+          wsrReport.transactions ?? []
+        )
+
+      } else if (report.reporttype === 'Statement of Issuance') {
+        const [wsiRes, stockRes] = await Promise.all([
+          api.get(`/reports/wsi-reports/upd/${report.wsiId}/`),
+          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
+        ])
+        const wsiReport = wsiRes.data
+        const stock     = stockRes.data
+        const firstTx   = wsiReport.transactions?.[0] ?? {}
+
+        exportWSIToExcel(
+          {
+            date:        stock.Date                               ?? '—',
+            region:      'Region 1',
+            province:    'La Union',
+            officer:     firstTx.user_full_name                   ?? '—',
+            whName:      'San Juan GID 2A',
+            whAddress:   'San Juan, La Union',
+            whCode:      firstTx.user_WHCode                      ?? '—',
+            cerealType:  stock.CerealType                         ?? '—',
+            wsiId:       `WSI-${report.wsiId}`,
+            certifiedBy: firstTx.user_full_name                   ?? '—',
+            verifiedBy1: wsiReport.wsi_report?.asst_bm_name      ?? wsiReport.asst_bm_name      ?? '—',
+            verifiedBy2: wsiReport.wsi_report?.accountant_name   ?? wsiReport.accountant_name   ?? '—',
+            notedBy:     wsiReport.wsi_report?.branch_m_name     ?? wsiReport.branch_m_name     ?? '—',
+          },
+          wsiReport.transactions ?? []
+        )
+      } else if (report.reporttype === 'Summary of Warehouse Reports') {
+        const summaryRes = await api.get(`/reports/summary/upd/${report.summaryId}/`)
+        exportSummaryToExcel(summaryRes.data)
+      }
+    } catch (err) {
+      console.error('Export failed:', err)
     }
   }
 
@@ -393,7 +461,10 @@ export default function ReportHistory() {
                             >
                               <GoLinkExternal size={14} />View
                             </button>
-                            <button className="inline-flex items-center gap-[5px] rounded-full border border-[#1D8104] px-[14px] py-[6px] text-[13px] font-semibold text-[#1D8104] transition-colors hover:bg-[#1D8104] hover:text-white">
+                            <button 
+                              className="inline-flex items-center gap-[5px] rounded-full border border-[#1D8104] px-[14px] py-[6px] text-[13px] font-semibold text-[#1D8104] transition-colors hover:bg-[#1D8104] hover:text-white"
+                              onClick={() => handleExport(report)}
+                            >
                               <CiExport size={17} />Export
                             </button>
                           </div>

@@ -7,3 +7,5 @@ class ReportsConfig(AppConfig):
 
     def ready(self):
         import reports.signals
+        from .scheduler import start
+        start()

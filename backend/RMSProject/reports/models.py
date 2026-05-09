@@ -1,5 +1,6 @@
 from django.db import models
 from collections import Counter
+from decimal import Decimal
 import logging
 logger = logging.getLogger(__name__)
 
@@ -23,17 +24,15 @@ class StockBook(models.Model):
     Status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='In Progress')
     Date = models.DateField(blank=True, null=True)
 
-    # Balances
     B_Bags = models.DecimalField(max_digits=15, decimal_places=3, default=1000.000)
-    B_GKG = models.DecimalField(max_digits=15, decimal_places=3, default=1500000.000)
-    B_NKG = models.DecimalField(max_digits=15, decimal_places=3, default=2300000.000)
+    B_GKG  = models.DecimalField(max_digits=15, decimal_places=3, default=1500000.000)
+    B_NKG  = models.DecimalField(max_digits=15, decimal_places=3, default=2300000.000)
 
-    # Signatories
-    Assist_BM = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assist_bm_stockbooks')
+    Assist_BM  = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assist_bm_stockbooks')
     Account_II = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='account_ii_stockbooks')
-    Branch_M = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='branch_m_stockbooks')
+    Branch_M   = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='branch_m_stockbooks')
 
-    completed_at = models.DateTimeField(blank=True, null=True) 
+    completed_at = models.DateTimeField(blank=True, null=True)
 
     @property
     def user_full_name(self):
@@ -55,33 +54,26 @@ class WSRReport(models.Model):
         ('Archive',  'Archive'),
     ]
     STAGE_CHOICES = [
-        ('admin',     'Admin'),
-        ('asst_bm',   'Asst. Branch Manager'),
-        ('accountant','Accountant 3'),
-        ('branch_m',  'Branch Manager'),
-        ('done',      'Done'),
+        ('admin',      'Admin'),
+        ('asst_bm',    'Asst. Branch Manager'),
+        ('accountant', 'Accountant 3'),
+        ('branch_m',   'Branch Manager'),
+        ('done',       'Done'),
     ]
 
-    wsr_report_id = models.AutoField(primary_key=True)
-    stockbook     = models.OneToOneField(
-        'StockBook',
-        on_delete=models.CASCADE,
-        related_name='wsr_report'
-    )
-    Evaluation    = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    Reason        = models.TextField(blank=True, null=True)
-    reviewed_by   = models.ForeignKey(
-        'users.User',
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='reviewed_wsr_reports'
-    )
-
-    current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
-    admin_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    asst_bm_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    wsr_report_id       = models.AutoField(primary_key=True)
+    stockbook           = models.ForeignKey('StockBook', on_delete=models.SET_NULL, null=True, blank=True, related_name='wsr_report_single')
+    stockbooks          = models.ManyToManyField('StockBook', related_name='wsr_reports', blank=True)
+    date_covered        = models.DateField(blank=True, null=True)
+    CerealType          = models.CharField(max_length=10, blank=True, null=True)
+    Evaluation          = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    Reason              = models.TextField(blank=True, null=True)
+    reviewed_by         = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_wsr_reports')
+    current_stage       = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
+    admin_approval      = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    asst_bm_approval    = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
     accountant_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    branch_m_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    branch_m_approval   = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
 
     def __str__(self):
         return f"WSRReport #{self.wsr_report_id} → {self.stockbook}"
@@ -95,34 +87,26 @@ class WSIReport(models.Model):
         ('Archive',  'Archive'),
     ]
     STAGE_CHOICES = [
-        ('admin',     'Admin'),
-        ('asst_bm',   'Asst. Branch Manager'),
-        ('accountant','Accountant 3'),
-        ('branch_m',  'Branch Manager'),
-        ('done',      'Done'),
+        ('admin',      'Admin'),
+        ('asst_bm',    'Asst. Branch Manager'),
+        ('accountant', 'Accountant 3'),
+        ('branch_m',   'Branch Manager'),
+        ('done',       'Done'),
     ]
 
-    wsi_report_id = models.AutoField(primary_key=True)
-    stockbook = models.OneToOneField(
-        'StockBook',
-        on_delete=models.CASCADE,
-        related_name='wsi_report'
-    )
-    Evaluation = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    Reason = models.TextField(blank=True, null=True)
-    reviewed_by = models.ForeignKey(
-        'users.User',
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='reviewed_wsi_reports'
-    )
-
-    current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
-    admin_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    asst_bm_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    wsi_report_id       = models.AutoField(primary_key=True)
+    stockbook           = models.ForeignKey('StockBook', on_delete=models.SET_NULL, null=True, blank=True, related_name='wsi_report_single')
+    stockbooks          = models.ManyToManyField('StockBook', related_name='wsi_reports', blank=True)
+    date_covered        = models.DateField(blank=True, null=True)
+    CerealType          = models.CharField(max_length=10, blank=True, null=True)
+    Evaluation          = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    Reason              = models.TextField(blank=True, null=True)
+    reviewed_by         = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_wsi_reports')
+    current_stage       = models.CharField(max_length=20, choices=STAGE_CHOICES, default='admin')
+    admin_approval      = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
+    asst_bm_approval    = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
     accountant_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-    branch_m_approval = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
-
+    branch_m_approval   = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='Pending')
 
     def __str__(self):
         return f"WSIReport #{self.wsi_report_id} → {self.stockbook}"
@@ -135,59 +119,38 @@ class Transaction(models.Model):
         ('WSI', 'WSI'),
     ]
 
-    transaction_id  = models.AutoField(primary_key=True)
-    stockbook       = models.ForeignKey(
-        'StockBook',
-        on_delete=models.CASCADE,
-        related_name='transactions'
-    )
-    # Link to WSRReport 
-    wsr_report      = models.ForeignKey(
-        'WSRReport',
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='transactions'
-    )
-    # Link to WSIReport 
-    wsi_report      = models.ForeignKey(
-        'WSIReport',
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='transactions'
-    )
-    type = models.CharField(max_length=5, choices=TYPE_CHOICES)
+    transaction_id   = models.AutoField(primary_key=True)
+    stockbook        = models.ForeignKey('StockBook', on_delete=models.CASCADE, related_name='transactions')
+    wsr_report       = models.ForeignKey('WSRReport', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    wsi_report       = models.ForeignKey('WSIReport', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    type             = models.CharField(max_length=5, choices=TYPE_CHOICES)
 
-    # Delivery & Vehicle
-    Particulars = models.CharField(max_length=100, blank=True, null=True)
-    Plate_Number = models.CharField(max_length=20,  blank=True, null=True)
-    Batch_No = models.CharField(max_length=2,  blank=True, null=True)
-    AI_Number = models.CharField(max_length=8,  blank=True, null=True)
-    OR_Number = models.CharField(max_length=8,  blank=True, null=True)
-    Transaction_ref = models.CharField(max_length=20,  blank=True, null=True)
+    Particulars      = models.CharField(max_length=100, blank=True, null=True)
+    Plate_Number     = models.CharField(max_length=20,  blank=True, null=True)
+    Batch_No         = models.CharField(max_length=2,   blank=True, null=True)
+    AI_Number        = models.CharField(max_length=8,   blank=True, null=True)
+    OR_Number        = models.CharField(max_length=8,   blank=True, null=True)
+    Transaction_ref  = models.CharField(max_length=20,  blank=True, null=True)
 
-    # Document numbers
-    WTS_no = models.CharField(max_length=8,  blank=True, null=True)
-    WSR_no = models.CharField(max_length=8,  blank=True, null=True)
-    WSI_no = models.CharField(max_length=8,  blank=True, null=True)
+    WTS_no = models.CharField(max_length=8, blank=True, null=True)
+    WSR_no = models.CharField(max_length=8, blank=True, null=True)
+    WSI_no = models.CharField(max_length=8, blank=True, null=True)
 
-    # Quality Metrics
-    Age = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Moisture_Content= models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Classifier = models.CharField(max_length=50, blank=True, null=True)
-    Pile_No  = models.CharField(max_length=10, blank=True, null=True)
-    Fillers  = models.CharField(max_length=255, blank=True, null=True)
+    Age              = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Moisture_Content = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    Classifier       = models.CharField(max_length=50,  blank=True, null=True)
+    Pile_No          = models.CharField(max_length=10,  blank=True, null=True)
+    Fillers          = models.CharField(max_length=255, blank=True, null=True)
 
-    # Receipts (WSR + WTS)
     R_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_GKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    R_NKG = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    R_GKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    R_NKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     Cond_R = models.CharField(max_length=5, blank=True, null=True)
 
-    # Issues (WSI + WTS)
-    I_Bags  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    I_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     I_GKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     I_NKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    Cond_I  = models.CharField(max_length=5, blank=True, null=True)
+    Cond_I = models.CharField(max_length=5, blank=True, null=True)
 
     @property
     def user_full_name(self):
@@ -214,138 +177,137 @@ class Transaction(models.Model):
 
 
 class Summary(models.Model):
-    summary_id   = models.AutoField(primary_key=True)
-    stockbook    = models.ForeignKey(
-        'StockBook',
-        on_delete=models.CASCADE,
-        related_name='summaries',
-        null=True, blank=True
-    )
+    summary_id = models.AutoField(primary_key=True)
+
     date_covered = models.DateField(blank=True, null=True)
     CerealType   = models.CharField(max_length=10, blank=True, null=True)
 
-    # Beginning balance (from previous summary's ending balance)
-    prev_B_Bags  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    prev_B_NKG   = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    stockbooks = models.ManyToManyField(
+        'StockBook',
+        related_name='summaries',
+        blank=True
+    )
 
-    # Computed totals
-    total_R_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    total_R_NKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    total_I_Bags = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    total_I_NKG  = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-    # Dominant condition
+    prev_B_Bags  = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    prev_B_NKG   = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    total_R_Bags = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    total_R_NKG  = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    total_I_Bags = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    total_I_NKG  = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
     Condition    = models.CharField(max_length=5, blank=True, null=True)
 
     @property
     def ending_B_Bags(self):
-        """
-        Ending balance = beginning + receipts - issues.
-        B_Bags on the stockbook already holds this computed value,
-        so we just return it directly.
-        """
-        return self.stockbook.B_Bags
+        return (
+            (self.prev_B_Bags  or Decimal('0'))
+            + (self.total_R_Bags or Decimal('0'))
+            - (self.total_I_Bags or Decimal('0'))
+        )
 
     @property
     def ending_B_NKG(self):
-        return self.stockbook.B_NKG
+        return (
+            (self.prev_B_NKG  or Decimal('0'))
+            + (self.total_R_NKG or Decimal('0'))
+            - (self.total_I_NKG or Decimal('0'))
+        )
+
+    def _primary_stockbook(self):
+        """Latest completed stockbook in this summary, for signatory info."""
+        return self.stockbooks.filter(
+            Status__in=['Completed', 'Archived']
+        ).order_by('-completed_at').first()
 
     @property
     def Assist_BM(self):
-        return self.stockbook.Assist_BM
+        sb = self._primary_stockbook()
+        return sb.Assist_BM if sb else None
 
     @property
     def Account_II(self):
-        return self.stockbook.Account_II
+        sb = self._primary_stockbook()
+        return sb.Account_II if sb else None
 
     @property
     def Branch_M(self):
-        return self.stockbook.Branch_M
+        sb = self._primary_stockbook()
+        return sb.Branch_M if sb else None
 
     @property
     def Name(self):
-        return self.stockbook.user_full_name
+        sb = self._primary_stockbook()
+        return sb.user_full_name if sb else '-'
 
     @property
     def WHCode(self):
-        return self.stockbook.user_WHCode
+        sb = self._primary_stockbook()
+        return sb.user_WHCode if sb else '-'
 
     def compute_and_save(self):
-        from decimal import Decimal
+        from reports.models import WSRReport, WSIReport
 
-        self.CerealType   = self.stockbook.CerealType
-        self.date_covered = self.stockbook.Date
+        all_stockbooks = self.stockbooks.filter(
+            Status__in=['Completed', 'Archived']
+        )
+
+        total_R_Bags = Decimal('0')
+        total_R_NKG  = Decimal('0')
+        total_I_Bags = Decimal('0')
+        total_I_NKG  = Decimal('0')
+        all_conditions = []
 
         try:
-            wsr_report = self.stockbook.wsr_report
-            if wsr_report and wsr_report.Evaluation == 'Approved':
-                receipt_txns      = wsr_report.transactions.filter(type__in=['WSR', 'WTS'])
-                self.total_R_Bags = sum(t.R_Bags or Decimal('0') for t in receipt_txns)
-                self.total_R_NKG  = sum(t.R_NKG  or Decimal('0') for t in receipt_txns)
-            else:
-                self.total_R_Bags = Decimal('0')
-                self.total_R_NKG  = Decimal('0')
+            wsr_report = WSRReport.objects.get(
+                date_covered=self.date_covered,
+                Evaluation__in=['Approved', 'Archive']
+            )
+            for t in wsr_report.transactions.filter(type__in=['WSR', 'WTS']):
+                total_R_Bags += t.R_Bags or Decimal('0')
+                total_R_NKG  += t.R_NKG  or Decimal('0')
+                if t.Cond_R:
+                    all_conditions.append(t.Cond_R)
+        except WSRReport.DoesNotExist:
+            pass
         except Exception as e:
             logger.warning(f"Summary #{self.summary_id} - WSR fetch failed: {e}")
-            self.total_R_Bags = Decimal('0')
-            self.total_R_NKG  = Decimal('0')
 
         try:
-            wsi_report = self.stockbook.wsi_report
-            if wsi_report and wsi_report.Evaluation == 'Approved':
-                issue_txns        = wsi_report.transactions.filter(type__in=['WSI', 'WTS'])
-                self.total_I_Bags = sum(t.I_Bags or Decimal('0') for t in issue_txns)
-                self.total_I_NKG  = sum(t.I_NKG  or Decimal('0') for t in issue_txns)
-            else:
-                self.total_I_Bags = Decimal('0')
-                self.total_I_NKG  = Decimal('0')
+            wsi_report = WSIReport.objects.get(
+                date_covered=self.date_covered,
+                Evaluation__in=['Approved', 'Archive']
+            )
+            for t in wsi_report.transactions.filter(type__in=['WSI', 'WTS']):
+                total_I_Bags += t.I_Bags or Decimal('0')
+                total_I_NKG  += t.I_NKG  or Decimal('0')
+                if t.Cond_I:
+                    all_conditions.append(t.Cond_I)
+        except WSIReport.DoesNotExist:
+            pass
         except Exception as e:
             logger.warning(f"Summary #{self.summary_id} - WSI fetch failed: {e}")
-            self.total_I_Bags = Decimal('0')
-            self.total_I_NKG  = Decimal('0')
-
-        all_conditions = []
-        try:
-            if self.stockbook.wsr_report:
-                all_conditions += [
-                    t.Cond_R for t in self.stockbook.wsr_report.transactions.all()
-                    if t.Cond_R
-                ]
-        except Exception as e:
-            logger.warning(f"Summary #{self.summary_id} - WSR condition fetch failed: {e}")
-        try:
-            if self.stockbook.wsi_report:
-                all_conditions += [
-                    t.Cond_I for t in self.stockbook.wsi_report.transactions.all()
-                    if t.Cond_I
-                ]
-        except Exception as e:
-            logger.warning(f"Summary #{self.summary_id} - WSI condition fetch failed: {e}")
 
         if all_conditions:
             self.Condition = Counter(all_conditions).most_common(1)[0][0]
 
+        self.total_R_Bags = total_R_Bags
+        self.total_R_NKG  = total_R_NKG
+        self.total_I_Bags = total_I_Bags
+        self.total_I_NKG  = total_I_NKG
+
         prev_summary = Summary.objects.filter(
-            CerealType=self.stockbook.CerealType,
-            date_covered__lt=self.stockbook.Date
-        ).order_by('-date_covered').first()
+            date_covered__lt=self.date_covered
+        ).exclude(pk=self.pk).order_by('-date_covered').first()
 
         if prev_summary:
             self.prev_B_Bags = prev_summary.ending_B_Bags
             self.prev_B_NKG  = prev_summary.ending_B_NKG
         else:
-            self.prev_B_Bags = (
-                self.stockbook.B_Bags
-                - (self.total_R_Bags or Decimal('0'))
-                + (self.total_I_Bags or Decimal('0'))
-            )
-            self.prev_B_NKG = (
-                self.stockbook.B_NKG
-                - (self.total_R_NKG or Decimal('0'))
-                + (self.total_I_NKG or Decimal('0'))
-            )
+            total_B_Bags = Decimal('0')
+            total_B_NKG  = Decimal('0')
+            for stockbook in all_stockbooks:
+                total_B_Bags += Decimal(str(stockbook.B_Bags))
+                total_B_NKG  += Decimal(str(stockbook.B_NKG))
+            self.prev_B_Bags = total_B_Bags - total_R_Bags + total_I_Bags
+            self.prev_B_NKG  = total_B_NKG  - total_R_NKG  + total_I_NKG
 
         self.save()
-
-    def __str__(self):
-        return f"Summary #{self.summary_id} - {self.CerealType} ({self.date_covered})"

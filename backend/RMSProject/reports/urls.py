@@ -5,7 +5,8 @@ from .views import (
     get_wsr_reports, upd_wsr_report,
     get_wsi_reports, upd_wsi_report,
     get_summary, create_summary, upd_summary,
-    unsubmit_stock
+    unsubmit_stock,
+    get_wsr_by_stockbook, get_wsi_by_stockbook
 )
 
 urlpatterns = [
@@ -33,4 +34,8 @@ urlpatterns = [
     path('summary/', get_summary, name='get_summary'),
     path('summary/create/', create_summary, name='create_summary'),
     path('summary/upd/<int:pk>/', upd_summary, name='upd_summary'),
+
+    # get wsr and wsi
+    path('stocks/wsr-grouped/<int:pk>/', get_wsr_by_stockbook),
+    path('stocks/wsi-grouped/<int:pk>/', get_wsi_by_stockbook),
 ]

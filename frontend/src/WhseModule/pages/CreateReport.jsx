@@ -16,9 +16,13 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
 import { FaExclamation } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa6"
 
 // api
 import api from "@/api/axios";
+
+// export
+import { exportStockbookToExcel } from "@/utils/exportToExcel";
 
 //  pure helpers (outside component)
 const getTransactionType = (txn) => {
@@ -151,9 +155,9 @@ const txnHasData = (txn) =>
 
 // Guard helper
 const isTransactionLocked = (txn, rejectedType) => {
-  if (!rejectedType) return false;          // no rejection context → all editable
+  if (!rejectedType) return false; 
   const txnType = getTransactionType(txn);
-  if (txnType === 'WTS') return false;      // WTS always editable
+  if (txnType === 'WTS') return false;
   if (txnType === 'WSR' && rejectedType === 'WSI') return true;
   if (txnType === 'WSI' && rejectedType === 'WSR') return true;
   return false;
@@ -167,7 +171,7 @@ export default function CreateReport() {
   const location = useLocation();
 
   const mode         = location.state?.mode         ?? 'edit';
-  const initialRejectedType = location.state?.rejectedType ?? null; // 'WSR' | 'WSI' | null
+  const initialRejectedType = location.state?.rejectedType ?? null;
   const isEditMode   = mode === 'edit';
 
   // US
@@ -177,6 +181,13 @@ export default function CreateReport() {
   const [transactions, setTransactions] = useState([{ ...emptyTransaction }]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving,       setSaving]       = useState(false);
+  const [toasts, setToasts] = useState([])
+
+  const addToast = (message, color) => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, color }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
+  }
 
   const currentRejectedType = useMemo(() => {
     if (initialRejectedType) return initialRejectedType;
@@ -195,6 +206,7 @@ export default function CreateReport() {
   const transactionsRef    = useRef(transactions);
   const currentIndexRef    = useRef(currentIndex);
   const stockBookRef       = useRef(stockBook);
+    const fileInputRef = useRef(null)
 
   useEffect(() => { transactionsRef.current = transactions; }, [transactions]);
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
@@ -279,7 +291,7 @@ export default function CreateReport() {
   // Auto-save debounce
   useEffect(() => {
     if (!txnHasData(currentTransaction)) return;
-    if (txnLocked) return; // don't debounce-save locked transactions
+    if (txnLocked) return;
 
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
@@ -366,8 +378,69 @@ export default function CreateReport() {
     });
   };
 
-  // Early returns AFTER all hooks
+  // Map transactions to export format
+  const mapToExportFormat = (txn) => ({
+    year:  stockBook?.Date?.split("-")[0]  ?? '',
+    month: stockBook?.Date?.split("-")[1]  ?? '',
+    Particulars: txn.particulars || '',
+    Plate_Number: txn.plateNo || '',
+    WTS: txn.wts || '',
+    WSR: txn.wsr || '',
+    WSI: txn.wsi || '',
+    Batch_No: txn.batchNo || '',
+    Age: txn.age || '',
+    AI_Number: txn.aiNo || '',
+    OR_Number: txn.orNo || '',
+    Moisture_Content: txn.moistureContent || '',
+    Classifier: txn.classifier || '',
+    Transaction: txn.transaction || '',
+    Pile_No: txn.pileNo || '',
+    R_Bags: txn.rBags || '',
+    R_GKG: txn.rGkg || '',
+    R_NKG: txn.rNkg || '',
+    R_Cond: txn.rCondition || '',
+    I_Bags: txn.iBags || '',
+    I_GKG: txn.iGkg || '',
+    I_NKG: txn.iNkg || '',
+    I_Cond: txn.iCondition || '',
+    Fillers: txn.fillers || '',
+    B_Bags: stockBook?.B_Bags || '',
+    B_GKG: stockBook?.B_GKG || '',
+    B_NKG: stockBook?.B_NKG || '',
+  });
 
+  // export
+  const handleExport = () => {
+    const exportRows = transactions.map(mapToExportFormat);
+    exportStockbookToExcel(exportRows, reportId);
+  }
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    e.target.value = ''
+
+    try {
+      const { parseStockbookExcel } = await import('@/utils/importToExcel')
+      const imported = await parseStockbookExcel(file)
+
+      await saveTransaction(transactions, currentIndex)
+
+      const existing = transactions.filter(t =>
+        t.id || Object.entries(t).filter(([k]) => k !== 'id').some(([, v]) => String(v).trim() !== '')
+      )
+      const merged = [...existing, ...imported]
+      setTransactions(merged)
+      setCurrentIndex(existing.length)
+
+      addToast(`Successfully imported ${imported.length} transaction(s).`, '#1D8104')
+    } catch (err) {
+      addToast(err.message || 'Import failed.', '#BB2325')
+    }
+  }
+
+  // Early returns AFTER all hooks
   if (loadingBook) {
     return (
       <>
@@ -427,10 +500,14 @@ export default function CreateReport() {
             <span className={badgeConfig.className}>{badgeConfig.label}</span>
           </div>
           <div className="flex gap-5 ml-auto">
-            <button className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1D8104] text-white rounded-lg px-3 py-1 flex items-center gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1D8104] text-white rounded-lg px-3 py-1 flex items-center gap-2">
               <CiImport size={21} color="white" /> Import
             </button>
-            <button className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1D8104] text-white rounded-lg px-3 py-1 flex items-center gap-2">
+            <button 
+              onClick={handleExport}
+              className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1D8104] text-white rounded-lg px-3 py-1 flex items-center gap-2">
               <CiExport size={21} color="white" /> Export
             </button>
           </div>
@@ -781,6 +858,35 @@ export default function CreateReport() {
         </div>
 
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        className="hidden"
+        onChange={handleImport}
+      />
+
+    {/* toasts */}
+    <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
+      {toasts.map(toast => (
+        <div
+          key={toast.id}
+          className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
+          style={{ borderLeft: `4px solid ${toast.color}` }}
+        >
+          <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
+            <FaCheck size={16} color="white" />
+          </div>
+          <div>
+            <p className="font-bold text-sm" style={{ color: toast.color }}>
+              {toast.color === '#BB2325' ? 'Error!' : 'Success!'}
+            </p>
+            <p className="text-gray-500 text-xs">{toast.message}</p>
+          </div>
+        </div>
+      ))}
+    </div>
     </>
   );
 }

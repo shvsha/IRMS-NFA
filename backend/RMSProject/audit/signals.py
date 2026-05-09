@@ -76,10 +76,12 @@ def log_transaction_delete(sender, instance, **kwargs):
 @receiver(post_save, sender='reports.WSRReport')
 def log_wsr_report_save(sender, instance, created, **kwargs):
     action = "Created" if created else "Updated"
+    stockbook = instance.stockbook or instance.stockbooks.first()
+    stockbook_info = f"StockBook #{stockbook.report_id}" if stockbook else "No StockBook"
     AuditLog.objects.create(
         User_ID=instance.reviewed_by if not created else None,
         Module="WSR Report",
-        Action=f"WSRReport #{instance.wsr_report_id} {action} - Evaluation: {instance.Evaluation} - StockBook #{instance.stockbook.report_id}"
+        Action=f"WSRReport #{instance.wsr_report_id} {action} - Evaluation: {instance.Evaluation} - {stockbook_info}"
     )
 
 
@@ -96,10 +98,12 @@ def log_wsr_report_delete(sender, instance, **kwargs):
 @receiver(post_save, sender='reports.WSIReport')
 def log_wsi_report_save(sender, instance, created, **kwargs):
     action = "Created" if created else "Updated"
+    stockbook = instance.stockbook or instance.stockbooks.first()
+    stockbook_info = f"StockBook #{stockbook.report_id}" if stockbook else "No StockBook"
     AuditLog.objects.create(
         User_ID=instance.reviewed_by if not created else None,
         Module="WSI Report",
-        Action=f"WSIReport #{instance.wsi_report_id} {action} - Evaluation: {instance.Evaluation} - StockBook #{instance.stockbook.report_id}"
+        Action=f"WSIReport #{instance.wsi_report_id} {action} - Evaluation: {instance.Evaluation} - {stockbook_info}"
     )
 
 

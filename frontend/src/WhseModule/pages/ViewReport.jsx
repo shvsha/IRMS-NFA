@@ -1,6 +1,7 @@
 // react
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import Header from '../../components/Header'
 
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
@@ -8,6 +9,9 @@ import { IoArrowBack } from "react-icons/io5";
 
 // api
 import api from "@/api/axios";
+
+// excel
+import { exportStockbookToExcel } from '@/utils/exportToExcel'
 
 export default function ViewReport() {
   const { id } = useParams();
@@ -117,117 +121,131 @@ export default function ViewReport() {
     </div>
   );
 
+  // export
+  const handleExport = () => {
+    exportStockbookToExcel(rows, reportId)
+  }
+
   return (
-    <div className="flex flex-col min-h-full p-5 box-border">
+    <>
+      <Header
+        pageTitle="Stock Book"
+        notifTo="/admin/notif"
+        unreadCount={5}
+        userName="Raph Nigos"
+      />
 
-      {/* header */}
-      <div className="flex-shrink-0 flex gap-[30px] items-center bg-white px-5 py-3 text-sm text-[#2d317f] border border-[#cfd6e0]">
-        <button
-          onClick={() => navigate(-1)}
-          className="cursor-pointer transition-opacity duration-200 hover:opacity-70 flex items-center gap-1 text-[#2d317f]"
-        >
-          <IoArrowBack size={18} />
-        </button>
-        <div><strong>Report ID:</strong> R-{String(reportId).padStart(3, "0")}</div>
-        <div><strong>Warehouse Supervisor:</strong> {whseUser?.fname} {whseUser?.lname}</div>
-        <div><strong>Cereal Type:</strong> {cerealType}</div>
-        <div><strong>Warehouse Code:</strong> {whseUser?.WHCode ?? "—"}</div>
-        <div className="flex items-center gap-2">
-          <strong>Status:</strong>
-          <div className={badgeConfig.className}>{badgeConfig.label}</div>
-        </div>
-        <div className="flex gap-5 ml-auto">
-          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 border border-[#3e7a43] bg-transparent rounded-lg px-2 py-1">
-            <CiImport size={25} color="#3E7A43" />
+      <div className="mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] !min-h-[653px]">
+
+        {/* header */}
+        <div className="flex-shrink-0 flex gap-[30px] items-center bg-white px-5 py-3 text-sm text-[#2d317f] border border-[#cfd6e0]">
+          <button
+            onClick={() => navigate(-1)}
+            className="cursor-pointer transition-opacity duration-200 hover:opacity-70 flex items-center gap-1 text-[#2d317f]"
+          >
+            <IoArrowBack size={18} />
           </button>
-          <button className="cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1d8104] text-white rounded-lg px-3 py-1 flex items-center gap-1">
-            <CiExport size={25} color="white" />
-            Export
-          </button>
+          <div><strong>Report ID:</strong> R-{String(reportId).padStart(3, "0")}</div>
+          <div><strong>Warehouse Supervisor:</strong> {whseUser?.fname} {whseUser?.lname}</div>
+          <div><strong>Cereal Type:</strong> {cerealType}</div>
+          <div><strong>Warehouse Code:</strong> {whseUser?.WHCode ?? "—"}</div>
+          <div className="flex items-center gap-2">
+            <strong>Status:</strong>
+            <div className={badgeConfig.className}>{badgeConfig.label}</div>
+          </div>
+          <div className="flex gap-5 ml-auto">
+            <button 
+              className="shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] cursor-pointer transition-opacity duration-200 hover:opacity-70 bg-[#1D8104] text-white rounded-lg px-3 py-1 flex items-center gap-2"
+              
+              onClick={handleExport}
+              >
+              <CiExport size={21} color="white" /> Export
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* loading / error states */}
-      {loading && (
-        <div className="flex items-center justify-center flex-1 mt-20 text-[#2d317f]">
-          Loading transactions...
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center justify-center flex-1 mt-20 text-red-500">
-          {error}
-        </div>
-      )}
+        {/* loading / error states */}
+        {loading && (
+          <div className="flex items-center justify-center flex-1 mt-20 text-[#2d317f]">
+            Loading transactions...
+          </div>
+        )}
+        {error && (
+          <div className="flex items-center justify-center flex-1 mt-20 text-red-500">
+            {error}
+          </div>
+        )}
 
-      {/* table */}
-      {!loading && !error && (
-        <>
-          <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
-            <table className="border-collapse min-w-[2200px] w-full">
-              <thead className="sticky top-0 z-10">
-                <tr>
-                  {[
-                    { label: "Date",             colSpan: 2 },
-                    { label: "Particulars",      rowSpan: 2 },
-                    { label: "Plate #",          rowSpan: 2 },
-                    { label: "WTS #",            rowSpan: 2 },
-                    { label: "WSR #",            rowSpan: 2 },
-                    { label: "WSI #",            rowSpan: 2 },
-                    { label: "Batch No.",        rowSpan: 2 },
-                    { label: "Age",              rowSpan: 2 },
-                    { label: "AI#",              rowSpan: 2 },
-                    { label: "OR#",              rowSpan: 2 },
-                    { label: "Moisture Content", rowSpan: 2 },
-                    { label: "Classifier",       rowSpan: 2 },
-                    { label: "Transaction",      rowSpan: 2 },
-                    { label: "Pile No.",         rowSpan: 2 },
-                    { label: "Receipts",         colSpan: 3 },
-                    { label: "Cond",             rowSpan: 2 },
-                    { label: "Issues",           colSpan: 3 },
-                    { label: "Cond",             rowSpan: 2 },
-                    { label: "Fillers",          rowSpan: 2 },
-                    { label: "Balance",          colSpan: 3 },
-                  ].map((th, i) => (
-                    <th
-                      key={i}
-                      colSpan={th.colSpan}
-                      rowSpan={th.rowSpan}
-                      className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
-                    >
-                      {th.label}
-                    </th>
-                  ))}
-                </tr>
-                <tr>
-                  {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
-                    (label, i) => (
+        {/* table */}
+        {!loading && !error && (
+          <>
+            <div className="mt-[15px] overflow-x-auto w-full border border-[#8fa3c1]">
+              <table className="border-collapse min-w-[2200px] w-full">
+                <thead className="sticky top-0 z-10">
+                  <tr>
+                    {[
+                      { label: "Date",             colSpan: 2 },
+                      { label: "Particulars",      rowSpan: 2 },
+                      { label: "Plate #",          rowSpan: 2 },
+                      { label: "WTS #",            rowSpan: 2 },
+                      { label: "WSR #",            rowSpan: 2 },
+                      { label: "WSI #",            rowSpan: 2 },
+                      { label: "Batch No.",        rowSpan: 2 },
+                      { label: "Age",              rowSpan: 2 },
+                      { label: "AI#",              rowSpan: 2 },
+                      { label: "OR#",              rowSpan: 2 },
+                      { label: "Moisture Content", rowSpan: 2 },
+                      { label: "Classifier",       rowSpan: 2 },
+                      { label: "Transaction",      rowSpan: 2 },
+                      { label: "Pile No.",         rowSpan: 2 },
+                      { label: "Receipts",         colSpan: 3 },
+                      { label: "Cond",             rowSpan: 2 },
+                      { label: "Issues",           colSpan: 3 },
+                      { label: "Cond",             rowSpan: 2 },
+                      { label: "Fillers",          rowSpan: 2 },
+                      { label: "Balance",          colSpan: 3 },
+                    ].map((th, i) => (
                       <th
                         key={i}
+                        colSpan={th.colSpan}
+                        rowSpan={th.rowSpan}
                         className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
                       >
-                        {label}
+                        {th.label}
                       </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="text-[#2d317f] bg-white">
-                    {FIELDS.map((field) => (
-                      <td key={field} className="border border-[#8fa3c1] h-8">
-                        <Cell value={row[field]} />
-                      </td>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+                  <tr>
+                    {["Year", "Month", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg", "Bags", "GKg", "NKg"].map(
+                      (label, i) => (
+                        <th
+                          key={i}
+                          className="bg-[#d7e1f2] border border-[#8fa3c1] px-1.5 py-1 text-[12px] text-center text-[#2d317f]"
+                        >
+                          {label}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
 
-    </div>
+                <tbody>
+                  {rows.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="text-[#2d317f] bg-white">
+                      {FIELDS.map((field) => (
+                        <td key={field} className="border border-[#8fa3c1] h-8">
+                          <Cell value={row[field]} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+      </div>
+    </>
   );
 }

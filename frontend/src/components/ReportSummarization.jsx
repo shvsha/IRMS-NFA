@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { GoLinkExternal } from "react-icons/go";
 import { CiExport } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
+import { exportSummaryToExcel } from '@/utils/exportToExcel'
+
 import { FaSearch, FaBars } from "react-icons/fa"
 
 import Header from '../components/Header'
@@ -23,7 +25,6 @@ const ITEMS_PER_PAGE = 4
 
 const TABLE_HEADERS = [
   { label: "Date" },
-  { label: "Cereal Type" },
   { label: "Cond." },
   { label: "Warehouse No." },
   { label: "Beginning Balance", sub: "Nkg" },
@@ -43,7 +44,6 @@ export default function ReportSummarization() {
 
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type")
   const [selectedWarehouse, setSelectedWarehouse] = useState("All Warehouses")
   const [currentPage, setCurrentPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -63,20 +63,23 @@ export default function ReportSummarization() {
             .map(s => s.report_id)
         )
 
-        const mapped = summaryRes.data
-          .filter(item => !archivedIds.has(item.stockbook))
-          .map((item) => ({
-            ...item,
-            date:         item.date_covered || '—',
-            cerealtype:   item.CerealType   || '—',
-            cond:         item.Condition    || '—',
-            whse:         item.WHCode       || '—',
-            beginbalance: item.prev_B_NKG   != null ? Number(item.prev_B_NKG).toLocaleString() : '0',
-            receipts:     item.total_R_NKG  != null ? Number(item.total_R_NKG).toLocaleString() : '0',
-            issues:       item.total_I_NKG  != null ? Number(item.total_I_NKG).toLocaleString() : '0',
-            balance:      item.ending_B_NKG != null ? Number(item.ending_B_NKG).toLocaleString() : '0',
-          }))
-          .sort((a, b) => b.summary_id - a.summary_id)
+      const mapped = summaryRes.data
+        .filter(item => {
+          if (!Array.isArray(item.stockbooks) || item.stockbooks.length === 0) return true
+          return item.stockbooks.some(id => !archivedIds.has(id))
+        })
+        .map((item) => ({
+          ...item,
+          date:         item.date_covered || '—',
+          cerealtype:   item.CerealType   || '—',
+          cond:         item.Condition    || '—',
+          whse:         item.WHCode       || '—',
+          beginbalance: item.prev_B_NKG   != null ? Number(item.prev_B_NKG).toLocaleString()   : '0',
+          receipts:     item.total_R_NKG  != null ? Number(item.total_R_NKG).toLocaleString()  : '0',
+          issues:       item.total_I_NKG  != null ? Number(item.total_I_NKG).toLocaleString()  : '0',
+          balance:      item.ending_B_NKG != null ? Number(item.ending_B_NKG).toLocaleString() : '0',
+        }))
+        .sort((a, b) => b.summary_id - a.summary_id)
 
         setReports(mapped)
       } catch (err) {
@@ -89,14 +92,12 @@ export default function ReportSummarization() {
   }, [])
 
   const filteredReports = reports.filter((report) => {
-    const matchesCerealType = selectedCerealType === "All Cereal Type" || report.cerealtype === selectedCerealType
     const matchesWarehouse = selectedWarehouse === "All Warehouses" || report.whse === selectedWarehouse
     const matchesSearch = search === '' ||
       report.date?.toString().toLowerCase().includes(search.toLowerCase()) ||
-      report.cerealtype?.toString().toLowerCase().includes(search.toLowerCase()) ||
       report.whse?.toString().toLowerCase().includes(search.toLowerCase()) ||
       report.cond?.toString().toLowerCase().includes(search.toLowerCase())
-    return matchesCerealType && matchesWarehouse && matchesSearch
+    return matchesWarehouse && matchesSearch
   })
 
   const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
@@ -106,6 +107,15 @@ export default function ReportSummarization() {
 
   const getTotal = (key) =>
     filteredReports.reduce((sum, r) => sum + Number(r[key].replace(/,/g, '')), 0).toLocaleString()
+
+  const handleExport = async (summaryId) => {
+    try {
+      const res = await api.get(`/reports/summary/upd/${summaryId}/`)
+      exportSummaryToExcel(res.data)
+    } catch (err) {
+      console.error('Failed to export summary:', err)
+    }
+  }
 
   return (
     <div>
@@ -137,20 +147,6 @@ export default function ReportSummarization() {
 
             {/* Filters */}
             <div className="flex items-center gap-4">
-
-              {/* Cereal Type */}
-              <Field>
-                <Select value={selectedCerealType} onValueChange={(v) => { setSelectedCerealType(v); setCurrentPage(1) }}>
-                  <SelectTrigger className="w-36 border border-[#2D317F] rounded-md py-5 bg-white px-3 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] text-[#2d317f] font-medium text-[13px] cursor-pointer">
-                    <SelectValue placeholder="All Cereal Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem className='text-[#2D317F] py-2' value="All Cereal Type">All Cereal Type</SelectItem>
-                    <SelectItem className='text-[#2D317F] py-2' value="WD1G50">Rice</SelectItem>
-                    <SelectItem className='text-[#2D317F] py-2' value="PD1350">Palay</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
 
               {/* Warehouses */}
               <Field>
@@ -214,7 +210,6 @@ export default function ReportSummarization() {
                       className="border-0 h-[52px] hover:bg-blue-50/40 transition-colors duration-150"
                     >
                       <TableCell className="text-center px-4 pl-5 font-semibold text-[13px] text-[#2d317f] border-0">{report.date}</TableCell>
-                      <TableCell className="text-center px-4 font-medium text-[13px] text-[#2d317f] border-0">{report.cerealtype}</TableCell>
                       <TableCell className="text-center px-4 font-medium text-[13px] text-[#2d317f] border-0">{report.cond}</TableCell>
                       <TableCell className="text-center px-4 font-medium text-[13px] text-[#2d317f] border-0">{report.whse}</TableCell>
                       <TableCell className="text-center px-4 font-medium text-[13px] text-[#2d317f] border-0">{report.beginbalance}</TableCell>
@@ -232,6 +227,7 @@ export default function ReportSummarization() {
                             <GoLinkExternal size={14} /> View
                           </button>
                           <button
+                            onClick={() => handleExport(report.summary_id)}
                             className="
                               inline-flex items-center gap-[5px] rounded-full border
                               border-[#1D8104] px-[14px] py-[6px]
@@ -256,19 +252,13 @@ export default function ReportSummarization() {
             {filteredReports.length > 0 && (
               <table className="w-full table-fixed">
                 <colgroup>
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
-                  <col style={{ width: '11.11%' }} />
+                  {Array(8).fill(null).map((_, i) => (
+                    <col key={i} style={{ width: '12.5%' }} />
+                  ))}
                 </colgroup>
                 <tbody>
                   <tr>
-                    <td colSpan={4} />
+                    <td colSpan={3} />
                     <td className="text-center px-4 py-3 text-[13px] text-[#8C8C8C]">{getTotal('beginbalance')}</td>
                     <td className="text-center px-4 py-3 text-[13px] text-[#8C8C8C]">{getTotal('receipts')}</td>
                     <td className="text-center px-4 py-3 text-[13px] text-[#8C8C8C]">{getTotal('issues')}</td>
