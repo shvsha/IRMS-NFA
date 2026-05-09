@@ -8,6 +8,7 @@ from .serializers import (
     WSRReportGroupedSerializer, WSIReportGroupedSerializer, SummarySerializer,
     StockBookListSerializer
 )
+from audit.models import AuditLog
 
 def get_user_from_token(request):
     from rest_framework_simplejwt.tokens import AccessToken
@@ -96,6 +97,8 @@ def upd_stock(request, pk):
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
         if stock.Status in ['Under Review', 'Completed']:
             return Response({'error': 'Cannot delete a locked StockBook.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        stock._deleted_by = user
         stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -126,6 +129,7 @@ def submit_stock(request, pk):
         )
 
     stock.Status = 'Under Review'
+    stock._submitted_by = user
     stock.save()
 
     return Response(StockBookSerializer(stock).data)
@@ -253,7 +257,8 @@ def upd_transaction(request, pk):
                 {'error': 'Cannot delete transaction. StockBook is locked.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-
+        
+        txn._deleted_by = user
         txn.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -320,12 +325,22 @@ def upd_wsr_report(request, pk):
         if evaluation == 'Approved':
             setattr(report, approval_field, 'Approved')
             report.reviewed_by = user
+            report._acted_by = user
 
             if next_stage == 'done':
                 report.Evaluation     = 'Approved'
                 report.current_stage  = 'done'
+                report.save()
             else:
                 report.current_stage  = next_stage
+                report.save()
+                sb = report.stockbooks.first()
+                sb_info = f"StockBook R-{str(sb.report_id).zfill(3)}" if sb else "No StockBook"
+                AuditLog.objects.create(
+                    User_ID=user,
+                    Module="WSR Report",
+                    Action=f"WSR Report #{report.wsr_report_id} Stage advanced to [{report.current_stage}] - {sb_info}"
+                )
 
             report.save()
             return Response(WSRReportGroupedSerializer(report).data)
@@ -335,6 +350,7 @@ def upd_wsr_report(request, pk):
             report.Evaluation    = 'Rejected'
             report.Reason        = reason
             report.reviewed_by   = user
+            report._acted_by     = user
             report.current_stage = stage
             report.save()
             return Response(WSRReportGroupedSerializer(report).data)
@@ -397,12 +413,22 @@ def upd_wsi_report(request, pk):
         if evaluation == 'Approved':
             setattr(report, approval_field, 'Approved')
             report.reviewed_by = user
+            report._acted_by = user
 
             if next_stage == 'done':
                 report.Evaluation     = 'Approved'
                 report.current_stage  = 'done'
+                report.save()
             else:
                 report.current_stage  = next_stage
+                report.save()
+                sb = report.stockbooks.first()
+                sb_info = f"StockBook R-{str(sb.report_id).zfill(3)}" if sb else "No StockBook"
+                AuditLog.objects.create(
+                    User_ID=user,
+                    Module="WSI Report",
+                    Action=f"WSI Report #{report.wsi_report_id} Stage advanced to [{report.current_stage}] - {sb_info}"
+                )
 
             report.save()
             return Response(WSIReportGroupedSerializer(report).data)
@@ -412,6 +438,7 @@ def upd_wsi_report(request, pk):
             report.Evaluation    = 'Rejected'
             report.Reason        = reason
             report.reviewed_by   = user
+            report._acted_by     = user
             report.current_stage = stage
             report.save()
             return Response(WSIReportGroupedSerializer(report).data)
@@ -457,11 +484,16 @@ def upd_summary(request, pk):
         serializer = SummarySerializer(summary, data=request.data, partial=True)
         if serializer.is_valid():
             instance = serializer.save()
+            instance._edited_by = user
             instance.compute_and_save()
             return Response(SummarySerializer(instance).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
+        user = get_user_from_token(request) 
+        if not user:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        summary._deleted_by = user
         summary.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -494,18 +526,32 @@ def unsubmit_stock(request, pk):
     stock.transactions.all().update(wsr_report=None, wsi_report=None)
 
     try:
-        wsr_report = WSRReport.objects.get(date_covered=stock.Date)
-        wsr_report.stockbooks.remove(stock)
-        if not wsr_report.stockbooks.exists():
-            wsr_report.delete()
+        for wsr in WSRReport.objects.filter(date_covered=stock.Date, stockbooks=stock):
+            if wsr.Evaluation == 'Pending':
+                wsr.stockbooks.remove(stock)
+                if not wsr.stockbooks.exists():
+                    wsr._deleted_by = user
+                    wsr.delete()
+            elif wsr.Evaluation == 'Rejected':
+                wsr.stockbooks.remove(stock)
+                if not wsr.stockbook:
+                    wsr.stockbook = stock
+                    wsr.save(update_fields=['stockbook'])
     except WSRReport.DoesNotExist:
         pass
 
     try:
-        wsi_report = WSIReport.objects.get(date_covered=stock.Date)
-        wsi_report.stockbooks.remove(stock)
-        if not wsi_report.stockbooks.exists():
-            wsi_report.delete()
+        for wsi in WSIReport.objects.filter(date_covered=stock.Date, stockbooks=stock):
+            if wsi.Evaluation == 'Pending':
+                wsi.stockbooks.remove(stock)
+                if not wsi.stockbooks.exists():
+                    wsi._deleted_by = user
+                    wsi.delete()
+            elif wsi.Evaluation == 'Rejected':
+                wsi.stockbooks.remove(stock)
+                if not wsi.stockbook:
+                    wsi.stockbook = stock
+                    wsi.save(update_fields=['stockbook'])
     except WSIReport.DoesNotExist:
         pass
 

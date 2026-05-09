@@ -110,6 +110,7 @@ export default function ReportSummarization() {
 
   const handleExport = async (summaryId) => {
     try {
+      await api.post('/audit/log-export/', { type: 'Summary', id: summaryId })
       const res = await api.get(`/reports/summary/upd/${summaryId}/`)
       exportSummaryToExcel(res.data)
     } catch (err) {

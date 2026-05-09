@@ -276,6 +276,12 @@ export default function StockBook() {
       navigate(`/whse/create/${newStock.report_id}`, {
         state: { stockBook: newStock, mode: 'edit' }
       })
+
+      await api.post('/audit/log-import/', { 
+        type: 'StockBook', 
+        id: newStock.report_id, 
+        count: importedTransactions.length
+      })
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to create stock book.')
     } finally {

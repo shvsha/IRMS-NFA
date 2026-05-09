@@ -46,6 +46,16 @@ class WSRReportGroupedSerializer(serializers.ModelSerializer):
     branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
     user_full_name    = serializers.CharField(source='stockbook.user_full_name', read_only=True)
     user_WHCode       = serializers.CharField(source='stockbook.user_WHCode', read_only=True)
+    warehouse = serializers.SerializerMethodField()
+
+    def get_warehouse(self, obj):
+        txn = obj.transactions.first()
+        if txn and txn.user_WHCode:
+            return txn.user_WHCode
+        if obj.stockbook and obj.stockbook.user_WHCode:
+            return obj.stockbook.user_WHCode
+        sb = obj.stockbooks.first()
+        return sb.user_WHCode if sb else None
 
     class Meta:
         model  = WSRReport
@@ -61,6 +71,16 @@ class WSIReportGroupedSerializer(serializers.ModelSerializer):
     branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
     user_full_name    = serializers.CharField(source='stockbook.user_full_name', read_only=True)
     user_WHCode       = serializers.CharField(source='stockbook.user_WHCode', read_only=True)
+    warehouse = serializers.SerializerMethodField()
+
+    def get_warehouse(self, obj):
+        txn = obj.transactions.first()
+        if txn and txn.user_WHCode:
+            return txn.user_WHCode
+        if obj.stockbook and obj.stockbook.user_WHCode:
+            return obj.stockbook.user_WHCode
+        sb = obj.stockbooks.first()
+        return sb.user_WHCode if sb else None
 
     class Meta:
         model  = WSIReport

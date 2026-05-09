@@ -81,6 +81,8 @@ export default function Login() {
       } else {
         alert('Unknown user level.')
       }
+      
+      await api.post('/audit/log-login/')
     } catch (err) {
       const error = err.response?.data
       if (error) {

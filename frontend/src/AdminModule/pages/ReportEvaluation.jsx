@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button"
 // api
 import api from "@/api/axios";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
 
 // Normalize WSRReport → display row
 const mapWSR = (r) => ({
@@ -32,7 +31,7 @@ const mapWSR = (r) => ({
   date:       r.stockbook_date   ?? '—',
   cerealType: r.stockbook_cereal ?? '—',
   reportType: 'Statement of Receipt',
-  whse:       r.transactions?.[0]?.user_WHCode ?? '—',
+  whse: r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
   status:     r.Evaluation       ?? 'Pending',
   reason:     r.Reason           ?? '',
   stockbookId: r.stockbook,
@@ -46,7 +45,7 @@ const mapWSI = (r) => ({
   date:       r.stockbook_date   ?? '—',
   cerealType: r.stockbook_cereal ?? '—',
   reportType: 'Statement of Issue',
-  whse:       r.transactions?.[0]?.user_WHCode ?? '—',
+  whse: r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
   status:     r.Evaluation       ?? 'Pending',
   reason:     r.Reason           ?? '',
   stockbookId: r.stockbook,
@@ -123,7 +122,10 @@ export default function ReportEvaluation() {
 
       const userStage = getSignatoryStage(currentUser);
       if (currentUser?.user_level === 'Admin') {
-        combined = combined.filter((report) => report.currentStage === 'admin');
+        combined = combined.filter((report) => 
+          report.currentStage === 'admin' &&
+          (report.status === 'Pending' || report.status === 'Rejected')
+        );
       } else if (userStage) {
         combined = combined.filter((report) => report.currentStage === userStage);
       }
@@ -531,26 +533,34 @@ export default function ReportEvaluation() {
           style={{ top: dropdownPos.top, left: dropdownPos.left }}
           onClick={e => e.stopPropagation()}
         >
-          <button
-            onClick={() => {
-              const report = filteredReports.find(r => rowKey(r) === openDropdown);
-              handleApprove(report);
-              setOpenDropdown(null);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#3E7A43] hover:bg-green-50 transition-colors"
-          >
-            <IoMdCheckmarkCircleOutline size={18} /> Approve
-          </button>
-          <button
-            onClick={() => {
-              const report = filteredReports.find(r => rowKey(r) === openDropdown);
-              handleRejectOpen(report);
-              setOpenDropdown(null);
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors"
-          >
-            <IoMdCloseCircleOutline size={18} /> Reject
-          </button>
+          {(() => {
+            const report = filteredReports.find(r => rowKey(r) === openDropdown);
+            const isRejected = report?.status === 'Rejected';
+            return (
+              <>
+                <button
+                  disabled={isRejected}
+                  onClick={() => {
+                    handleApprove(report);
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#3E7A43] hover:bg-green-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <IoMdCheckmarkCircleOutline size={18} /> Approve
+                </button>
+                <button
+                  disabled={isRejected}
+                  onClick={() => {
+                    handleRejectOpen(report);
+                    setOpenDropdown(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <IoMdCloseCircleOutline size={18} /> Reject
+                </button>
+              </>
+            );
+          })()}
         </div>,
         document.body
       )}

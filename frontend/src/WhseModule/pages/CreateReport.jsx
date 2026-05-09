@@ -410,7 +410,8 @@ export default function CreateReport() {
   });
 
   // export
-  const handleExport = () => {
+  const handleExport = async () => {
+    await api.post('/audit/log-export/', { type: 'StockBook', id: reportId })
     const exportRows = transactions.map(mapToExportFormat);
     exportStockbookToExcel(exportRows, reportId);
   }
@@ -434,6 +435,11 @@ export default function CreateReport() {
       setTransactions(merged)
       setCurrentIndex(existing.length)
 
+      await api.post('/audit/log-import/', { 
+        type: 'StockBook', 
+        id: reportId,
+        count: imported.length 
+      })
       addToast(`Successfully imported ${imported.length} transaction(s).`, '#1D8104')
     } catch (err) {
       addToast(err.message || 'Import failed.', '#BB2325')

@@ -201,6 +201,7 @@ export default function ReportHistory() {
   const handleExport = async (report) => {
     try {
       if (report.reporttype === 'Statement of Receipts') {
+        await api.post('/audit/log-export/', { type: 'WSR', id: wsrId })
         const [wsrRes, stockRes] = await Promise.all([
           api.get(`/reports/wsr-reports/upd/${report.wsrId}/`),
           api.get(`/reports/stocks/upd/${report.stockbookId}/`),
@@ -229,6 +230,7 @@ export default function ReportHistory() {
         )
 
       } else if (report.reporttype === 'Statement of Issuance') {
+        await api.post('/audit/log-export/', { type: 'WSI', id: wsiId })
         const [wsiRes, stockRes] = await Promise.all([
           api.get(`/reports/wsi-reports/upd/${report.wsiId}/`),
           api.get(`/reports/stocks/upd/${report.stockbookId}/`),
@@ -256,6 +258,7 @@ export default function ReportHistory() {
           wsiReport.transactions ?? []
         )
       } else if (report.reporttype === 'Summary of Warehouse Reports') {
+        await api.post('/audit/log-export/', { type: 'Summary', id: summaryId })
         const summaryRes = await api.get(`/reports/summary/upd/${report.summaryId}/`)
         exportSummaryToExcel(summaryRes.data)
       }

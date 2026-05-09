@@ -122,7 +122,8 @@ export default function ViewReport() {
   );
 
   // export
-  const handleExport = () => {
+  const handleExport = async () => {
+    await api.post('/audit/log-export/', { type: 'StockBook', id: reportId })
     exportStockbookToExcel(rows, reportId)
   }
 

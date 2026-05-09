@@ -37,7 +37,10 @@ class AuditLog(models.Model):
     @property
     def Position(self):
         if self.User_ID:
-            return self.User_ID.position 
+            pos = getattr(self.User_ID, 'position', None)
+            if pos:
+                return pos
+            return self.User_ID.user_level
         return None
 
     def __str__(self):

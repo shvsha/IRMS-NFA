@@ -34,6 +34,7 @@ export default function NavBarWhse() {
   const handleLogout = async () => {
     try {
       const refresh = localStorage.getItem('refresh_token')
+      await api.post('/audit/log-logout/')
       await api.post('api/auth/logout', { refresh })
     } catch (err) {
       console.log('Logout error: ', err)
