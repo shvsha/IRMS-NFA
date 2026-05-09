@@ -6,7 +6,8 @@ from .views import (
     get_wsi_reports, upd_wsi_report,
     get_summary, create_summary, upd_summary,
     unsubmit_stock,
-    get_wsr_by_stockbook, get_wsi_by_stockbook
+    get_wsr_by_stockbook, get_wsi_by_stockbook,
+    trigger_archive
 )
 
 urlpatterns = [
@@ -38,4 +39,7 @@ urlpatterns = [
     # get wsr and wsi
     path('stocks/wsr-grouped/<int:pk>/', get_wsr_by_stockbook),
     path('stocks/wsi-grouped/<int:pk>/', get_wsi_by_stockbook),
+
+    # archive tester
+    path('stocks/trigger-archive/', trigger_archive, name='trigger_archive'),
 ]

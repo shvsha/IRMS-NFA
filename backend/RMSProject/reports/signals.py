@@ -23,9 +23,6 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
     if has_wsr:
         wsr_report = WSRReport.objects.filter(
             date_covered=instance.Date,
-        ).filter(
-            models.Q(stockbook=instance) | models.Q(stockbooks=instance)
-        ).filter(
             Evaluation__in=['Rejected', 'Pending']
         ).order_by('-wsr_report_id').first()
 
@@ -63,7 +60,7 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
 
         if submitted_by:
             from audit.models import AuditLog
-            action = "Created" if created_wsr else "Resubmitted"
+            action = "Created" if created_wsr else "Updated"
             AuditLog.objects.create(
                 User_ID=submitted_by,
                 Module="WSR Report",
@@ -73,14 +70,11 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
     if has_wsi:
         wsi_report = WSIReport.objects.filter(
             date_covered=instance.Date,
-        ).filter(
-            models.Q(stockbook=instance) | models.Q(stockbooks=instance)
-        ).filter(
             Evaluation__in=['Rejected', 'Pending']
         ).order_by('-wsi_report_id').first()
 
         if wsi_report:
-            created_wsr = False
+            created_wsi = False
             wsi_report.Evaluation          = 'Pending'
             wsi_report.current_stage       = 'admin'
             wsi_report.Reason              = ''
@@ -113,7 +107,7 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
 
         if submitted_by:
             from audit.models import AuditLog
-            action = "Created" if created_wsi else "Resubmitted"
+            action = "Created" if created_wsi else "Updated"
             AuditLog.objects.create(
                 User_ID=submitted_by,
                 Module="WSI Report",

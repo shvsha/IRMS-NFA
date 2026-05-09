@@ -63,7 +63,7 @@ export default function WarehouseIssuesForm() {
   const signatories = [
     { label: 'Certified Correct:', name: accountOfficer,               role: 'Warehouse Supervisor' },
     { label: 'Verified Correct:',  name: report?.asst_bm_name  ?? '—', role: 'Asst. Branch Manager' },
-    { label: 'Verified Correct:',  name: report?.accountant_name ?? '—', role: 'Accountant II'      },
+    { label: 'Verified Correct:',  name: report?.accountant_name ?? '—', role: 'Accountant III'      },
     { label: 'Noted by:',          name: report?.branch_m_name  ?? '—', role: 'Branch Manager'      },
   ]
 
@@ -209,10 +209,10 @@ export default function WarehouseIssuesForm() {
                   return (
                     <tr key={txn.transaction_id ?? i}>
                       {/* Cereal Type / Variety */}
-                      <td className="border border-[#333] text-center break-words"
-                          style={{ padding: "clamp(2px,0.4vw,5px) clamp(2px,0.3vw,4px)", height: "clamp(18px,2.5vw,28px)" }}>
-                        {cerealVariety}
-                      </td>
+                    <td className="border border-[#333] text-center break-words"
+                        style={{ padding: "clamp(2px,0.4vw,5px) clamp(2px,0.3vw,4px)", height: "clamp(18px,2.5vw,28px)" }}>
+                      {txn.cereal_type || cerealVariety}
+                    </td>
                       {/* WSI# — only if type is WSI */}
                       <td className="border border-[#333] text-center"
                           style={{ padding: "clamp(2px,0.4vw,5px) clamp(2px,0.3vw,4px)", height: "clamp(18px,2.5vw,28px)" }}>

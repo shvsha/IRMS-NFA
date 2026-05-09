@@ -30,12 +30,13 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogDescription } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 const ITEMS_PER_PAGE = 7
 
 import { exportWSRToExcel, exportWSIToExcel, exportSummaryToExcel } from '@/utils/exportToExcel'
 
-// Map API data into flat rows for the table
 function buildRows(stocks, wsrReports, wsiReports, summaries) {
   const rows = []
 
@@ -76,12 +77,21 @@ function buildRows(stocks, wsrReports, wsiReports, summaries) {
   summaries.forEach(s => {
     const stock = stocks.find(st => st.report_id === s.stockbook)
     if (stock?.Status === 'Archived') {
+      const cerealTypes = [...new Set(
+        (s.rows ?? []).map(r => r.cerealType).filter(c => c && c !== '—')
+      )]
+      const cerealDisplay = cerealTypes.length === 0
+        ? (s.CerealType ?? '—')
+        : cerealTypes.length === 1
+          ? cerealTypes[0]
+          : 'Mixed Cereal'
+
       rows.push({
         date:        s.date_covered    ?? '—',
         reportid:    `SUM-${s.summary_id}`,
         reporttype:  'Summary of Warehouse Reports',
         whse:        s.WHCode          ?? '—',
-        cerealtype:  s.CerealType      ?? '—',
+        cerealtype:  cerealDisplay,
         summaryId:   s.summary_id,
         stockbookId: s.stockbook,
         wsrId:       null,
@@ -131,6 +141,10 @@ export default function ReportHistory() {
   const [selectedMonth,      setSelectedMonth]      = useState("January")
   const [monthlyYear,        setMonthlyYear]        = useState(new Date().getFullYear())
 
+  // for multi export
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [isExporting,     setIsExporting]     = useState(false)
+
   // fetch all needed data
   useEffect(() => {
     const fetchAll = async () => {
@@ -174,8 +188,53 @@ export default function ReportHistory() {
     const matchesReportType = selectedReportType === "All Reports"     || report.reporttype === selectedReportType
     const matchesCerealType = selectedCerealType === "All Cereal Type" || report.cerealtype === selectedCerealType
     const matchesSearch     = report.reportid.toLowerCase().includes(search.toLowerCase())
-    return matchesWarehouse && matchesReportType && matchesCerealType && matchesSearch
+
+    let matchesDate = true
+
+    if (report.date && report.date !== '—') {
+      const reportDate = new Date(report.date)
+
+      if (rangeDate === 'Daily' && selectedDate) {
+        matchesDate =
+          reportDate.getFullYear() === selectedDate.getFullYear() &&
+          reportDate.getMonth()    === selectedDate.getMonth()    &&
+          reportDate.getDate()     === selectedDate.getDate()
+
+      } else if (rangeDate === 'Weekly' && selectedWeek) {
+        const firstOfMonth = new Date(weeklyYear, weeklyMonth, 1)
+        const firstDayOfWeek = firstOfMonth.getDay()
+        const weekStart = new Date(weeklyYear, weeklyMonth, 1 + (selectedWeek - 1) * 7 - firstDayOfWeek)
+        const weekEnd   = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+        matchesDate = reportDate >= weekStart && reportDate <= weekEnd
+
+      } else if (rangeDate === 'Monthly' && selectedMonth) {
+        const MONTHS = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December']
+        const monthIndex = MONTHS.indexOf(selectedMonth)
+        matchesDate =
+          reportDate.getFullYear() === monthlyYear &&
+          reportDate.getMonth()    === monthIndex
+      }
+    }
+
+    return matchesWarehouse && matchesReportType && matchesCerealType && matchesSearch && matchesDate
   })
+
+  const handleRangeDateChange = (v) => {
+    setRangeDate(v)
+    setShowCalendarFilter(false)
+    setSelectedDate(null)
+    setSelectedWeek(1)
+    setSelectedMonth('January')
+    setCurrentPage(1)
+  }
+
+  const handleDateSelect    = (d) => { setSelectedDate(d);    setCurrentPage(1) }
+  const handleWeekSelect    = (w) => { setSelectedWeek(w);    setCurrentPage(1) }
+  const handleMonthSelect   = (m) => { setSelectedMonth(m);   setCurrentPage(1) }
+  const handleYearChange    = (y) => { setMonthlyYear(y);     setCurrentPage(1) }
 
   const totalPages      = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
   const startIndex      = (currentPage - 1) * ITEMS_PER_PAGE
@@ -212,7 +271,7 @@ export default function ReportHistory() {
   const handleExport = async (report) => {
     try {
       if (report.reporttype === 'Statement of Receipts') {
-        await api.post('/audit/log-export/', { type: 'WSR', id: wsrId })
+        await api.post('/audit/log-export/', { type: 'WSR', id: report.wsrId })
         const [wsrRes, stockRes] = await Promise.all([
           api.get(`/reports/wsr-reports/upd/${report.wsrId}/`),
           api.get(`/reports/stocks/upd/${report.stockbookId}/`),
@@ -241,7 +300,7 @@ export default function ReportHistory() {
         )
 
       } else if (report.reporttype === 'Statement of Issuance') {
-        await api.post('/audit/log-export/', { type: 'WSI', id: wsiId })
+        await api.post('/audit/log-export/', { type: 'WSR', id: report.wsrId })
         const [wsiRes, stockRes] = await Promise.all([
           api.get(`/reports/wsi-reports/upd/${report.wsiId}/`),
           api.get(`/reports/stocks/upd/${report.stockbookId}/`),
@@ -269,12 +328,29 @@ export default function ReportHistory() {
           wsiReport.transactions ?? []
         )
       } else if (report.reporttype === 'Summary of Warehouse Reports') {
-        await api.post('/audit/log-export/', { type: 'Summary', id: summaryId })
+        await api.post('/audit/log-export/', { type: 'Summary', id: report.summaryId })
         const summaryRes = await api.get(`/reports/summary/upd/${report.summaryId}/`)
         exportSummaryToExcel(summaryRes.data)
       }
     } catch (err) {
       console.error('Export failed:', err)
+    }
+  }
+
+  const handleBulkExport = async () => {
+    setIsExporting(true)
+    try {
+      const reportsToExport = rows.filter(r => selectedRows.includes(r.reportid))
+      for (const report of reportsToExport) {
+        await handleExport(report)
+        await new Promise(res => setTimeout(res, 400))
+      }
+      setSelectedRows([])
+      setShowExportModal(false)
+    } catch (err) {
+      console.error('Bulk export failed:', err)
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -309,7 +385,7 @@ export default function ReportHistory() {
             <div className="flex gap-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center justify-center rounded-md bg-[#E6EEF6] text-[#072560] hover:bg-[#d5e3f0] transition ease-in h-10 w-12 shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
+                  <button className="flex items-center justify-center rounded-md  text-[#072560] hover:bg-[#d5e3f0] transition ease-in h-10 w-12 shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
                     <FaRegCalendarAlt color='#072560' size={20} />
                   </button>
                 </PopoverTrigger>
@@ -323,7 +399,7 @@ export default function ReportHistory() {
                     <FieldGroup>
                       <Field>
                         <FieldLabel className="font-medium text-[#2D317F]">Range</FieldLabel>
-                        <Select value={rangeDate} onValueChange={(v) => { setRangeDate(v); setShowCalendarFilter(false) }}>
+                        <Select value={rangeDate} onValueChange={handleRangeDateChange}>
                           <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue placeholder="Select range" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem className="p-2 text-[#2D317F]" value="Daily">Daily</SelectItem>
@@ -365,9 +441,20 @@ export default function ReportHistory() {
                   </div>
                   {showCalendarFilter && (
                     <div className="absolute left-7 top-60 z-50 mt-2">
-                      {rangeDate === "Daily"   && <DailyFilter value={selectedDate} onChange={setSelectedDate} />}
-                      {rangeDate === "Weekly"  && <WeeklyFilter selectedWeek={selectedWeek} year={weeklyYear} month={weeklyMonth} onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth} onMonthChange={setWeeklyMonth} onYearChange={setWeeklyYear} onWeekSelect={setSelectedWeek} />}
-                      {rangeDate === "Monthly" && <MonthlyFilter selectedMonth={selectedMonth} year={monthlyYear} onYearChange={setMonthlyYear} onMonthChange={setSelectedMonth} />}
+                      {rangeDate === "Daily"   && <DailyFilter value={selectedDate} onChange={handleDateSelect} />}
+                      {rangeDate === "Weekly"  && <WeeklyFilter
+                        selectedWeek={selectedWeek}
+                        year={weeklyYear} month={weeklyMonth}
+                        onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth}
+                        onMonthChange={setWeeklyMonth} onYearChange={setWeeklyYear}
+                        onWeekSelect={handleWeekSelect}
+                      />}
+                      {rangeDate === "Monthly" && <MonthlyFilter
+                        selectedMonth={selectedMonth}
+                        year={monthlyYear}
+                        onYearChange={handleYearChange}
+                        onMonthChange={handleMonthSelect}
+                      />}
                     </div>
                   )}
                 </PopoverContent>
@@ -396,6 +483,7 @@ export default function ReportHistory() {
                   <SelectTrigger className="py-5 border-[#2D317F] bg-white text-[#2D317F] shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem className='p-2 text-[#2D317F]' value="All Cereal Type">All Cereal Type</SelectItem>
+                    <SelectItem className='p-2 text-[#2D317F]' value="Mixed Cereal">Mixed Cereal</SelectItem>
                     <SelectItem className='p-2 text-[#2D317F]' value="WD1G50">Rice</SelectItem>
                     <SelectItem className='p-2 text-[#2D317F]' value="PD1350">Palay</SelectItem>
                   </SelectContent>
@@ -471,7 +559,13 @@ export default function ReportHistory() {
                         <TableCell className="text-center text-[13px] font-semibold text-[#2D317F]">{report.reportid}</TableCell>
                         <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">{report.reporttype}</TableCell>
                         <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">{report.whse}</TableCell>
-                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">{report.cerealtype}</TableCell>
+                        <TableCell className="text-center text-[13px] font-medium text-[#2D317F]">
+                          {report.cerealtype === 'Mixed Cereal' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] text-[#2D317F]">
+                              Mixed Cereal
+                            </span>
+                          ) : report.cerealtype}
+                        </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -504,8 +598,10 @@ export default function ReportHistory() {
             {selectedRows.length > 0 && (
               <div className="flex items-center justify-between gap-3 font-medium text-[#2D317F]">
                 <span>{selectedRows.length} Reports Selected</span>
-                <button className="inline-flex items-center gap-[5px] rounded-full border border-[#1D8104] px-[14px] py-[6px] text-[13px] font-semibold text-[#1D8104] transition-colors hover:bg-[#1D8104] hover:text-white">
-                  <CiExport size={17} />Export
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  className="inline-flex items-center gap-[5px] rounded-full border border-[#1D8104] px-[14px] py-[6px] text-[13px] font-semibold text-[#1D8104] transition-colors hover:bg-[#1D8104] hover:text-white">
+                  <CiExport size={17} />Export ({selectedRows.length})
                 </button>
               </div>
             )}
@@ -529,6 +625,50 @@ export default function ReportHistory() {
           </div>
         </div>
       </div>
+
+      {/* Export Confirmation Dialog */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[420px] shadow-2xl'>
+          <div className='bg-[#1D8104] py-3 rounded-t-lg' />
+          <div className='bg-[#1D8104] py-5 rounded-full flex justify-center mx-38 mb-3 mt-5'>
+            <CiExport className="w-12 h-12" color='white' />
+          </div>
+          <DialogHeader>
+            <div className='text-center'>
+              <p className='text-[#1D8104] font-bold text-xl'>Export Reports?</p>
+              <p className='text-sm mx-5 mt-2 text-[#051F52]'>
+                You are about to export{' '}
+                <span className='font-semibold'>{selectedRows.length}</span>{' '}
+                report{selectedRows.length > 1 ? 's' : ''} as separate files.
+              </p>
+            </div>
+            <DialogDescription className='flex flex-col gap-3 mx-5 mt-3'>
+              <ul className="max-h-36 overflow-y-auto rounded-md border border-gray-200 bg-white px-4 py-2 text-sm text-[#2D317F] flex flex-col gap-1">
+                {selectedRows.map(id => (
+                  <li key={id} className="font-medium">• {id}</li>
+                ))}
+              </ul>
+              <div className='flex justify-center gap-3 mt-3 mb-5'>
+                <Button
+                  variant="ghost"
+                  disabled={isExporting}
+                  onClick={() => setShowExportModal(false)}
+                  className='px-7 py-4.5 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBulkExport}
+                  disabled={isExporting}
+                  className='px-7 py-4.5 rounded-md bg-[#1D8104] text-white font-medium hover:bg-green-700 disabled:opacity-50'
+                >
+                  {isExporting ? 'Exporting…' : 'Confirm Export'}
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

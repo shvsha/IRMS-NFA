@@ -343,7 +343,7 @@ export function exportWSRToExcel(reportData, wsrData) {
     set(r, 1,  row.WSR_no ?? row.WTS_no  ?? '', RPT_TD)  // WSR#/WTS#
     set(r, 2,  row.Transaction_ref       ?? '', RPT_TD)  // Nature of Transaction
     set(r, 3,  row.Particulars           ?? '', RPT_TD)  // From Whom (Name)
-    set(r, 4,  row.OR_Number             ?? '', RPT_TD)  // PR/BL/
+    set(r, 4,  '', RPT_TD)  // PR/BL/
     set(r, 5,  row.Age                   ?? '', RPT_TD)  // Age
     set(r, 6,  row.Cond_R                ?? '', RPT_TD)  // Cond.
     set(r, 7,  row.Moisture_Content      ?? '', RPT_TD)  // MC
@@ -427,7 +427,7 @@ export function exportWSIToExcel(reportData, wsiData) {
     set(r, 3,  row.AI_Number          ?? '', RPT_TD)  // AI#
     set(r, 4,  row.Transaction_ref    ?? '', RPT_TD)  // Nature of Transaction
     set(r, 5,  row.Particulars        ?? '', RPT_TD)  // Issued to (Name)
-    set(r, 6,  row.OR_Number          ?? '', RPT_TD)  // OR/BL/WSR No.
+    set(r, 6,  '', RPT_TD)   // OR/BL/WSR No.
     set(r, 7,  row.Age                ?? '', RPT_TD)  // Age
     set(r, 8,  row.Cond_I             ?? '', RPT_TD)  // Cond.
     set(r, 9,  row.Moisture_Content   ?? '', RPT_TD)  // MC

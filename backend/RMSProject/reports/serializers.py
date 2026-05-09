@@ -37,16 +37,27 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class WSRReportGroupedSerializer(serializers.ModelSerializer):
-    """Returns all WSR transactions for a given date + cereal, across multiple stockbooks."""
     transactions      = TransactionSerializer(many=True, read_only=True)
     stockbook_date    = serializers.DateField(source='stockbook.Date', read_only=True)
-    stockbook_cereal  = serializers.CharField(source='stockbook.CerealType', read_only=True)
+    stockbook_cereal  = serializers.SerializerMethodField()
     asst_bm_name      = serializers.CharField(source='stockbook.Assist_BM.full_name', read_only=True, default='—')
     accountant_name   = serializers.CharField(source='stockbook.Account_II.full_name', read_only=True, default='—')
     branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
     user_full_name    = serializers.CharField(source='stockbook.user_full_name', read_only=True)
     user_WHCode       = serializers.CharField(source='stockbook.user_WHCode', read_only=True)
-    warehouse = serializers.SerializerMethodField()
+    warehouse         = serializers.SerializerMethodField()
+
+    def get_stockbook_cereal(self, obj):
+        cereals = list(
+            obj.stockbooks.exclude(CerealType=None)
+            .values_list('CerealType', flat=True)
+            .distinct()
+        )
+        if not cereals:
+            return obj.stockbook.CerealType if obj.stockbook else '—'
+        if len(cereals) == 1:
+            return cereals[0]
+        return 'Mixed Cereal'
 
     def get_warehouse(self, obj):
         txn = obj.transactions.first()
@@ -65,13 +76,25 @@ class WSRReportGroupedSerializer(serializers.ModelSerializer):
 class WSIReportGroupedSerializer(serializers.ModelSerializer):
     transactions      = TransactionSerializer(many=True, read_only=True)
     stockbook_date    = serializers.DateField(source='stockbook.Date', read_only=True)
-    stockbook_cereal  = serializers.CharField(source='stockbook.CerealType', read_only=True)
+    stockbook_cereal  = serializers.SerializerMethodField()
     asst_bm_name      = serializers.CharField(source='stockbook.Assist_BM.full_name', read_only=True, default='—')
     accountant_name   = serializers.CharField(source='stockbook.Account_II.full_name', read_only=True, default='—')
     branch_m_name     = serializers.CharField(source='stockbook.Branch_M.full_name', read_only=True, default='—')
     user_full_name    = serializers.CharField(source='stockbook.user_full_name', read_only=True)
     user_WHCode       = serializers.CharField(source='stockbook.user_WHCode', read_only=True)
-    warehouse = serializers.SerializerMethodField()
+    warehouse         = serializers.SerializerMethodField()
+
+    def get_stockbook_cereal(self, obj):
+        cereals = list(
+            obj.stockbooks.exclude(CerealType=None)
+            .values_list('CerealType', flat=True)
+            .distinct()
+        )
+        if not cereals:
+            return obj.stockbook.CerealType if obj.stockbook else '—'
+        if len(cereals) == 1:
+            return cereals[0]
+        return ', '.join(cereals)
 
     def get_warehouse(self, obj):
         txn = obj.transactions.first()
@@ -128,26 +151,21 @@ class SummarySerializer(serializers.ModelSerializer):
         running_begin_bags = float(obj.prev_B_Bags or 0)
         running_begin_nkg  = float(obj.prev_B_NKG  or 0)
 
-        try:
-            wsr_report = WSRReport.objects.get(
-                date_covered=obj.date_covered,
-                Evaluation__in=['Approved', 'Archive']
-            )
-        except WSRReport.DoesNotExist:
-            wsr_report = None
-
-        try:
-            wsi_report = WSIReport.objects.get(
-                date_covered=obj.date_covered,
-                Evaluation__in=['Approved', 'Archive']
-            )
-        except WSIReport.DoesNotExist:
-            wsi_report = None
-
         result = []
         for stockbook in stockbooks:
             total_R_Bags = total_R_NKG = total_I_Bags = total_I_NKG = 0
             condition = ''
+
+            # Match by BOTH date AND cereal type
+            wsr_report = WSRReport.objects.filter(
+                date_covered=stockbook.Date,
+                Evaluation__in=['Approved', 'Archive']
+            ).order_by('-wsr_report_id').first()
+
+            wsi_report = WSIReport.objects.filter(
+                date_covered=stockbook.Date,
+                Evaluation__in=['Approved', 'Archive']
+            ).order_by('-wsi_report_id').first()
 
             if wsr_report:
                 for t in wsr_report.transactions.filter(

@@ -14,35 +14,37 @@ def archive_completed_reports():
     logger.info(f"[Scheduler] Running archive job at {now}")
 
     stockbooks = StockBook.objects.filter(Status='Completed')
+    count = stockbooks.count()
 
     for stockbook in stockbooks:
+        # Archive the StockBook
         stockbook.Status = 'Archived'
         stockbook.save(update_fields=['Status'])
 
-        try:
-            if stockbook.wsr_report.Evaluation == 'Approved':
-                stockbook.wsr_report.Evaluation = 'Archive'
-                stockbook.wsr_report.save(update_fields=['Evaluation'])
-        except WSRReport.DoesNotExist:
-            pass
+        # Archive linked WSR reports (via M2M)
+        for wsr in WSRReport.objects.filter(stockbooks=stockbook, Evaluation='Approved'):
+            wsr.Evaluation = 'Archive'
+            wsr.save(update_fields=['Evaluation'])
 
-        try:
-            if stockbook.wsi_report.Evaluation == 'Approved':
-                stockbook.wsi_report.Evaluation = 'Archive'
-                stockbook.wsi_report.save(update_fields=['Evaluation'])
-        except WSIReport.DoesNotExist:
-            pass
+        # Archive linked WSI reports (via M2M)
+        for wsi in WSIReport.objects.filter(stockbooks=stockbook, Evaluation='Approved'):
+            wsi.Evaluation = 'Archive'
+            wsi.save(update_fields=['Evaluation'])
 
-    logger.info(f"[Scheduler] Archived {stockbooks.count()} stockbooks.")
+    logger.info(f"[Scheduler] Archived {count} stockbooks.")
 
 
 def start():
+    import os
+    if os.environ.get('RUN_MAIN') != 'true':
+        return
+
     scheduler = BackgroundScheduler(timezone=settings.TIME_ZONE)
     scheduler.add_jobstore(DjangoJobStore(), 'default')
 
     scheduler.add_job(
         archive_completed_reports,
-        trigger=CronTrigger(hour=18, minute=0),  # ← 6:00 PM daily
+        trigger=CronTrigger(hour=18, minute=0),
         id='archive_reports_6pm',
         name='Archive completed reports at 6 PM',
         jobstore='default',

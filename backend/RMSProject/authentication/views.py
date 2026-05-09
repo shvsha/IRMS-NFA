@@ -12,6 +12,8 @@ import random
 from users.models import User, PasswordResetCode
 from django.contrib.auth.hashers import make_password
 
+from audit.models import AuditLog
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -80,6 +82,12 @@ class ForgotPasswordView(APIView):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
         )
+        
+        AuditLog.objects.create(
+            User_ID = user,
+            Module  = 'Authentication',
+            Action  = f'Password reset requested for {user.full_name} ({user.username})'
+        )
 
         return Response({'message': 'Code sent to email.'}, status=status.HTTP_200_OK)
 
@@ -120,6 +128,12 @@ class ResetPasswordView(APIView):
         reset = PasswordResetCode.objects.filter(user=user, code=code, is_used=False).last()
 
         if not reset or reset.is_expired():
+            AuditLog.objects.create(
+                User_ID = user,
+                Module  = 'Authentication',
+                Action  = f'Password reset failed (invalid/expired code) for {user.full_name} ({user.username})'
+            )
+                        
             return Response({'error': 'Invalid or expired code.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.password = make_password(new_password)
@@ -127,5 +141,11 @@ class ResetPasswordView(APIView):
 
         reset.is_used = True
         reset.save()
+
+        AuditLog.objects.create(
+            User_ID = user,
+            Module  = 'Authentication',
+            Action  = f'Password reset successful for {user.full_name} ({user.username})'
+        )
 
         return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)

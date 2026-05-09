@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { GoLinkExternal } from "react-icons/go";
 import { FaRegCircleCheck } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
+import { CiExport } from "react-icons/ci"
 import Header from '../../components/Header';
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +10,10 @@ import { useNavigate } from "react-router-dom";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getNotifRoute } from "@/utils/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+
+// for excel
+import { createPortal } from 'react-dom'
+import { exportWSRToExcel, exportWSIToExcel } from '@/utils/exportToExcel'
 
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,6 +78,9 @@ export default function ReportStatus() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason]         = useState("");
   const [selectedReport, setSelectedReport]     = useState(null);
+
+  const [openDropdown,  setOpenDropdown]  = useState(null)
+  const [dropdownPos,   setDropdownPos]   = useState({ top: 0, left: 0 })
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -147,10 +155,78 @@ export default function ReportStatus() {
     navigate(`/whse/create/${selectedReport.stockbookId}`, {
       state: {
         mode:         'edit',
-        rejectedType: selectedReport._type, // 'WSR' or 'WSI'
+        rejectedType: selectedReport._type,
       },
     });
   };
+
+  const handleExport = async (report) => {
+    try {
+      if (report.reportType === 'Statement of Receipts') {
+        await api.post('/audit/log-export/', { type: 'WSR', id: report.id })
+        const [wsrRes, stockRes] = await Promise.all([
+          api.get(`/reports/wsr-reports/upd/${report.id}/`),
+          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
+        ])
+        const wsrReport = wsrRes.data
+        const stock     = stockRes.data
+        const firstTx   = wsrReport.transactions?.[0] ?? {}
+        exportWSRToExcel(
+          {
+            date:        stock.Date                              ?? '—',
+            region:      'Region 1',
+            province:    'La Union',
+            officer:     firstTx.user_full_name                 ?? '—',
+            whName:      'San Juan GID 2A',
+            whAddress:   'San Juan, La Union',
+            whCode:      firstTx.user_WHCode                    ?? '—',
+            cerealType:  stock.CerealType                       ?? '—',
+            wsrId:       `WSR-${report.id}`,
+            certifiedBy: firstTx.user_full_name                 ?? '—',
+            verifiedBy1: wsrReport.asst_bm_name                 ?? '—',
+            verifiedBy2: wsrReport.accountant_name              ?? '—',
+            notedBy:     wsrReport.branch_m_name                ?? '—',
+          },
+          wsrReport.transactions ?? []
+        )
+      } else if (report.reportType === 'Statement of Issuance') {
+        await api.post('/audit/log-export/', { type: 'WSI', id: report.id })
+        const [wsiRes, stockRes] = await Promise.all([
+          api.get(`/reports/wsi-reports/upd/${report.id}/`),
+          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
+        ])
+        const wsiReport = wsiRes.data
+        const stock     = stockRes.data
+        const firstTx   = wsiReport.transactions?.[0] ?? {}
+        exportWSIToExcel(
+          {
+            date:        stock.Date                              ?? '—',
+            region:      'Region 1',
+            province:    'La Union',
+            officer:     firstTx.user_full_name                 ?? '—',
+            whName:      'San Juan GID 2A',
+            whAddress:   'San Juan, La Union',
+            whCode:      firstTx.user_WHCode                    ?? '—',
+            cerealType:  stock.CerealType                       ?? '—',
+            wsiId:       `WSI-${report.id}`,
+            certifiedBy: firstTx.user_full_name                 ?? '—',
+            verifiedBy1: wsiReport.asst_bm_name                 ?? '—',
+            verifiedBy2: wsiReport.accountant_name              ?? '—',
+            notedBy:     wsiReport.branch_m_name                ?? '—',
+          },
+          wsiReport.transactions ?? []
+        )
+      }
+    } catch (err) {
+      console.error('Export failed:', err)
+    }
+  }
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   // filters
   const filteredReports = reports.filter((r) => {
@@ -281,25 +357,36 @@ export default function ReportStatus() {
                           </td>
                           <td className="text-center">
                             <div className="flex justify-center items-center gap-2">
-
                               {/* View button */}
                               <button
                                 onClick={() => handleView(report)}
-                                className="border border-[#2D317F] bg-white text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white"
+                                className="border border-[#2D317F] text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white"
                               >
                                 <GoLinkExternal size={15} /> View
                               </button>
 
-                              {/* Reject reason button — only shown when Rejected */}
-                              {report.status === "Rejected" && (
+                              {/* ... dropdown */}
+                              <div className="relative">
                                 <button
-                                  onClick={() => handleViewReason(report)}
-                                  className="border border-[#FF595C] text-[#FF595C] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#BB2325] hover:text-white"
+                                  className="font-medium rounded-full bg-transparent py-0.5 px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer border border-[#2D317F] text-[#2D317F]"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const key = `${report.reportType}-${report.id}`
+                                    if (openDropdown === key) {
+                                      setOpenDropdown(null)
+                                    } else {
+                                      const rect = e.currentTarget.getBoundingClientRect()
+                                      setDropdownPos({
+                                        top:  rect.bottom + window.scrollY + 4,
+                                        left: rect.right  - 160,
+                                      })
+                                      setOpenDropdown(key)
+                                    }
+                                  }}
                                 >
-                                  <MdOutlineCancel size={15} /> Reject Reason
+                                  <span className="text-lg font-bold tracking-widest">···</span>
                                 </button>
-                              )}
-
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -349,6 +436,40 @@ export default function ReportStatus() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {openDropdown && createPortal(
+        <div
+          className="fixed bg-white border border-gray-200 rounded-xl shadow-xl z-[9999] w-40 overflow-hidden"
+          style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          onClick={e => e.stopPropagation()}
+        >
+          {(() => {
+            const report = filteredReports.find(
+              r => `${r.reportType}-${r.id}` === openDropdown
+            )
+            if (!report) return null
+            return (
+              <>
+                <button
+                  onClick={() => { handleExport(report); setOpenDropdown(null) }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1D8104] hover:bg-green-50 transition-colors"
+                >
+                  <CiExport size={18} /> Export
+                </button>
+                {report.status === 'Rejected' && (
+                  <button
+                    onClick={() => { handleViewReason(report); setOpenDropdown(null) }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors"
+                  >
+                    <MdOutlineCancel size={18} /> Reject Reason
+                  </button>
+                )}
+              </>
+            )
+          })()}
+        </div>,
+        document.body
+      )}
     </>
   );
 }

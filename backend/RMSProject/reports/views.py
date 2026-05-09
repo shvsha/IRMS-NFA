@@ -266,7 +266,35 @@ def upd_transaction(request, pk):
 # WSRReport
 @api_view(['GET'])
 def get_wsr_reports(request):
+    import calendar
     reports = WSRReport.objects.all()
+
+    year  = request.query_params.get('year')
+    month = request.query_params.get('month')
+    week  = request.query_params.get('week')
+
+    if year and month:
+        year  = int(year)
+        month = int(month)
+
+        if week:
+            week = int(week)
+            cal  = calendar.monthcalendar(year, month)
+            if week - 1 < len(cal):
+                week_days = [d for d in cal[week - 1] if d != 0]
+                if week_days:
+                    reports = reports.filter(
+                        date_covered__year=year,
+                        date_covered__month=month,
+                        date_covered__day__gte=week_days[0],
+                        date_covered__day__lte=week_days[-1],
+                    )
+        else:
+            reports = reports.filter(
+                date_covered__year=year,
+                date_covered__month=month,
+            )
+
     return Response(WSRReportGroupedSerializer(reports, many=True).data)
 
 
@@ -361,7 +389,35 @@ def upd_wsr_report(request, pk):
 # WSIReport
 @api_view(['GET'])
 def get_wsi_reports(request):
+    import calendar
     reports = WSIReport.objects.all()
+
+    year  = request.query_params.get('year')
+    month = request.query_params.get('month')
+    week  = request.query_params.get('week')
+
+    if year and month:
+        year  = int(year)
+        month = int(month)
+
+        if week:
+            week = int(week)
+            cal  = calendar.monthcalendar(year, month)
+            if week - 1 < len(cal):
+                week_days = [d for d in cal[week - 1] if d != 0]
+                if week_days:
+                    reports = reports.filter(
+                        date_covered__year=year,
+                        date_covered__month=month,
+                        date_covered__day__gte=week_days[0],
+                        date_covered__day__lte=week_days[-1],
+                    )
+        else:
+            reports = reports.filter(
+                date_covered__year=year,
+                date_covered__month=month,
+            )
+
     return Response(WSIReportGroupedSerializer(reports, many=True).data)
 
 
@@ -570,14 +626,17 @@ def get_wsr_by_stockbook(request, pk):
     except StockBook.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    try:
-        wsr_report = WSRReport.objects.get(date_covered=stock.Date)
-    except WSRReport.DoesNotExist:
-        wsr_report = None
-    except WSRReport.MultipleObjectsReturned:
-        wsr_report = WSRReport.objects.filter(
-            date_covered=stock.Date
-        ).order_by('-wsr_report_id').first()
+    wsr_report = WSRReport.objects.filter(
+        date_covered=stock.Date,
+        stockbooks=stock,
+    ).order_by('-wsr_report_id').first()
+
+    transactions = []
+    if wsr_report:
+        for t in wsr_report.transactions.filter(type__in=['WSR', 'WTS']):
+            txn_data = TransactionSerializer(t).data
+            txn_data['cereal_type'] = t.stockbook.CerealType if t.stockbook else '—'
+            transactions.append(txn_data)
 
     data = {
         'date':            str(stock.Date),
@@ -587,9 +646,7 @@ def get_wsr_by_stockbook(request, pk):
         'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
         'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
         'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
-        'transactions': TransactionSerializer(
-            wsr_report.transactions.filter(type__in=['WSR', 'WTS']), many=True
-        ).data if wsr_report else [],
+        'transactions':    transactions,
     }
     return Response(data)
 
@@ -602,14 +659,17 @@ def get_wsi_by_stockbook(request, pk):
     except StockBook.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    try:
-        wsi_report = WSIReport.objects.get(date_covered=stock.Date)
-    except WSIReport.DoesNotExist:
-        wsi_report = None
-    except WSIReport.MultipleObjectsReturned:
-        wsi_report = WSIReport.objects.filter(
-            date_covered=stock.Date
-        ).order_by('-wsi_report_id').first()
+    wsi_report = WSIReport.objects.filter(
+        date_covered=stock.Date,
+        stockbooks=stock,
+    ).order_by('-wsi_report_id').first()
+
+    transactions = []
+    if wsi_report:
+        for t in wsi_report.transactions.filter(type__in=['WSI', 'WTS']):
+            txn_data = TransactionSerializer(t).data
+            txn_data['cereal_type'] = t.stockbook.CerealType if t.stockbook else '—'
+            transactions.append(txn_data)
 
     data = {
         'date':            str(stock.Date),
@@ -619,8 +679,14 @@ def get_wsi_by_stockbook(request, pk):
         'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
         'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
         'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
-        'transactions': TransactionSerializer(
-            wsi_report.transactions.filter(type__in=['WSI', 'WTS']), many=True
-        ).data if wsi_report else [],
+        'transactions':    transactions,
     }
     return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def trigger_archive(request):
+    from .scheduler import archive_completed_reports
+    archive_completed_reports()
+    return Response({'status': 'archive triggered'})

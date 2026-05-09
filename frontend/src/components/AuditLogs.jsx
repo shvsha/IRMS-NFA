@@ -138,7 +138,7 @@ export default function AuditLogs() {
         userName={userName}
       />
 
-      <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[640px]">
+      <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[650px]">
 
         {/* Filter Container */}
         <div className="flex flex-row items-start gap-5 p-4 flex-wrap justify-between">

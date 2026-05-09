@@ -256,35 +256,34 @@ class Summary(models.Model):
         total_I_NKG  = Decimal('0')
         all_conditions = []
 
-        try:
-            wsr_report = WSRReport.objects.get(
+        for stockbook in all_stockbooks:
+            wsr_report = WSRReport.objects.filter(
                 date_covered=self.date_covered,
                 Evaluation__in=['Approved', 'Archive']
-            )
-            for t in wsr_report.transactions.filter(type__in=['WSR', 'WTS']):
-                total_R_Bags += t.R_Bags or Decimal('0')
-                total_R_NKG  += t.R_NKG  or Decimal('0')
-                if t.Cond_R:
-                    all_conditions.append(t.Cond_R)
-        except WSRReport.DoesNotExist:
-            pass
-        except Exception as e:
-            logger.warning(f"Summary #{self.summary_id} - WSR fetch failed: {e}")
+            ).order_by('-wsr_report_id').first()
 
-        try:
-            wsi_report = WSIReport.objects.get(
+            if wsr_report:
+                for t in wsr_report.transactions.filter(
+                    type__in=['WSR', 'WTS'], stockbook=stockbook
+                ):
+                    total_R_Bags += t.R_Bags or Decimal('0')
+                    total_R_NKG  += t.R_NKG  or Decimal('0')
+                    if t.Cond_R:
+                        all_conditions.append(t.Cond_R)
+
+            wsi_report = WSIReport.objects.filter(
                 date_covered=self.date_covered,
                 Evaluation__in=['Approved', 'Archive']
-            )
-            for t in wsi_report.transactions.filter(type__in=['WSI', 'WTS']):
-                total_I_Bags += t.I_Bags or Decimal('0')
-                total_I_NKG  += t.I_NKG  or Decimal('0')
-                if t.Cond_I:
-                    all_conditions.append(t.Cond_I)
-        except WSIReport.DoesNotExist:
-            pass
-        except Exception as e:
-            logger.warning(f"Summary #{self.summary_id} - WSI fetch failed: {e}")
+            ).order_by('-wsi_report_id').first()
+
+            if wsi_report:
+                for t in wsi_report.transactions.filter(
+                    type__in=['WSI', 'WTS'], stockbook=stockbook
+                ):
+                    total_I_Bags += t.I_Bags or Decimal('0')
+                    total_I_NKG  += t.I_NKG  or Decimal('0')
+                    if t.Cond_I:
+                        all_conditions.append(t.Cond_I)
 
         if all_conditions:
             self.Condition = Counter(all_conditions).most_common(1)[0][0]
