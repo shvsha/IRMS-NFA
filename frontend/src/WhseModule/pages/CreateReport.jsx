@@ -21,6 +21,11 @@ import { FaCheck } from "react-icons/fa6"
 // api
 import api from "@/api/axios";
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // export
 import { exportStockbookToExcel } from "@/utils/exportToExcel";
 
@@ -166,6 +171,12 @@ const isTransactionLocked = (txn, rejectedType) => {
 // component
 
 export default function CreateReport() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const { id }   = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -206,7 +217,7 @@ export default function CreateReport() {
   const transactionsRef    = useRef(transactions);
   const currentIndexRef    = useRef(currentIndex);
   const stockBookRef       = useRef(stockBook);
-    const fileInputRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => { transactionsRef.current = transactions; }, [transactions]);
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
@@ -491,7 +502,12 @@ export default function CreateReport() {
   // UI
   return (
     <>
-      <Header pageTitle="Stock Book" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+        pageTitle="Stock Book" 
+        unreadCount={unreadCount} 
+        notifTo={notifRoute}
+        userName={userName}
+      />
 
       <div className="mx-4 my-4 mt-2 pb-50 flex flex-col rounded-lg !min-h-[640px]">
 

@@ -10,6 +10,11 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { FaExclamation } from "react-icons/fa"
 import { IoSend } from "react-icons/io5";
 
+// for notif
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+
 // api
 import api from "@/api/axios";
 
@@ -41,6 +46,12 @@ const mapFromBackend = (txn) => ({
 });
 
 export default function ReviewTransaction() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const { id }   = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,16 +76,12 @@ export default function ReviewTransaction() {
   };
   const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG["In Progress"];
 
-  // ─── State ──────────────────────────────────────────────────────────────────
   const [localTransactions, setLocalTransactions] = useState([]);
   const [loading,           setLoading]           = useState(true);
   const [loadError,         setLoadError]         = useState(null);
   const [submitting,        setSubmitting]        = useState(false);
   const [deletingIndex,     setDeletingIndex]     = useState(null);
 
-  // ─── Fetch fresh from DB on mount ───────────────────────────────────────────
-  // This is the key fix: we never trust location.state for transaction data.
-  // CreateReport auto-saves everything, so the DB is always the source of truth.
   useEffect(() => {
     const fetchId = reportId !== "—" ? reportId : id;
     if (!fetchId) {
@@ -90,8 +97,6 @@ export default function ReviewTransaction() {
         setLoading(false);
       })
       .catch(() => {
-        // Fallback: if the fetch fails, use whatever was passed via navigation state
-        // so the user isn't left with a blank screen
         const fallback = location.state?.transactions ?? [];
         setLocalTransactions(fallback);
         setLoadError("Could not refresh from server — showing last known data.");
@@ -100,7 +105,7 @@ export default function ReviewTransaction() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);   // run once on mount only
 
-  // ─── Helpers ────────────────────────────────────────────────────────────────
+  // helpers
   const getDocumentField = (t) => {
     if (t.wts) return { label: "WTS#", value: t.wts };
     if (t.wsr) return { label: "WSR#", value: t.wsr };
@@ -141,9 +146,6 @@ export default function ReviewTransaction() {
   };
 
   const handleGoBack = () => {
-    // Pass the current (possibly trimmed after deletes) transaction list back.
-    // CreateReport will re-fetch from DB anyway, but passing editIndex ensures
-    // the cursor lands on the last card rather than always index 0.
     navigate(`/whse/create/${reportId}`, {
       state: {
         stockBook,
@@ -163,7 +165,6 @@ export default function ReviewTransaction() {
     });
   };
 
-  // ─── Early returns ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <>
@@ -175,10 +176,14 @@ export default function ReviewTransaction() {
     );
   }
 
-  // ─── UI ─────────────────────────────────────────────────────────────────────
   return (
     <>
-      <Header pageTitle="Stock Book" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+        pageTitle="Stock Book" 
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
+      />
 
       <div className="mx-4 my-4 mt-2 pb-50 flex flex-col rounded-lg !min-h-[640px]">
 

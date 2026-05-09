@@ -8,6 +8,11 @@ import { FaSearch, FaBars } from "react-icons/fa";
 import { useState, useEffect } from 'react'
 import Header from '../../components/Header'
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // react router
 import { useNavigate } from "react-router-dom";
 import { createPortal } from 'react-dom'
@@ -16,7 +21,6 @@ import { createPortal } from 'react-dom'
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
@@ -75,6 +79,12 @@ const getSignatoryStage = (user) => {
 // component
 
 export default function ReportEvaluation() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate = useNavigate();
   const currentUser = (() => {
     try {
@@ -269,9 +279,9 @@ export default function ReportEvaluation() {
     <>
       <Header
         pageTitle="Evaluation"
-        notifTo={`${basePath}/notif`}
-        unreadCount={5}
-        userName={currentUser?.full_name || currentUser?.username || 'User'}
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
       />
 
       <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">

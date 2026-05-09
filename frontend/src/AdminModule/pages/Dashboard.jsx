@@ -10,6 +10,12 @@ import { Plus, ClipboardCheck, BarChart2, UserCheck } from "lucide-react";
 import { useState } from 'react';
 import * as React from "react"
 import { useNavigate } from 'react-router-dom';
+import Header from '@/components/Header'
+
+// notif
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getNotifRoute } from '@/utils/getNotifRoute';
+import { useUnreadCount } from '@/hooks/useUnreadCount'
 
 // shadcn components
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -72,6 +78,12 @@ function StatCard({ label, value, accentColor, textColor }) {
 export default function Dashboard() {
   const navigate = useNavigate()
 
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const [cerealType, setCerealType]               = useState("All Cereal Type")
   const [rangeDate, setRangeDate]                 = useState("Weekly")
   const [showCalendarFilter, setShowCalendarFilter] = useState(false)
@@ -97,6 +109,14 @@ export default function Dashboard() {
   const handleWeekSelect        = (week) => setSelectedWeek(week)
 
   return (
+    <>
+      <Header
+        pageTitle="Dashboard"
+        notifTo={notifRoute}
+        userName={userName}
+        unreadCount={unreadCount}
+      />
+
      <div className='px-5 xl:px-7 2xl:px-8 py-3 xl:py-4 flex flex-col gap-2 xl:gap-3 h-full'>
 
       <div className='flex justify-between items-center shrink-0 mb-0'>
@@ -344,5 +364,7 @@ export default function Dashboard() {
       </div>
 
     </div>
+
+    </>
   )
 }

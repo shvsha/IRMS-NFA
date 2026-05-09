@@ -3,6 +3,11 @@ import api from '../../api/axios'
 import EmployeeForm from './EmployeeForm'
 import Header from '../../components/Header'
 
+// for notif
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { getNotifRoute } from '@/utils/getNotifRoute'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
+
 // shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -17,6 +22,12 @@ import { FaPlus } from "react-icons/fa6"
 import { SquarePen, UserX , UserRoundCheck } from "lucide-react"
 
 export default function UserManagement() {
+  // for notif
+  const user      = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+  
   const [search, setSearch] = useState('')
   const [userStatus, setUserStatus] = useState('Active')
   const [users, setUsers] = useState([])
@@ -82,9 +93,9 @@ export default function UserManagement() {
     <>
       <Header
           pageTitle="Supervisor"
-          notifTo="/admin/notif"
-          unreadCount={5}
-          userName="Raph Nigos"
+          notifTo={notifRoute} 
+          unreadCount={unreadCount}
+          userName={userName}
         />
       
       <div className=" mx-4 my-4 mb-5 flex flex-col !min-h-[653px]">

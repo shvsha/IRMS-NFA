@@ -9,6 +9,11 @@ import { FiCheckSquare } from "react-icons/fi";
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // components
 import { DailyFilter } from '../../components/filters/DailyFilter';
 import { WeeklyFilter } from '../../components/filters/WeeklyFilter';
@@ -95,6 +100,12 @@ function buildRows(stocks, wsrReports, wsiReports, summaries) {
 }
 
 export default function ReportHistory() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate = useNavigate()
 
   // data
@@ -269,7 +280,12 @@ export default function ReportHistory() {
 
   return (
     <>
-      <Header pageTitle="History" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+      pageTitle="History" 
+      unreadCount={unreadCount} 
+      notifTo={notifRoute}
+      userName={userName}
+    />
 
       <div className="bg-[#F5F9F9] mx-4 my-4 !min-h-[650px] h-[calc(100vh-120px)] border border-black/10 rounded-lg shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] flex flex-col">
 

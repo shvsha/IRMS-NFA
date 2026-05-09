@@ -10,10 +10,21 @@ import { IoArrowBack } from "react-icons/io5";
 // api
 import api from "@/api/axios";
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // excel
 import { exportStockbookToExcel } from '@/utils/exportToExcel'
 
 export default function ViewReport() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+  
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -131,9 +142,9 @@ export default function ViewReport() {
     <>
       <Header
         pageTitle="Stock Book"
-        notifTo="/admin/notif"
-        unreadCount={5}
-        userName="Raph Nigos"
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
       />
 
       <div className="mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] !min-h-[653px]">

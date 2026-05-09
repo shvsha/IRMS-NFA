@@ -42,6 +42,10 @@ class Notification(models.Model):
     date_audited = models.DateField(null=True, blank=True)
     time_audited = models.TimeField(null=True, blank=True)
 
+    snapshot_evaluation = models.CharField(max_length=20, blank=True, null=True)
+    snapshot_stage      = models.CharField(max_length=20, blank=True, null=True)
+    read                = models.BooleanField(default=False)
+
     @property
     def submitted_by_name(self):
         return (self.submitted_by.full_name if self.submitted_by
@@ -49,10 +53,17 @@ class Notification(models.Model):
 
     @property
     def reviewed_by_name(self):
-        return self.reviewed_by.full_name if self.reviewed_by else '-'
+        if not self.reviewed_by:
+            return '-'
+        user = self.reviewed_by
+        role = user.signatory_role if user.user_level == 'Signatory' else user.user_level
+        return f"{user.full_name} ({role})"
+    
 
     @property
     def status(self):
+        if self.snapshot_evaluation:
+            return self.snapshot_evaluation
         if self.wsr_report:
             return self.wsr_report.Evaluation
         elif self.wsi_report:
@@ -85,13 +96,4 @@ class Notification(models.Model):
         return f"Notif #{self.notif_id} - Report #{self.report_id} - Status: {self.status}"
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['wsr_report', 'recipient'],
-                name='unique_wsr_report_per_recipient'
-            ),
-            models.UniqueConstraint(
-                fields=['wsi_report', 'recipient'],
-                name='unique_wsi_report_per_recipient'
-            ),
-        ]
+        pass

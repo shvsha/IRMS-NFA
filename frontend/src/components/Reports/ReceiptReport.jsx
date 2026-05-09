@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 import Header from '../../components/Header';
 import api from "@/api/axios";
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // Variety code mapping
 const VARIETY_CODE = {
   palay: "WD1G50",
@@ -26,6 +31,12 @@ const fmt = (val, decimals = 2) =>
   val != null && val !== "" ? Number(val).toFixed(decimals) : "";
 
 export default function WarehouseReceiptsForm() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -90,9 +101,9 @@ export default function WarehouseReceiptsForm() {
     <>
       <Header
         pageTitle={pageTitle ?? 'Evaluation'} 
-        notifTo="/admin/notif"
-        unreadCount={5}
-        userName="Raph Nigos"
+        notifTo={notifRoute}
+        userName={userName}
+        unreadCount={unreadCount}
       />
 
       <div className="overflow-auto !min-h-[650px] p-3 xl:p-5 box-border flex justify-center items-start mx-4 my-4 shadow-2xl border border-black/10">

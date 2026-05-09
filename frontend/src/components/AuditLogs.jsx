@@ -8,6 +8,11 @@ import { FaRegCalendarAlt, FaSearch, FaBars } from "react-icons/fa";
 // react
 import { useState, useEffect, useMemo } from 'react'
 
+// for notif
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getNotifRoute } from '@/utils/getNotifRoute';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
+
 // shadcn
 import {
   Table, TableBody, TableCell,
@@ -23,6 +28,12 @@ const ITEMS_PER_PAGE = 10
 const HEADERS = ["Audit ID", "Name", "Position", "Action", "Module", "Date", "Time"]
 
 export default function AuditLogs() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const [auditLogs,         setAuditLogs]         = useState([])
   const [loading,           setLoading]           = useState(true)
   const [selectedStartDate, setSelectedStartDate] = useState(null)
@@ -122,9 +133,9 @@ export default function AuditLogs() {
     <>
       <Header
         pageTitle="Audit"
-        notifTo="/admin/notif"
-        unreadCount={5}
-        userName="Raph Nigos"
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
       />
 
       <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[640px]">

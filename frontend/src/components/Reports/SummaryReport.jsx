@@ -3,7 +3,18 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from '../../components/Header'
 import api from "@/api/axios";
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 export default function NFAWarehouseReceipt() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -123,7 +134,12 @@ export default function NFAWarehouseReceipt() {
 
   return (
     <>
-      <Header pageTitle={pageTitle} notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+      pageTitle={pageTitle} 
+      notifTo={notifRoute}
+      userName={userName}
+      unreadCount={unreadCount} 
+    />
 
       <div
         className="shadow-2xl border border-black/10 !min-h-[650px] mx-4 my-4 overflow-auto p-3 xl:p-5"

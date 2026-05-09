@@ -7,6 +7,11 @@ import { FaRegCircleCheck } from "react-icons/fa6";
 import { CiImport } from "react-icons/ci";
 import { FaSearch, FaBars } from "react-icons/fa";
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getNotifRoute } from "@/utils/getNotifRoute";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
+
 // shadcn
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -52,6 +57,12 @@ const formatDate = (dateStr) => {
 const CEREAL_LABEL = { WD1G50: "Palay", PD1350: "Rice" };
 
 export default function StockBook() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -293,9 +304,9 @@ export default function StockBook() {
     <>
       <Header
         pageTitle="Stock Book"
-        notifTo="/admin/notif"
-        unreadCount={5}
-        userName="Raph Nigos"
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
       />
 
       <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">

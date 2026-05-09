@@ -4,6 +4,11 @@ import api from '../../api/axios'
 import Header from '../../components/Header'
 import SignatoryForm from './SignaForm'
 
+// for notif
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { getNotifRoute } from '@/utils/getNotifRoute'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
+
 // shadcn
 import { Dialog, DialogContent, DialogHeader, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -20,6 +25,12 @@ const SIGNATORY_ROLES = [
 ]
 
 export default function SignaManagement() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const [signatories, setSignatories] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView]  = useState('list') 
@@ -100,7 +111,12 @@ export default function SignaManagement() {
 
   return (
     <>
-      <Header pageTitle="Signatory" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+        pageTitle="Signatory" 
+        unreadCount={unreadCount} 
+        notifTo={notifRoute}
+        userName={userName}
+      />
 
       <div className="mx-4 my-4 pb-10 flex flex-col !min-h-[650px]">
 

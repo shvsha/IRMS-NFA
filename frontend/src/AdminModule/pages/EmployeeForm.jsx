@@ -9,6 +9,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useState } from "react"
 import api from '../../api/axios'
 
+// for notif
+import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { getNotifRoute } from "@/utils/getNotifRoute"
+import { useUnreadCount } from "@/hooks/useUnreadCount"
+
 // icons
 import { FaExclamation } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa6";
@@ -18,6 +23,12 @@ import { CiUser } from "react-icons/ci"
 import Header from '../../components/Header'
 
 export default function EmployeeForm({ mode = 'add', employeeData = null, onCancel }) {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const isEdit = mode === 'edit';
 
   // us
@@ -110,10 +121,11 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     <>
      <Header
         pageTitle="Supervisor"
-        notifTo="/admin/notif"
-        unreadCount={5}
-        userName="Raph Nigos"
+        notifTo={notifRoute}
+        userName={userName}
+        unreadCount={unreadCount}
       />
+      
       <div className="px-6 py-4 ">
         <form onSubmit={handleSubmit}>
           <div className="text-[#2D317F] !min-h-[643px] pb-4 overflow-auto">

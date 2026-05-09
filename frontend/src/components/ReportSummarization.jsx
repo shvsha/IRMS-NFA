@@ -4,6 +4,11 @@ import { CiExport } from "react-icons/ci";
 import { useNavigate } from 'react-router-dom';
 import { exportSummaryToExcel } from '@/utils/exportToExcel'
 
+// for notif
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getNotifRoute } from '@/utils/getNotifRoute';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
+
 import { FaSearch, FaBars } from "react-icons/fa"
 
 import Header from '../components/Header'
@@ -35,6 +40,12 @@ const TABLE_HEADERS = [
 ]
 
 export default function ReportSummarization() {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const navigate = useNavigate();
   const basePath = window.location.pathname.startsWith('/signa')
     ? '/signa'
@@ -122,9 +133,9 @@ export default function ReportSummarization() {
     <div>
       <Header
         pageTitle="Summary"
-        notifTo={`${basePath}/notif`}
-        unreadCount={5}
-        userName="Raph Nigos"
+        unreadCount={unreadCount}
+        notifTo={notifRoute}
+        userName={userName}
       />
 
       {/* Outer card  */}

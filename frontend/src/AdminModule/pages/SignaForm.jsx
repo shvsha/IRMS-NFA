@@ -6,7 +6,6 @@ import Header from '../../components/Header'
 // shadcn
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
@@ -15,9 +14,19 @@ import { FaExclamation, FaCheck } from "react-icons/fa"
 import { CiUser } from "react-icons/ci"
 import { ImageUp } from "lucide-react"
 
+import { useUnreadCount } from '@/hooks/useUnreadCount'
+import { getNotifRoute } from '@/utils/getNotifRoute'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+
 const SIGNATORY_ROLES = ['Asst. Branch Manager', 'Accountant 3', 'Branch Manager']
 
 export default function SignatoryForm({ mode = 'add', role = null, signatoryData = null, onCancel }) {
+  // for notif
+  const user       = useCurrentUser()
+  const notifRoute = getNotifRoute(user)
+  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const unreadCount = useUnreadCount()
+
   const isEdit = mode === 'edit'
 
   const [toasts, setToasts] = useState([])
@@ -101,7 +110,13 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
 
   return (
     <>
-      <Header pageTitle="Signatory" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header 
+        pageTitle="Signatory" 
+        notifTo={notifRoute}
+        userName={userName}
+        unreadCount={unreadCount}
+      />
+
       <div className="px-6 py-4">
         <form onSubmit={handleSubmit}>
           <div className="text-[#2D317F] !min-h-[643px] pb-4 overflow-auto">
