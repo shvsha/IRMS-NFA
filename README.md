@@ -68,7 +68,10 @@ cd frontend
 # 2. Install dependencies
 npm install
 
-# 3. Start the development server
+# 3. Install Tailwind CSS Animate
+npm install tailwindcss-animate
+
+# 4. Start the development server
 npm run dev
 ```
 
