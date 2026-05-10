@@ -39,8 +39,9 @@ backend/.venv/
 # Django media uploads
 backend/media/
 
-# Environment variables
-backend/.env
+# Virtual environment
+backend/myenv/
+backend/RMSProject/myenv/
 
 # Python build files
 *.egg-info/
