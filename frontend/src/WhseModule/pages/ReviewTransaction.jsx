@@ -62,7 +62,7 @@ export default function ReviewTransaction() {
   const cerealType = stockBook?.CerealType     ?? "—";
   const status     = stockBook?.Status         ?? "In Progress";
 
-  const whseUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const whseUser = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   const STATUS_CONFIG = {
     "In Progress": {

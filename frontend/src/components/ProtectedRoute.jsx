@@ -11,20 +11,20 @@ function isTokenExpired(token) {
 
 function getUser() {
   try {
-    return JSON.parse(localStorage.getItem('user'));
+    return JSON.parse(sessionStorage.getItem('user'));
   } catch {
     return null;
   }
 }
 
 export default function ProtectedRoute({ children, allowedRoles }) {
-  const token = localStorage.getItem('access_token');
+  const token = sessionStorage.getItem('access_token');
   const user  = getUser();
 
   if (!token || isTokenExpired(token)) {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user');
     return <Navigate to="/" replace />;
   }
 

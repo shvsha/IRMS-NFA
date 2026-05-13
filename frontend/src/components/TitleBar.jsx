@@ -21,14 +21,14 @@ export default function TitleBar() {
   // custom function
   const handleLogout = async () => {
     try {
-      const refresh = localStorage.getItem('refresh_token');
+      const refresh = sessionStorage.getItem('refresh_token');
       await api.post('api/auth/logout', {refresh});
     } catch (err) {
       console.log('Logout error: ', err);
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('user');
       navigate('/');
     }
   }

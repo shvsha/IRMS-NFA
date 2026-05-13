@@ -489,7 +489,7 @@ export default function CreateReport() {
   const cerealType  = stockBook.CerealType ?? '—';
   const status      = stockBook.Status ?? 'In Progress';
   const badgeConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG['In Progress'];
-  const whseUser    = JSON.parse(localStorage.getItem('user') || '{}');
+  const whseUser    = JSON.parse(sessionStorage.getItem('user') || '{}');
 
   // Class helpers
   const lockedClass    = 'bg-gray-100 border-0 rounded h-8 w-full cursor-not-allowed opacity-50';

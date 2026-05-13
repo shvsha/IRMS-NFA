@@ -6,7 +6,7 @@ const api = axios.create({
 
 // this attach token generated from the backend to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
+  const token = sessionStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,7 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = sessionStorage.getItem('refresh_token');
 
       if (refreshToken) {
         try {
@@ -33,24 +33,24 @@ api.interceptors.response.use(
 
           const newAccessToken = response.data.access;
 
-          localStorage.setItem('access_token', newAccessToken)
+          sessionStorage.setItem('access_token', newAccessToken)
 
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return api(originalRequest);
 
         } catch (refreshError) {
           // get kick out IF REFRESH TOKEN is also expired
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('user');
           alert('Your session has expired. Please login again.');
           window.location.href = '/';
         }
       } else {
         // no refresh token
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('user');
         window.location.href = '/';
       }
     }

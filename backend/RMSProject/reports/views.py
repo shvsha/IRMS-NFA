@@ -24,6 +24,22 @@ def get_user_from_token(request):
         return None
     except Exception:
         return None
+    
+
+NFA_WEEK_RANGES = {
+    1: (1, 7),
+    2: (8, 14),
+    3: (15, 21),
+    4: (22, None),
+}
+
+def get_nfa_week_day_range(year, month, week):
+    import calendar
+    days_in_month = calendar.monthrange(year, month)[1]
+    start_day, end_day = NFA_WEEK_RANGES.get(week, (1, 7))
+    if end_day is None:
+        end_day = days_in_month
+    return start_day, min(end_day, days_in_month)
 
 # Stockbook
 @api_view(['GET'])
@@ -266,7 +282,6 @@ def upd_transaction(request, pk):
 # WSRReport
 @api_view(['GET'])
 def get_wsr_reports(request):
-    import calendar
     reports = WSRReport.objects.all()
 
     year  = request.query_params.get('year')
@@ -279,16 +294,13 @@ def get_wsr_reports(request):
 
         if week:
             week = int(week)
-            cal  = calendar.monthcalendar(year, month)
-            if week - 1 < len(cal):
-                week_days = [d for d in cal[week - 1] if d != 0]
-                if week_days:
-                    reports = reports.filter(
-                        date_covered__year=year,
-                        date_covered__month=month,
-                        date_covered__day__gte=week_days[0],
-                        date_covered__day__lte=week_days[-1],
-                    )
+            start_day, end_day = get_nfa_week_day_range(year, month, week)
+            reports = reports.filter(
+                date_covered__year=year,
+                date_covered__month=month,
+                date_covered__day__gte=start_day,
+                date_covered__day__lte=end_day,
+            )
         else:
             reports = reports.filter(
                 date_covered__year=year,
@@ -389,7 +401,6 @@ def upd_wsr_report(request, pk):
 # WSIReport
 @api_view(['GET'])
 def get_wsi_reports(request):
-    import calendar
     reports = WSIReport.objects.all()
 
     year  = request.query_params.get('year')
@@ -402,16 +413,13 @@ def get_wsi_reports(request):
 
         if week:
             week = int(week)
-            cal  = calendar.monthcalendar(year, month)
-            if week - 1 < len(cal):
-                week_days = [d for d in cal[week - 1] if d != 0]
-                if week_days:
-                    reports = reports.filter(
-                        date_covered__year=year,
-                        date_covered__month=month,
-                        date_covered__day__gte=week_days[0],
-                        date_covered__day__lte=week_days[-1],
-                    )
+            start_day, end_day = get_nfa_week_day_range(year, month, week) 
+            reports = reports.filter(
+                date_covered__year=year,
+                date_covered__month=month,
+                date_covered__day__gte=start_day,
+                date_covered__day__lte=end_day,
+            )
         else:
             reports = reports.filter(
                 date_covered__year=year,

@@ -88,7 +88,7 @@ export default function ReportEvaluation() {
   const navigate = useNavigate();
   const currentUser = (() => {
     try {
-      return JSON.parse(localStorage.getItem('user')) || null;
+      return JSON.parse(sessionStorage.getItem('user')) || null;
     } catch {
       return null;
     }

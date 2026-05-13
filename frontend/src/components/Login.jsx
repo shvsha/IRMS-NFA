@@ -82,9 +82,9 @@ export default function Login() {
     setIsLoadingLogin(true)
     try {
       const response = await api.post('/api/auth/login/', { username, password })
-      localStorage.setItem('access_token', response.data.access)
-      localStorage.setItem('refresh_token', response.data.refresh)
-      localStorage.setItem('user', JSON.stringify(response.data.user))
+      sessionStorage.setItem('access_token', response.data.access)
+      sessionStorage.setItem('refresh_token', response.data.refresh)
+      sessionStorage.setItem('user', JSON.stringify(response.data.user))
       const userLevel = response.data.user.user_level
       if (userLevel === "Admin") {
         navigate("/admin/dashboard")
