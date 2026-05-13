@@ -89,7 +89,7 @@ With **both servers running**, use Thunder Client to create users via the API.
 This is required first since the system has no users by default.
 
 Method: POST
-URL: http://localhost:8000/api/users/
+URL: http://localhost:8000/api/users/create-admin/
 Body (JSON):
 
 ```bash
