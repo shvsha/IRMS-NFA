@@ -440,32 +440,32 @@ export default function ReportEvaluation() {
         </div>
       </div>
 
-      {/* ── approve modal ── */}
+      {/* approve modal */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[400px] shadow-2xl'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl'>
           <div className='bg-[#3E7A43] py-3 rounded-t-lg' />
-          <div className='bg-[#3E7A43] py-5 rounded-full flex justify-center mx-38 mb-3 mt-5'>
-            <IoMdCheckmarkCircleOutline className="w-12 h-12" color='white' />
+          <div className='bg-[#3E7A43] py-4 rounded-full flex justify-center mx-31 mb-1.5 mt-3'>
+            <IoMdCheckmarkCircleOutline className="w-9 h-9" color='white' />
           </div>
           <DialogHeader>
             <div className='text-center'>
-              <p className='text-[#3E7A43] font-bold text-xl'>Approve Report?</p>
-              <p className='text-sm mx-5 mt-2 text-[#051F52]'>Are you sure you want to approve this report?</p>
+              <p className='text-[#3E7A43] font-bold text-[20px]'>Approve Report?</p>
+              <p className='text-[12px] mx-5 mt-0.5 text-[#051F52]'>Are you sure you want to approve this report?</p>
             </div>
             <DialogDescription className='flex flex-col gap-5'>
-              <div className='flex justify-center gap-3 mt-6 mb-5'>
+              <div className='flex justify-center gap-3 mt-3 mb-3'>
                 <Button
                   variant="ghost"
                   disabled={approving}
                   onClick={() => setApproveOpen(false)}
-                  className='px-7 py-4.5 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'
+                  className='px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleApproveConfirm}
                   disabled={approving}
-                  className='px-7 py-4.5 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'
+                  className='px-3 py-4 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'
                 >
                   {approving ? 'Approving…' : 'Approve'}
                 </Button>
@@ -475,39 +475,39 @@ export default function ReportEvaluation() {
         </DialogContent>
       </Dialog>
 
-      {/* ── reject modal ── */}
+      {/* reject modal */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className='pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[540px] bg-[#E6EEF6] [&>button]:hidden'>
+        <DialogContent className='pt-0 px-0 pb-0 overflow-hidden !max-w-[320px] bg-[#E6EEF6] [&>button]:hidden'>
           <div className='h-7 bg-[#BB2325]' />
           <DialogHeader className='p-5 text-center items-center pb-2'>
-            <div className="rounded-full p-5 bg-[#BB2325] w-fit">
-              <TbXboxX size={60} color='white' />
+            <div className="rounded-full p-3.5 bg-[#BB2325] w-fit -mt-3">
+              <TbXboxX size={35} color='white' />
             </div>
-            <DialogTitle className='font-bold text-[#BB2325] text-2xl mt-2'>Reject Report?</DialogTitle>
-            <DialogDescription className='text-sm text-gray-600 px-2'>
+            <DialogTitle className='font-bold text-[#BB2325] text-[20px] mt-2'>Reject Report?</DialogTitle>
+            <DialogDescription className='text-[12px] text-gray-600 px-2'>
               Please provide the reason for rejecting this report:
             </DialogDescription>
           </DialogHeader>
-          <div className='px-6 pb-2'>
+          <div className='px-6 pb-2 -mt-2'>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Type your reason here..."
-              className="w-full border bg-white rounded-md p-3 text-sm resize-none h-28 focus:outline-none focus:border-[#BB2325]"
+              className="w-full border bg-white rounded-md p-3 text-sm resize-none h-20 focus:outline-none focus:border-[#BB2325]"
             />
           </div>
-          <DialogFooter className='p-10 !-mt-7 flex flex-row gap-3 bg-[#E6EEF6] border-0'>
+          <DialogFooter className='pb-10 pr-10 flex justify-center gap-3 bg-[#E6EEF6] border-0 -mt-7'>
             <button
               onClick={() => setRejectDialogOpen(false)}
               disabled={rejecting}
-              className='px-6 py-2 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'
+              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'
             >
               Cancel
             </button>
             <button
               onClick={handleRejectSubmit}
               disabled={!rejectReason.trim() || rejecting}
-              className='px-6 py-2 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'
+              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'
             >
               {rejecting ? 'Rejecting…' : 'Reject'}
             </button>

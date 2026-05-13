@@ -92,13 +92,10 @@ export default function Dashboard() {
   const [cerealType,          setCerealType]          = useState("All Cereal Type")
   const [rangeDate,           setRangeDate]           = useState("Weekly")
   const [showCalendarFilter,  setShowCalendarFilter]  = useState(false)
-  const [selectedWeek,        setSelectedWeek]        = useState(1)
-  const [selectedMonth,       setSelectedMonth]       = useState("January")
-  const [weeklyYear,          setWeeklyYear]          = useState(new Date().getFullYear())
-  const [weeklyMonth,         setWeeklyMonth]         = useState(new Date().getMonth())
-  const [monthlyYear,         setMonthlyYear]         = useState(new Date().getFullYear())
-  const [activeIndex,         setActiveIndex]         = useState(null)
-  const [isFiltered, setIsFiltered] = useState(false)
+  const [filterParams, setFilterParams] = useState(null)
+  const [pendingWeek, setPendingWeek]     = useState({ year: new Date().getFullYear(), month: new Date().getMonth(), week: 1 })
+  const [pendingMonth, setPendingMonth]   = useState({ year: new Date().getFullYear(), month: "January" })
+  const [activeIndex, setActiveIndex] = useState(null)
 
   const weekDropdownRef  = React.useRef(null)
   const monthDropdownRef = React.useRef(null)
@@ -108,17 +105,13 @@ export default function Dashboard() {
       setDataLoading(true)
       try {
         const params = {}
-        if (isFiltered) {
-          if (rangeDate === 'Weekly') {
-            params.year  = weeklyYear
-            params.month = weeklyMonth + 1
-            params.week  = selectedWeek
-          } else {
-            params.year  = monthlyYear
-            params.month = months.indexOf(selectedMonth) + 1
+        if (filterParams) {
+          params.year  = filterParams.year
+          params.month = filterParams.month
+          if (filterParams.week !== undefined) {
+            params.week = filterParams.week
           }
-          console.log('Fetching with params:', params)
-        }
+       }
 
         const [wsrRes, wsiRes, auditRes] = await Promise.all([
           api.get('/reports/wsr-reports/', { params }),
@@ -169,7 +162,7 @@ export default function Dashboard() {
       }
     }
     fetchData()
-  }, [isFiltered, selectedWeek, selectedMonth, weeklyYear, weeklyMonth, monthlyYear, rangeDate])
+  }, [filterParams])
 
   const total = pieData.reduce((sum, d) => sum + d.value, 0)
 
@@ -186,12 +179,16 @@ export default function Dashboard() {
   }
 
   const handlePrevMonth = () => {
-    if (weeklyMonth === 0) { setWeeklyMonth(11); setWeeklyYear(y => y - 1) }
-    else setWeeklyMonth(m => m - 1)
+    setPendingWeek(p => {
+      if (p.month === 0) return { ...p, month: 11, year: p.year - 1 }
+      return { ...p, month: p.month - 1 }
+    })
   }
   const handleNextMonth = () => {
-    if (weeklyMonth === 11) { setWeeklyMonth(0); setWeeklyYear(y => y + 1) }
-    else setWeeklyMonth(m => m + 1)
+    setPendingWeek(p => {
+      if (p.month === 11) return { ...p, month: 0, year: p.year + 1 }
+      return { ...p, month: p.month + 1 }
+    })
   }
 
   return (
@@ -225,9 +222,9 @@ export default function Dashboard() {
               <div className="absolute -top-2 right-4 w-4 h-4 bg-[#2D317F] rotate-45" />
               <div className="h-8 bg-[#2D317F] rounded-t-lg flex items-center justify-between px-4">
                 <p className="text-white font-medium text-sm xl:text-base">Date</p>
-                {isFiltered && (
+                {filterParams &&(
                   <button
-                    onClick={() => { setIsFiltered(false); setShowCalendarFilter(false) }}
+                    onClick={() => { setFilterParams(null); setShowCalendarFilter(false) }}
                     className="text-xs text-red-400 underline hover:text-red-100"
                   >
                     Reset
@@ -255,7 +252,7 @@ export default function Dashboard() {
                       <div ref={weekDropdownRef} className="relative">
                         <button type="button" onClick={() => setShowCalendarFilter(p => !p)}
                           className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none">
-                          <span>Week {selectedWeek}</span>
+                          <span>Week {filterParams?.week ?? pendingWeek.week}</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                             className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6" /></svg>
@@ -269,7 +266,7 @@ export default function Dashboard() {
                       <div ref={monthDropdownRef} className="relative">
                         <button type="button" onClick={() => setShowCalendarFilter(p => !p)}
                           className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none">
-                          <span>{selectedMonth}</span>
+                          <span>{filterParams?.month ? months[filterParams.month - 1] : pendingMonth.month}</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                             className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6" /></svg>
@@ -283,16 +280,26 @@ export default function Dashboard() {
                 <div className="absolute left-1/2 -right-175 top-30 -translate-x-1/2 mt-2 z-50">
                   {rangeDate === "Weekly" ? (
                     <WeeklyFilter
-                      selectedWeek={selectedWeek} year={weeklyYear} month={weeklyMonth}
+                      selectedWeek={pendingWeek.week} year={pendingWeek.year} month={pendingWeek.month}
                       onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth}
-                      onMonthChange={setWeeklyMonth} onYearChange={setWeeklyYear}
-                      onWeekSelect={(week) => { setSelectedWeek(week); setIsFiltered(true); setShowCalendarFilter(false) }}
+                      onMonthChange={(m) => setPendingWeek(p => ({ ...p, month: m }))}
+                      onYearChange={(y)  => setPendingWeek(p => ({ ...p, year: y }))}
+                      onWeekSelect={(week) => {
+                        setFilterParams({ year: pendingWeek.year, month: pendingWeek.month + 1, week })
+                        setPendingWeek(p => ({ ...p, week }))
+                        setShowCalendarFilter(false)
+                      }}
                     />
                   ) : (
                     <MonthlyFilter
-                      selectedMonth={selectedMonth} year={monthlyYear}
-                      onYearChange={setMonthlyYear}
-                      onMonthChange={(month) => { setSelectedMonth(month); setIsFiltered(true); setShowCalendarFilter(false) }}
+                      selectedMonth={pendingMonth.month}
+                      year={pendingMonth.year}
+                      onYearChange={(y) => setPendingMonth(p => ({ ...p, year: y }))}
+                      onMonthChange={(month) => {
+                        setFilterParams({ year: pendingMonth.year, month: months.indexOf(month) + 1 })
+                        setPendingMonth(p => ({ ...p, month }))
+                        setShowCalendarFilter(false)
+                      }}
                     />
                   )}
                 </div>

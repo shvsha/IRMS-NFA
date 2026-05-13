@@ -16,9 +16,9 @@ const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 // Predefined week ranges (NFA Week)
 const WEEK_RANGES = {
   1: [1, 7],
-  2: [8, 15],
-  3: [16, 22],
-  4: [23, "end"],
+  2: [8, 14],
+  3: [16, 21],
+  4: [22, "end"],
 }
 
 function getWeekRange(week, year, month) {
@@ -30,10 +30,10 @@ function getWeekRange(week, year, month) {
 }
 
 function getWeekNumber(day) {
-  if (day >= 1 && day <= 7) return 1
-  if (day >= 8 && day <= 15) return 2
-  if (day >= 16 && day <= 22) return 3
-  return 4 // day >= 23
+  if (day >= 1  && day <= 7)  return 1
+  if (day >= 8  && day <= 14) return 2
+  if (day >= 15 && day <= 21) return 3
+  return 4 // day >= 22
 }
 
 export function WeeklyFilter({

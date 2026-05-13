@@ -17,6 +17,9 @@ import { MdOutlineMarkEmailUnread } from "react-icons/md"
 // assets
 import NFALogo from '../assets/NFA-logo.png'
 
+const RESEND_COOLDOWNS = [0, 60, 180, 3600]
+const RESEND_LIMIT = RESEND_COOLDOWNS.length
+
 export default function Login() {
   const navigate = useNavigate()
 
@@ -25,6 +28,8 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoadingLogin, setIsLoadingLogin] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [fieldError, setFieldError] = useState('')
 
   // modal states
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
@@ -42,6 +47,11 @@ export default function Login() {
   const [codeError, setCodeError] = useState('')
   const [isLoadingCode, setIsLoadingCode] = useState(false)
   const inputRefs = useRef([])
+
+  // resend otp
+  const [resendCount, setResendCount] = useState(0)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
+  const [cooldownInterval, setCooldownInterval] = useState(null)
 
   // new password
   const [newPassword, setNewPassword] = useState('')
@@ -61,10 +71,14 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    setLoginError('')
+    setFieldError('')
+
     if (username === "" || password === "") {
-      alert("Incomplete Credentials")
+      setFieldError('Please fill in all fields.')
       return
     }
+
     setIsLoadingLogin(true)
     try {
       const response = await api.post('/api/auth/login/', { username, password })
@@ -79,7 +93,7 @@ export default function Login() {
       } else if (userLevel === "Signatory") {
         navigate("/signa/evaluation")
       } else {
-        alert('Unknown user level.')
+        setLoginError('Unknown user level.')
       }
       
       await api.post('/audit/log-login/')
@@ -87,9 +101,9 @@ export default function Login() {
       const error = err.response?.data
       if (error) {
         const msg = Object.values(error)[0]
-        alert(Array.isArray(msg) ? msg[0] : msg)
+        setLoginError(Array.isArray(msg) ? msg[0] : msg)
       } else {
-        alert('Login failed. Please try again.')
+        setLoginError('Login faild. Please try again.')
       }
     } finally {
       setIsLoadingLogin(false)
@@ -106,6 +120,9 @@ export default function Login() {
       setCheckEmailOpen(true)
       setOtp(Array(6).fill(''))
       setCodeError('')
+      setResendCount(0)
+      setCooldownSeconds(0)
+      if (cooldownInterval) clearInterval(cooldownInterval)
     } catch (err) {
       const msg = err.response?.data?.email || 'Something went wrong.'
       setEmailError(msg)
@@ -136,6 +153,26 @@ export default function Login() {
     const newOtp = paste.split('')
     setOtp([...newOtp, ...Array(6 - newOtp.length).fill('')])
     inputRefs.current[Math.min(paste.length, 5)].focus()
+  }
+
+  const startCooldown = (seconds) => {
+    setCooldownSeconds(seconds)
+    const interval = setInterval(() => {
+      setCooldownSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    setCooldownInterval(interval)
+  }
+
+  const handleCloseOtpDialog = () => {
+    if (cooldownInterval) clearInterval(cooldownInterval)
+    setCooldownSeconds(0)
+    setCheckEmailOpen(false)
   }
 
   // verify otp
@@ -194,6 +231,8 @@ export default function Login() {
 
   // resend code
   const handleResendCode = async () => {
+    if (cooldownSeconds > 0 || resendCount >= RESEND_LIMIT) return
+
     setIsLoadingResend(true)
     try {
       await api.post('/api/auth/forgot-password/', { email: resetEmail })
@@ -202,11 +241,33 @@ export default function Login() {
       setResendSuccess(true)
       setTimeout(() => setResendSuccess(false), 3000)
       inputRefs.current[0]?.focus()
+
+      const nextCount = resendCount + 1
+      setResendCount(nextCount)  
+
+      if (RESEND_COOLDOWNS[nextCount] > 0) {
+        startCooldown(RESEND_COOLDOWNS[nextCount])
+      }
     } catch (err) {
       alert('Failed to resend code. Please try again.')
     } finally {
       setIsLoadingResend(false)
     }
+  }
+
+  const formatCooldown = (secs) => {
+    if (secs >= 3600) {
+      const h = Math.floor(secs / 3600)
+      const m = Math.floor((secs % 3600) / 60)
+      const s = secs % 60
+      return `${h}h ${m}m ${s}s`
+    }
+    if (secs >= 60) {
+      const m = Math.floor(secs / 60)
+      const s = secs % 60
+      return `${m}m ${s}s`
+    }
+    return `${secs}s`
   }
 
   return (
@@ -223,19 +284,55 @@ export default function Login() {
               <FieldLabel className='text-[#2D317F]' htmlFor='username'>Username</FieldLabel>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2D317F]" />
-                <Input name="username" id="username" type="text" value={username} onChange={handleCredentials} className='border border-[#2D317F] focus:ring-0 focus:border-[#2D317F] bg-white pl-10' />
+                <Input
+                  name="username"
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={e => { handleCredentials(e); setFieldError(''); setLoginError('') }}
+                  className={`border focus:ring-0 bg-white pl-10 ${
+                    fieldError || loginError ? 'border-red-500' : 'border-[#2D317F] focus:border-[#2D317F]'
+                  }`}
+                />
               </div>
             </Field>
-            <Field className='gap-0.5'>
+
+            <Field className='gap-0.5 -mt-2'>
               <FieldLabel className='text-[#2D317F]' htmlFor='password'>Password</FieldLabel>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2D317F]" />
-                <Input name="password" id="password" type={showPassword ? "text" : "password"} value={password} autoComplete="off" onChange={handleCredentials} className='border border-[#2D317F] focus:ring-0 focus:border-[#2D317F] bg-white pl-10 pr-10' />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D317F] cursor-pointer">
+                <Input
+                  name="password"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  autoComplete="off"
+                  onChange={e => { handleCredentials(e); setFieldError(''); setLoginError('') }}
+                  className={`border focus:ring-0 bg-white pl-10 pr-10 ${
+                    fieldError || loginError ? 'border-red-500' : 'border-[#2D317F] focus:border-[#2D317F]'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D317F] cursor-pointer"
+                >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </Field>
+            
+            {/* inline error mssges */}
+            {fieldError && (
+              <p className="text-red-500 text-xs -mt-3 flex items-center gap-1">
+                <span>⊙</span> {fieldError}
+              </p>
+            )}
+            {loginError && (
+              <p className="text-red-500 text-xs -mt-3 flex items-center gap-1">
+                <span>⊙</span> {loginError}
+              </p>
+            )}
           </FieldGroup>
         </CardContent>
         <CardFooter className='justify-center py-0 pb-4 flex-col'>
@@ -257,7 +354,7 @@ export default function Login() {
 
       {/* forgot password / email */}
       <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-7 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
           <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-38 mb-3'>
             <LockKeyhole className="w-12 h-12" color={'#2D317F'} />
           </div>
@@ -306,9 +403,9 @@ export default function Login() {
       </Dialog>
 
       {/* check email / otp */}
-      <Dialog open={checkEmailOpen} onOpenChange={setCheckEmailOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-8 pt-14 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
-          <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-39 mb-3'>
+      <Dialog open={checkEmailOpen} onOpenChange={handleCloseOtpDialog}>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-7 px-0 !max-w-[400px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
+          <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-39 '>
             <MdOutlineMarkEmailUnread className="w-12 h-12" color={'#2D317F'} />
           </div>
           <DialogHeader>
@@ -317,7 +414,7 @@ export default function Login() {
               <p className='text-xs mx-10 mt-2.5 mb-7'>Input the code that was sent to <span className='font-medium'>{resetEmail}</span>.</p>
             </div>
             <DialogDescription className='flex flex-col gap-5'>
-              <div className='flex justify-center gap-3 px-10'>
+              <div className='flex justify-center gap-3 px-10 -mt-2'>
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -351,15 +448,28 @@ export default function Login() {
               </Button>
 
               <div className='text-center mb-2 -mt-1'>
-                {resendSuccess ? (
-                  <p className='text-[#1D8104] text-xs font-medium'>A new code has been sent to your email.</p>
+                {resendCount >= RESEND_LIMIT ? (
+                  <p className='text-red-500 text-xs font-medium text-center'>
+                    Too many attempts. Please try again later.
+                  </p>
+                ) : cooldownSeconds > 0 ? (
+                  <p className='text-gray-400 text-xs text-center'>
+                    Resend available in <span className='text-[#2D317F] font-semibold'>{formatCooldown(cooldownSeconds)}</span>
+                  </p>
+                ) : resendSuccess ? (
+                  <p className='text-[#1D8104] text-xs font-medium text-center'>
+                    A new code has been sent to your email.
+                  </p>
                 ) : isLoadingResend ? (
                   <div className="flex items-center justify-center gap-1.5">
                     <div className="w-3 h-3 border-2 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
                     <p className='text-[#2D317F] text-xs'>Sending new code...</p>
                   </div>
                 ) : (
-                  <p className='text-black text-xs'>Didn't get any code? <a onClick={handleResendCode} className='text-[#2D317F] cursor-pointer'>Click to resend</a></p>
+                  <p className='text-black text-xs text-center'>
+                    Didn't get any code?{' '}
+                    <a onClick={handleResendCode} className='text-[#2D317F] cursor-pointer'>Click to resend</a>
+                  </p>
                 )}
               </div>
 
@@ -370,7 +480,7 @@ export default function Login() {
               </div>
 
               <div className='flex justify-center'>
-                <a onClick={() => setCheckEmailOpen(false)} className='text-[#2D317F] no-underline decoration-transparent cursor-pointer'>&lt; Back to Login</a>
+                <a onClick={() => handleCloseOtpDialog()} className='text-[#2D317F] no-underline decoration-transparent cursor-pointer'>&lt; Back to Login</a>
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -399,13 +509,13 @@ export default function Login() {
           ) : (
             /* normal content */
             <>
-              <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-44 mb-3 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
+              <div className='bg-[#E1EBFF] py-5 rounded-2xl flex justify-center mx-44 -mt-2.5'>
                 <KeyRound className="w-12 h-12" color={'#2D317F'} />
               </div>
               <DialogHeader>
                 <div className='text-center'>
                   <p className='text-[#2D317F] font-bold text-xl'>Set a new password</p>
-                  <p className='text-xs mx-10 mt-2.5'>Your new password must be different from previously used passwords.</p>
+                  <p className='text-xs mx-10 mt-2.5 -mb-3'>Your new password must be different from previously used passwords.</p>
                 </div>
                 <DialogDescription className='flex flex-col gap-5'>
                   <Field className='px-10 -mb-3'>

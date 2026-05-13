@@ -359,9 +359,9 @@ export default function CreateReport() {
   };
 
   const handlePileNoInput = (e) => {
-    const val = e.target.value.toUpperCase().slice(0, 3);
-    if (/^([1-9]|1[0-5]?)?[AB]?$/.test(val) || val === '') setField('pileNo', val);
-  };
+    const val = e.target.value
+    if (/^[1-6]$/.test(val) || val === '') setField('pileNo', val)
+  }
 
   const handlePrev = async () => {
     if (isFirstTransaction || saving) return;
@@ -631,8 +631,8 @@ export default function CreateReport() {
                     <Input
                       value={currentTransaction.pileNo}
                       onChange={handlePileNoInput}
-                      placeholder="1A – 15B"
-                      maxLength={3}
+                      placeholder="1 - 6"
+                      maxLength={1}
                       readOnly={txnLocked}
                       className={fieldClass} />
                   </Field>

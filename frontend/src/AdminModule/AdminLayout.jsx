@@ -16,7 +16,7 @@ export default function AdminLayout() {
   return (
     <div className="flex h-screen">
       <SidebarAdmin />
-      <div className="flex-1 overflow-hidden min-h-0 transition-all duration-300">
+      <div className="flex-1 overflow-y-auto min-h-0 transition-all duration-300">
         <Outlet />
       </div>
     </div>

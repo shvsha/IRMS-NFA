@@ -31,10 +31,9 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   const isEdit = mode === 'edit';
 
-  // us
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [toasts, setToasts] = useState([])
+  // inline field errors
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const addToast = (message) => {
     const id = Date.now()
@@ -66,35 +65,35 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   const handleDeptChange = (val) => { 
     setSelectedDepartment(val);
-    setFormData( prev => ({
-      ...prev,
-      dept: val
-    }));
+    setFormData( prev => ({ ...prev, dept: val }));
+    setFieldErrors(prev => ({ ...prev, dept: '' }));
   }
   const handleWhseCodeChange = (val) => { 
     setSelectedWhseCode(val); 
-    setFormData( prev => ({
-      ...prev,
-      WHCode: val
-    }));
+    setFormData( prev => ({ ...prev, WHCode: val }));
+    setFieldErrors(prev => ({ ...prev, WHCode: '' }));
   }
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value});
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }));
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData)
-
-    // validation for the required fields
-    const requiredFields = ['fname', 'mI', 'lname', 'email', 'dept', 'position', 'WHCode', 'Office_id', 'username'];
+    // Build inline errors for all required fields
+    const requiredFields = ['fname', 'lname', 'email', 'dept', 'WHCode', 'Office_id', 'username'];
+    const errors = {}
     for (const field of requiredFields) {
       if (!formData[field]?.trim()) {
-        alert(`Please fill in all required fields.`);
-        return;
+        errors[field] = 'This field is required.'
       }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
     }
 
     try {
@@ -109,13 +108,25 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     } catch (error) {
       const errors = error.response?.data;
       if (errors) {
-        const firstError = Object.values(errors)[0];
-        alert(Array.isArray(firstError) ? firstError[0] : firstError);
+        // Map server errors back to field-level errors if possible
+        const serverErrors = {}
+        Object.entries(errors).forEach(([key, val]) => {
+          serverErrors[key] = Array.isArray(val) ? val[0] : val
+        })
+        setFieldErrors(serverErrors)
       } else {
-        alert("Something went wrong. Please try again.")
+        setFieldErrors({ general: "Something went wrong. Please try again." })
       }
     }
   }
+
+  // Helper: renders the red inline error message
+  const FieldError = ({ name }) =>
+    fieldErrors[name] ? (
+      <p className="text-red-500 text-xs flex items-center gap-1">
+        <span>⊙</span> {fieldErrors[name]}
+      </p>
+    ) : null
 
   return (
     <>
@@ -128,8 +139,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
       
       <div className="px-6 py-4 ">
         <form onSubmit={handleSubmit}>
-          <div className="text-[#2D317F] !min-h-[643px] pb-4 overflow-auto">
-            <h2 className="m-0 font-semibold text-[25px]  ">{isEdit ? "Edit Employee" : "Add Employee"}</h2>
+          <div className="text-[#2D317F]  pb-4 overflow-auto">
+            <h2 className="m-0 font-semibold text-[25px]">{isEdit ? "Edit Employee" : "Add Employee"}</h2>
 
             <div className="bg-[#F5F9F9] shadow border border-black/5 rounded-lg p-6 px-8 pt-4 mt-1 !min-h-[565px] text-black">
               {/* header */}
@@ -157,7 +168,11 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                   <div className="flex flex-row gap-4 mb-3">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="firstName">First Name<span className="text-red-500">*</span></FieldLabel>
-                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="firstName" name="fname" value={formData.fname} onChange={handleChange} type="text" placeholder="e.g. Febrose" />
+                      <Input
+                        className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.fname ? 'border-red-500' : 'border-gray-300'}`}
+                        id="firstName" name="fname" value={formData.fname} onChange={handleChange} type="text" placeholder="e.g. Febrose"
+                      />
+                      <FieldError name="fname" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="middleInitial">Middle Initial</FieldLabel>
@@ -165,7 +180,11 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="lastName">Last Name<span className="text-red-500">*</span></FieldLabel>
-                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="lastName" name="lname" value={formData.lname} onChange={handleChange} type="text" placeholder="e.g. Valenzuela" />
+                      <Input
+                        className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.lname ? 'border-red-500' : 'border-gray-300'}`}
+                        id="lastName" name="lname" value={formData.lname} onChange={handleChange} type="text" placeholder="e.g. Valenzuela"
+                      />
+                      <FieldError name="lname" />
                     </Field>
                   </div>
 
@@ -173,7 +192,11 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                   <div className="flex flex-row gap-4">
                     <Field className="flex gap-1.5 flex-col w-[320px]">
                       <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="email">Email <span className="text-red-500">*</span></FieldLabel>
-                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph" />
+                      <Input
+                        className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                        id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph"
+                      />
+                      <FieldError name="email" />
                     </Field>
                   </div>
                 </div>
@@ -187,7 +210,7 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[150px]">
                       <FieldLabel className="text-sm font-medium">Department <span className="text-red-500">*</span></FieldLabel>
                       <Select value={selectedDepartment} onValueChange={handleDeptChange}>
-                        <SelectTrigger className="!font-normal bg-white rounded border-gray-300">
+                        <SelectTrigger className={`!font-normal bg-white rounded ${fieldErrors.dept ? 'border-red-500' : 'border-gray-300'}`}>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -195,11 +218,12 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                           <SelectItem className='text-[#2D317F] p-2' value="Buffer Stock Management">Buffer Stock Management</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FieldError name="dept" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[150px]">
                       <FieldLabel className="text-sm font-medium">Warehouse Code <span className="text-red-500">*</span></FieldLabel>
                       <Select value={selectedWhseCode} onValueChange={handleWhseCodeChange}>
-                        <SelectTrigger className="!font-normal bg-white rounded border-gray-300">
+                        <SelectTrigger className={`!font-normal bg-white rounded ${fieldErrors.WHCode ? 'border-red-500' : 'border-gray-300'}`}>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -207,10 +231,15 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                           <SelectItem className='p-2' value="010502A">010502A</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FieldError name="WHCode" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[120px]">
                       <FieldLabel className="text-sm font-medium">Office ID <span className="text-red-500">*</span></FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" name="Office_id" value={formData.Office_id} onChange={handleChange} type="text" placeholder="e.g. 645328" />
+                      <Input
+                        className={`rounded text-sm bg-white !font-normal ${fieldErrors.Office_id ? 'border-red-500' : 'border-gray-300'}`}
+                        name="Office_id" value={formData.Office_id} onChange={handleChange} type="text" placeholder="e.g. 645328"
+                      />
+                      <FieldError name="Office_id" />
                     </Field>
                   </div>
                 </div>
@@ -223,16 +252,27 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                   <div className="flex flex-row gap-4 flex-wrap">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium" htmlFor="username">Username <span className="text-red-500">*</span></FieldLabel>
-                      <Input className="rounded border-gray-300 text-sm bg-white !font-normal" id="username" name="username" value={formData.username} onChange={handleChange} type="text" placeholder="e.g. FebValenzuela" />
+                      <Input
+                        className={`rounded text-sm bg-white !font-normal ${fieldErrors.username ? 'border-red-500' : 'border-gray-300'}`}
+                        id="username" name="username" value={formData.username} onChange={handleChange} type="text" placeholder="e.g. FebValenzuela"
+                      />
+                      <FieldError name="username" />
                     </Field>
                   </div>
                 </div>
               </div>
 
+              {/* general server error */}
+              {fieldErrors.general && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <span>⊙</span> {fieldErrors.general}
+                </p>
+              )}
+
               <div className="mt-4 flex justify-end gap-4">
                 {/* cancel btn */}
                 <AlertDialog>
-                  <AlertDialogTrigger className='flex items-center justify-center pr-7.5 '  asChild>
+                  <AlertDialogTrigger className='flex items-center justify-center pr-7.5' asChild>
                     <Button className="px-4 py-5 bg-[#D9D9D9] text-[#5B5B5B]" type='button'>Cancel</Button>
                   </AlertDialogTrigger>
 
@@ -241,15 +281,11 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                     <AlertDialogHeader className='p-5 text-center items-center pb-4'>
                       <div className="rounded-full px-5 py-5 my-2 bg-[#BB2325]"><FaExclamation color={'white'} size={60} /></div>
                       <AlertDialogTitle className='!font-bold text-[#BB2325] text-2xl mx-2 mt-2'>{isEdit ? "Cancel Editing?" : "Cancel Adding?"}</AlertDialogTitle>
-                      <AlertDialogDescription className="text-sm px-2 mt-3 -mb-2" >
+                      <AlertDialogDescription className="text-sm px-2 mt-3 -mb-2">
                         {isEdit ? 
-                          <>
-                            Your data won’t be saved! Are you sure you want to quit editing?
-                          </> : (
-                          <>
-                            Your data won't be saved! Are you sure you want to quit adding new employee?
-                          </>
-                        )}
+                          <>Your data won't be saved! Are you sure you want to quit editing?</> : 
+                          <>Your data won't be saved! Are you sure you want to quit adding new employee?</>
+                        }
                       </AlertDialogDescription>
                     </AlertDialogHeader>
 
@@ -257,7 +293,6 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                       <AlertDialogCancel className='w-23 px-5 py-4.5'>Cancel</AlertDialogCancel>
                       <AlertDialogAction className='w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5 mb-3' onClick={onCancel}>Yes</AlertDialogAction>
                     </AlertDialogFooter>
-
                   </AlertDialogContent>
                 </AlertDialog>
 

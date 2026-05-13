@@ -30,6 +30,9 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
   const isEdit = mode === 'edit'
 
   const [toasts, setToasts] = useState([])
+  // inline field errors
+  const [fieldErrors, setFieldErrors] = useState({})
+
   const addToast = (message, color = '#1D8104') => {
     const id = Date.now()
     setToasts(prev => [...prev, { id, message, color }])
@@ -58,6 +61,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }))
   }
 
   const handleSignatureChange = (e) => {
@@ -70,16 +74,20 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const required = ['fname', 'lname', 'email', 'signatory_role', 'username']
+    const required = ['fname', 'lname', 'dept', 'Office_id', 'email', 'signatory_role', 'username']
+    const errors = {}
     for (const field of required) {
       if (!formData[field]?.trim()) {
-        alert('Please fill in all required fields.')
-        return
+        errors[field] = 'This field is required.'
       }
     }
 
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
+
     try {
-      // Use FormData to support file upload
       const payload = new FormData()
       Object.entries(formData).forEach(([k, v]) => { if (v) payload.append(k, v) })
       if (signatureFile) payload.append('e_signature', signatureFile)
@@ -100,13 +108,24 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
     } catch (err) {
       const errors = err.response?.data
       if (errors) {
-        const first = Object.values(errors)[0]
-        addToast(Array.isArray(first) ? first[0] : first, '#BB2325')
+        // Map server errors to field-level errors
+        const serverErrors = {}
+        Object.entries(errors).forEach(([key, val]) => {
+          serverErrors[key] = Array.isArray(val) ? val[0] : val
+        })
+        setFieldErrors(serverErrors)
       } else {
-        addToast('Something went wrong. Please try again.', '#BB2325')
+        setFieldErrors({ general: 'Something went wrong. Please try again.' })
       }
     }
   }
+
+  const FieldError = ({ name }) =>
+    fieldErrors[name] ? (
+      <p className="text-red-500 text-xs flex items-center gap-1">
+        <span>⊙</span> {fieldErrors[name]}
+      </p>
+    ) : null
 
   return (
     <>
@@ -119,7 +138,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
 
       <div className="px-6 py-4">
         <form onSubmit={handleSubmit}>
-          <div className="text-[#2D317F] !min-h-[643px] pb-4 overflow-auto">
+          <div className="text-[#2D317F] pb-4 overflow-auto">
             <h2 className="font-semibold text-[25px]">{isEdit ? 'Edit Signatory' : 'Add Signatory'}</h2>
 
             <div className="bg-[#F5F9F9] shadow border border-black/5 rounded-lg p-6 px-8 pt-4 mt-1 !min-h-[565px]">
@@ -146,7 +165,11 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   <div className="flex gap-4 mb-3">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium">First Name <span className="text-red-500">*</span></FieldLabel>
-                      <Input name="fname" value={formData.fname} onChange={handleChange} placeholder="e.g. Maria" className="rounded border-gray-300 text-sm bg-white" />
+                      <Input
+                        name="fname" value={formData.fname} onChange={handleChange} placeholder="e.g. Maria"
+                        className={`rounded text-sm bg-white ${fieldErrors.fname ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      <FieldError name="fname" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium">Middle Initial</FieldLabel>
@@ -154,12 +177,20 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium">Last Name <span className="text-red-500">*</span></FieldLabel>
-                      <Input name="lname" value={formData.lname} onChange={handleChange} placeholder="e.g. Santos" className="rounded border-gray-300 text-sm bg-white" />
+                      <Input
+                        name="lname" value={formData.lname} onChange={handleChange} placeholder="e.g. Santos"
+                        className={`rounded text-sm bg-white ${fieldErrors.lname ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      <FieldError name="lname" />
                     </Field>
                   </div>
                   <Field className="flex gap-1.5 flex-col w-[320px]">
                     <FieldLabel className="text-sm font-medium">Email <span className="text-red-500">*</span></FieldLabel>
-                    <Input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. msantos@nfa.gov.ph" className="rounded border-gray-300 text-sm bg-white" />
+                    <Input
+                      name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. msantos@nfa.gov.ph"
+                      className={`rounded text-sm bg-white ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    <FieldError name="email" />
                   </Field>
                 </div>
               </div>
@@ -171,11 +202,11 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   <div className="flex gap-4 flex-wrap">
                     <Field className="flex gap-1.5 flex-col w-[200px]">
                       <FieldLabel className="text-sm font-medium">Department</FieldLabel>
-                      <Input name="dept" value={formData.dept} onChange={handleChange} placeholder="e.g. Accounting" className="rounded border-gray-300 text-sm bg-white" />
+                      <Input name="dept" value={formData.dept} onChange={handleChange} placeholder="e.g. Accounting" className={`rounded text-sm bg-white ${fieldErrors.dept ? 'border-red-500' : 'border-gray-300'}`} />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[200px]">
                       <FieldLabel className="text-sm font-medium">Office ID</FieldLabel>
-                      <Input name="Office_id" value={formData.Office_id} onChange={handleChange} placeholder="e.g. 645328" className="rounded border-gray-300 text-sm bg-white" />
+                      <Input name="Office_id" value={formData.Office_id} onChange={handleChange} placeholder="e.g. 645328" className={`rounded text-sm bg-white ${fieldErrors.Office_id ? 'border-red-500' : 'border-gray-300'} `} />
                     </Field>
                   </div>
                 </div>
@@ -190,7 +221,11 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm h-[calc(100%-24px)]">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium">Username <span className="text-red-500">*</span></FieldLabel>
-                      <Input name="username" value={formData.username} onChange={handleChange} placeholder="e.g. MSantos" className="rounded border-gray-300 text-sm bg-white" />
+                      <Input
+                        name="username" value={formData.username} onChange={handleChange} placeholder="e.g. MSantos"
+                        className={`rounded text-sm bg-white ${fieldErrors.username ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      <FieldError name="username" />
                     </Field>
                   </div>
                 </div>
@@ -224,7 +259,14 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   </div>
                 </div>
 
-              </div>           
+              </div>
+
+              {/* general server error */}
+              {fieldErrors.general && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <span>⊙</span> {fieldErrors.general}
+                </p>
+              )}
 
               {/* Buttons */}
               <div className="mt-4 flex justify-end gap-4">

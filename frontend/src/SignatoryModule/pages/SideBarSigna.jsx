@@ -97,18 +97,18 @@ export default function NavBarWhse() {
             </button>
           </AlertDialogTrigger>
 
-          <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 max-w-[90vw] md:max-w-[380px] xl:max-w-[400px] overflow-hidden rounded-[10px] border-none'>
-            <div className='h-7 bg-[#2D317F] rounded-t-lg'></div>
-            <AlertDialogHeader className='p-5 text-center items-center pb-4'>
-              <AlertDialogTitle className='font-bold text-[#2D317F] text-3xl'>Logout</AlertDialogTitle>
-              <AlertDialogDescription className={cn('!text-customSize', 'text-gray-600')}>
+          <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none'>
+            <div className='py-3 bg-[#2D317F] rounded-t-lg'></div>
+            <AlertDialogHeader className='p-2 text-center items-center pb-4'>
+              <AlertDialogTitle className='font-bold text-[#2D317F] text-[25px]'>Logout</AlertDialogTitle>
+              <AlertDialogDescription className={cn('!text-[13px]', 'text-gray-600')}>
                 Are you sure you want to logout?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row justify-center gap-3 border-[#a2aab3]'>
-              <AlertDialogCancel className='px-5 py-4.5'>Cancel</AlertDialogCancel>
+            <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row justify-center gap-3 border-0 -mt-7'>
+              <AlertDialogCancel className='px-4 py-4'>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className='!bg-[#2D317F] text-white hover:bg-[#1a1f4d] px-5 py-4.5'
+                className='!bg-[#2D317F] text-white hover:bg-[#1a1f4d] px-4 py-4'
                 onClick={handleLogout}
               >
                 Logout

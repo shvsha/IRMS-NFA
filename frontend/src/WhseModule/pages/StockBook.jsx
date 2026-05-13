@@ -1,6 +1,6 @@
 // icons
 import { GoLinkExternal } from "react-icons/go";
-import { FiEdit, FiRotateCcw } from "react-icons/fi";
+import { FiEdit, FiRotateCcw, FiAlertCircle } from "react-icons/fi";
 import { IoClose } from "react-icons/io5";
 import { TbFileSearch } from "react-icons/tb";
 import { FaRegCircleCheck } from "react-icons/fa6";
@@ -54,7 +54,44 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/ /g, "-");
 };
 
+const isDateInFuture = (year, month, day) => {
+  const selected = new Date(Number(year), Number(month) - 1, Number(day))
+  const today    = new Date()
+  today.setHours(0, 0, 0, 0)
+  return selected > today
+}
+
 const CEREAL_LABEL = { WD1G50: "Palay", PD1350: "Rice" };
+
+function AlertModal({ open, onClose, title, message, accentColor = "#BB2325" }) {
+  return (
+    <AlertDialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
+      <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[500px] xl:max-w-[420px] overflow-hidden rounded-[10px] border-none">
+        <div className="h-7 rounded-t-lg" style={{ backgroundColor: accentColor }} />
+        <AlertDialogHeader className="p-5 text-center items-center pb-4">
+          <div className="rounded-full px-5 py-5" style={{ backgroundColor: accentColor }}>
+            <FiAlertCircle color="white" size={55} />
+          </div>
+          <AlertDialogTitle className="!font-bold text-2xl mx-2" style={{ color: accentColor }}>
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-sm px-2 text-gray-600">
+            {message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 pb-5">
+          <AlertDialogAction
+            className="px-10 py-4.5 text-white"
+            style={{ backgroundColor: accentColor }}
+            onClick={onClose}
+          >
+            OK
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export default function StockBook() {
   // for notif
@@ -105,6 +142,15 @@ export default function StockBook() {
   const [importedTransactions, setImportedTransactions] = useState([])
   const [importedFileName, setImportedFileName] = useState('')
 
+  const [addDialogError, setAddDialogError] = useState('')
+  const [importDialogError, setImportDialogError] = useState('')
+
+  const [alertModal, setAlertModal] = useState({ open: false, title: '', message: '', accentColor: '#BB2325' })
+  const showAlert = (title, message, accentColor = '#BB2325') => {
+    setAlertModal({ open: true, title, message, accentColor })
+  }
+  const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }))
+
   const fetchStocks = async () => {
     try {
       setLoading(true);
@@ -131,6 +177,7 @@ export default function StockBook() {
       );
     });
 
+
   // add report
   const handleAddReportClick = () => {
     setSelectedType("");
@@ -154,17 +201,26 @@ export default function StockBook() {
 
   // cereal modal next → create directly
   const handleCerealNext = async () => {
-    if (!selectedType) { alert("Please select a cereal type"); return; }
+    if (!selectedType) { 
+      setAddDialogError('Please select a cereal type.')
+      return; 
+    }
+
     if (!selectedYear || !selectedMonth || !selectedDay) {
-      alert("Please fill in all date fields (year, month, and day)");
+      setAddDialogError('Please fill in all date fields (year, month, and day).')
       return;
     }
 
     const yearNum = parseInt(selectedYear);
       if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
-        alert("Please enter a valid year (e.g. 2026)");
+        setAddDialogError('Please enter a valid year (e.g. 2026).')
         return;
       }
+
+    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) {
+      setAddDialogError('You cannot create a stock book for a future date.')
+      return
+    }
 
     try {
       setSubmitting(true);
@@ -182,7 +238,7 @@ export default function StockBook() {
         state: { stockBook: newStock, mode: "create" },
       });
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to create stock book.");
+      setAddDialogError(err.response?.data?.error || 'Failed to create stock book.')
     } finally {
       setSubmitting(false);
     }
@@ -195,14 +251,18 @@ export default function StockBook() {
     });
   };
 
-  // unsubmit button
+  // unsubmit button 
   const handleUnsubmit = async (stock) => {
     try {
       setUnsubmitting(stock.report_id);
       await api.post(`/reports/stocks/unsubmit/${stock.report_id}/`);
       await fetchStocks();
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to unsubmit.");
+      showAlert(
+        'Unsubmit Failed',
+        err.response?.data?.error || 'Failed to unsubmit. Please try again.',
+        '#BB2325'
+      )
     } finally {
       setUnsubmitting(null);
     }
@@ -225,7 +285,12 @@ export default function StockBook() {
       setImportedTransactions(imported)
       setImportedFileName(file.name)
     } catch (err) {
-      alert(err.message || 'Import failed.')
+      // was: alert(err.message || 'Import failed.')
+      showAlert(
+        'Import Failed',
+        err.message || 'Something went wrong while reading the file. Please try again.',
+        '#1D8104'
+      )
     } finally {
       setImporting(false)
     }
@@ -233,9 +298,26 @@ export default function StockBook() {
 
   // create the imported stock book
   const handleImportCreate = async () => {
-    if (!selectedType) { alert('Please select a cereal type.'); return }
-    if (!selectedYear || !selectedMonth || !selectedDay) { alert('Please fill in all date fields.'); return }
-    if (importedTransactions.length === 0) { alert('Please select an Excel file first.'); return }
+    setImportDialogError('')
+
+    if (!selectedType) { 
+      setImportDialogError('Please select a cereal type.')
+      return 
+
+    }
+    if (!selectedYear || !selectedMonth || !selectedDay) { 
+      setImportDialogError('Please fill in all date fields.')
+      return 
+    }
+    if (importedTransactions.length === 0) {
+      setImportDialogError('Please select an Excel file first.'); 
+      return 
+    }
+
+    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) {
+      setImportDialogError('You cannot create a stock book for a future date.')
+      return
+    }
 
     try {
       setSubmitting(true)
@@ -294,7 +376,7 @@ export default function StockBook() {
         count: importedTransactions.length
       })
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to create stock book.')
+      setImportDialogError(err.response?.data?.error || 'Failed to create stock book.')
     } finally {
       setSubmitting(false)
     }
@@ -329,7 +411,7 @@ export default function StockBook() {
 
           <div className="flex items-center gap-6 mt-3.5">
             <Select value={selectedCereal} onValueChange={setSelectedCereal}>
-              <SelectTrigger className="w-40 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
+              <SelectTrigger className="w-40 bg-white border-gray-300 py-5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
                 <SelectValue placeholder="All Cereal Type" />
               </SelectTrigger>
               <SelectContent>
@@ -341,7 +423,7 @@ export default function StockBook() {
 
             <button
               onClick={handleImportClick}
-              className="bg-[#1D8104] px-5 py-3 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold"
+              className="bg-[#1D8104] px-5 py-2.5 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold"
             >
               <div className="flex gap-2 items-center">
                 <CiImport size={20} />
@@ -351,7 +433,7 @@ export default function StockBook() {
 
             <Button
               onClick={handleAddReportClick}
-              className="bg-[#2D317F] text-white rounded-md py-5.5 w-35 font-semibold hover:bg-[#1f2360] shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]"
+              className="bg-[#2D317F] text-white rounded-md py-5 w-35 font-semibold hover:bg-[#1f2360] shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]"
             >
               + Add Report
             </Button>
@@ -448,23 +530,23 @@ export default function StockBook() {
                                   Unsubmit
                                 </button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                                  <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                                <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                                  <div className="h-5 bg-[#BB2325] rounded-t-lg" />
                                   <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                                    <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                                      <FiRotateCcw color="white" size={55} />
+                                    <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                                      <FiRotateCcw color="white" size={33} />
                                     </div>
-                                    <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                    <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mx-2">
                                       Unsubmit Stockbook?
                                     </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-sm px-2">
+                                    <AlertDialogDescription className="text-[12px] px-2">
                                       Are you sure you want to unsubmit your stock book?
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-                                  <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                                    <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                                  <AlertDialogFooter className="mx-0 mb-0 -mt-4 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                                    <AlertDialogCancel className="w-23 px-4 py-1.5">Stay</AlertDialogCancel>
                                     <AlertDialogAction
-                                      className="w-23 !bg-[#BB2325] text-white hover:bg-[#981416] px-10 py-4.5"
+                                      className="w-23 !bg-[#BB2325] text-white hover:bg-[#981416] px-4 py-1.5"
                                       onClick={() => handleUnsubmit(r)}
                                     >
                                       Yes
@@ -493,6 +575,7 @@ export default function StockBook() {
             setSelectedYear("");
             setSelectedMonth("");
             setSelectedDay("");
+            setAddDialogError('');
           }
         }}>
           <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
@@ -575,6 +658,12 @@ export default function StockBook() {
                 </div>
               </div>
 
+              {addDialogError && (
+                <p className="flex items-center gap-1.5 text-red-500 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <span>⊙</span> {addDialogError}
+                </p>
+              )}
+
               <div className="flex justify-end gap-3 mt-5">
                 <button
                   onClick={() => setAddDialogOpen(false)}
@@ -602,6 +691,7 @@ export default function StockBook() {
             setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay("")
             setImportedTransactions([])
             setImportedFileName('')
+            setImportDialogError('')
           }
         }}>
           <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
@@ -665,7 +755,11 @@ export default function StockBook() {
               <div
                 onClick={() => {
                   if (!selectedType || !selectedYear || !selectedMonth || !selectedDay) {
-                    alert('Please select cereal type and date first.')
+                    showAlert(
+                      'Missing Information',
+                      'Please select a cereal type and fill in the date fields before uploading a file.',
+                      '#1D8104'
+                    )
                     return
                   }
                   importFileRef.current?.click()
@@ -689,6 +783,12 @@ export default function StockBook() {
                   </>
                 )}
               </div>
+
+              {importDialogError && (
+                <p className="flex items-center gap-1.5 text-red-500 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <span>⊙</span> {importDialogError}
+                </p>
+              )}
 
               {/* Footer */}
               <div className="flex justify-end gap-3 mt-4">
@@ -718,6 +818,14 @@ export default function StockBook() {
         accept=".xlsx,.xls"
         className="hidden"
         onChange={handleImportStockbook}
+      />
+
+      <AlertModal
+        open={alertModal.open}
+        onClose={closeAlert}
+        title={alertModal.title}
+        message={alertModal.message}
+        accentColor={alertModal.accentColor}
       />
     </>
   );

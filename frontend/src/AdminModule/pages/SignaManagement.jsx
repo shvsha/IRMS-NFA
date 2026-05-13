@@ -262,28 +262,28 @@ export default function SignaManagement() {
 
       {/* Deactivate Dialog */}
       <Dialog open={deactivateDialog.open} onOpenChange={() => setDeactivateDialog({ open: false, user: null })}>
-        <DialogContent className="bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[400px] shadow-2xl">
+        <DialogContent className="bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl">
           <div className="bg-[#BB2325] py-3 rounded-t-lg" />
-          <div className="bg-[#BB2325] py-5 rounded-full flex justify-center mx-38 mb-3 mt-5">
-            <FaUserTimes className="w-12 h-12" color="white" />
+          <div className="bg-[#BB2325] py-4 rounded-full flex justify-center mx-31 mb-1.5 mt-3">
+            <FaUserTimes className="w-9 h-9" color="white" />
           </div>
           <DialogHeader>
             <div className="text-center">
-              <p className="text-[#BB2325] font-bold text-xl">Deactivate Signatory</p>
-              <p className="text-sm mx-5 mt-2 text-[#051F52]">
+              <p className="text-[#BB2325] font-bold text-[20px]">Deactivate Signatory</p>
+              <p className="text-[12px] mx-5 mt-0.5 text-[#051F52]">
                 Are you sure you want to deactivate{' '}
                 <strong>{deactivateDialog.user?.fname} {deactivateDialog.user?.lname}</strong>?
                 You can add a new signatory or reactivate them afterwards.
               </p>
             </div>
             <DialogDescription className="flex flex-col gap-5">
-              <div className="flex justify-center gap-3 mt-6 mb-5">
+              <div className="flex justify-center gap-3 mt-3 mb-3">
                 <Button variant="ghost" onClick={() => setDeactivateDialog({ open: false, user: null })}
-                  className="px-7 py-4.5 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300">
+                  className="px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300">
                   Cancel
                 </Button>
                 <Button onClick={handleDeactivate}
-                  className="px-7 py-4.5 rounded-md bg-[#BB2325] text-white font-medium hover:bg-red-700">
+                  className="px-3 py-4 rounded-md bg-[#BB2325] text-white font-medium hover:bg-red-700">
                   Deactivate
                 </Button>
               </div>
@@ -294,27 +294,27 @@ export default function SignaManagement() {
 
       {/* Reactivate Dialog */}
       <Dialog open={reactivateDialog.open} onOpenChange={() => setReactivateDialog({ open: false, user: null })}>
-        <DialogContent className="bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[400px] shadow-2xl">
+        <DialogContent className="bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl">
           <div className="bg-[#1D8104] py-3 rounded-t-lg" />
-          <div className="bg-[#1D8104] py-5 rounded-full flex justify-center mx-38 mb-3 mt-5">
-            <UserRoundCheck className="w-12 h-12" color="white" />
+          <div className="bg-[#1D8104] py-4 rounded-full flex justify-center mx-31 mb-1.5 mt-3">
+            <UserRoundCheck className="w-9 h-9" color="white" />
           </div>
           <DialogHeader>
             <div className="text-center">
-              <p className="text-[#1D8104] font-bold text-xl">Reactivate Signatory</p>
-              <p className="text-sm mx-5 mt-2 text-[#051F52]">
+              <p className="text-[#1D8104] font-bold text-[20px]">Reactivate Signatory</p>
+              <p className="text-[12px] mx-5 mt-0.5 text-[#051F52]">
                 Are you sure you want to reactivate{' '}
                 <strong>{reactivateDialog.user?.fname} {reactivateDialog.user?.lname}</strong>?
               </p>
             </div>
             <DialogDescription className="flex flex-col gap-5">
-              <div className="flex justify-center gap-3 mt-6 mb-5">
+              <div className="flex justify-center gap-3 mt-3 mb-3">
                 <Button variant="ghost" onClick={() => setReactivateDialog({ open: false, user: null })}
-                  className="px-7 py-4.5 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300">
+                  className="px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300">
                   Cancel
                 </Button>
                 <Button onClick={handleReactivate}
-                  className="px-7 py-4.5 rounded-md bg-[#1D8104] text-white font-medium hover:bg-green-700">
+                  className="px-3 py-4 rounded-md bg-[#1D8104] text-white font-medium hover:bg-green-700">
                   Reactivate
                 </Button>
               </div>
