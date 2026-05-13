@@ -25,7 +25,7 @@ def get_user_from_token(request):
     except Exception:
         return None
     
-
+# helpers
 NFA_WEEK_RANGES = {
     1: (1, 7),
     2: (8, 14),
@@ -40,6 +40,38 @@ def get_nfa_week_day_range(year, month, week):
     if end_day is None:
         end_day = days_in_month
     return start_day, min(end_day, days_in_month)
+
+NEXT_STAGE_ROLE = {
+    'asst_bm':    'Asst. Branch Manager',
+    'accountant': 'Accountant 3',
+    'branch_m':   'Branch Manager',
+}
+
+
+def check_all_remaining_evaluators(current_stage):
+    """Check all stages after current_stage still have active signatories. Returns error message or None."""
+    stage_order = ['admin', 'asst_bm', 'accountant', 'branch_m']
+    if current_stage not in stage_order:
+        return None
+
+    current_index = stage_order.index(current_stage)
+    remaining_stages = stage_order[current_index + 1:]  # all stages after current
+
+    missing = []
+    for stage in remaining_stages:
+        role = NEXT_STAGE_ROLE.get(stage)
+        if role:
+            from users.models import User
+            if not User.objects.filter(
+                user_level='Signatory',
+                signatory_role=role,
+                status='Active'
+            ).exists():
+                missing.append(role)
+
+    if missing:
+        return f"Cannot approve: no active signatory for: {', '.join(missing)}. Contact Admin to assign active signatories first."
+    return None
 
 # Stockbook
 @api_view(['GET'])
@@ -64,7 +96,21 @@ def create_stock(request):
         assist_bm  = User.objects.filter(user_level='Signatory', signatory_role='Asst. Branch Manager', status='Active').first()
         account_ii = User.objects.filter(user_level='Signatory', signatory_role='Accountant 3', status='Active').first()
         branch_m   = User.objects.filter(user_level='Signatory', signatory_role='Branch Manager', status='Active').first()
+        
+        missing = []
+        if not assist_bm:
+            missing.append('Asst. Branch Manager')
+        if not account_ii:
+            missing.append('Accountant 3')
+        if not branch_m:
+            missing.append('Branch Manager')
 
+        if missing:
+            return Response(
+                {'error': f"Cannot create StockBook: no active signatory for: {', '.join(missing)}. Contact Admin to assign active signatories first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         instance = serializer.save(
             name=user,
             Assist_BM=assist_bm,
@@ -141,6 +187,22 @@ def submit_stock(request, pk):
     if not stock.transactions.exists():
         return Response(
             {'error': 'Cannot submit a StockBook with no transactions'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # check if all signatories are active
+    from users.models import User as UserModel
+    missing = [
+        role for role in ['Asst. Branch Manager', 'Accountant 3', 'Branch Manager']
+        if not UserModel.objects.filter(
+            user_level='Signatory',
+            signatory_role=role,
+            status='Active'
+        ).exists()
+    ]
+    if missing:
+        return Response(
+            {'error': f"Cannot submit: no active signatory for: {', '.join(missing)}. Contact Admin to assign active signatories first."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -372,8 +434,13 @@ def upd_wsr_report(request, pk):
                 report.current_stage  = 'done'
                 report.save()
             else:
+                err_msg = check_all_remaining_evaluators(stage)
+                if err_msg:
+                    return Response({'error': err_msg}, status=status.HTTP_400_BAD_REQUEST)
+
                 report.current_stage  = next_stage
                 report.save()
+
                 sb = report.stockbooks.first()
                 sb_info = f"StockBook R-{str(sb.report_id).zfill(3)}" if sb else "No StockBook"
                 AuditLog.objects.create(
@@ -484,8 +551,13 @@ def upd_wsi_report(request, pk):
                 report.current_stage  = 'done'
                 report.save()
             else:
+                err_msg = check_all_remaining_evaluators(stage)
+                if err_msg:
+                    return Response({'error': err_msg}, status=status.HTTP_400_BAD_REQUEST)
+
                 report.current_stage  = next_stage
                 report.save()
+
                 sb = report.stockbooks.first()
                 sb_info = f"StockBook R-{str(sb.report_id).zfill(3)}" if sb else "No StockBook"
                 AuditLog.objects.create(

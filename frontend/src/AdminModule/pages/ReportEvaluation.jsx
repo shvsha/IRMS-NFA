@@ -20,7 +20,6 @@ import { createPortal } from 'react-dom'
 // shadcn components
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
@@ -28,38 +27,35 @@ import { Button } from "@/components/ui/button"
 import api from "@/api/axios";
 
 
-// Normalize WSRReport → display row
 const mapWSR = (r) => ({
-  _type:      'WSR',
-  _id:        r.wsr_report_id,
-  date:       r.stockbook_date   ?? '—',
-  cerealType: r.stockbook_cereal ?? '—',
-  reportType: 'Statement of Receipt',
-  whse: r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
-  status:     r.Evaluation       ?? 'Pending',
-  reason:     r.Reason           ?? '',
-  stockbookId: r.stockbook,
+  _type:        'WSR',
+  _id:          r.wsr_report_id,
+  date:         r.stockbook_date   ?? '—',
+  cerealType:   r.stockbook_cereal ?? '—',
+  reportType:   'Statement of Receipt',
+  whse:         r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
+  status:       r.Evaluation       ?? 'Pending',
+  reason:       r.Reason           ?? '',
+  stockbookId:  r.stockbook,
   currentStage: r.current_stage,
 });
 
-// Normalize WSIReport → display row
 const mapWSI = (r) => ({
-  _type:      'WSI',
-  _id:        r.wsi_report_id,
-  date:       r.stockbook_date   ?? '—',
-  cerealType: r.stockbook_cereal ?? '—',
-  reportType: 'Statement of Issue',
-  whse: r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
-  status:     r.Evaluation       ?? 'Pending',
-  reason:     r.Reason           ?? '',
-  stockbookId: r.stockbook,
+  _type:        'WSI',
+  _id:          r.wsi_report_id,
+  date:         r.stockbook_date   ?? '—',
+  cerealType:   r.stockbook_cereal ?? '—',
+  reportType:   'Statement of Issue',
+  whse:         r.warehouse ?? r.transactions?.[0]?.user_WHCode ?? '—',
+  status:       r.Evaluation       ?? 'Pending',
+  reason:       r.Reason           ?? '',
+  stockbookId:  r.stockbook,
   currentStage: r.current_stage,
 });
 
-// Route to view detail page
 const getBasePath = () => {
   if (window.location.pathname.startsWith('/signa')) return '/signa';
-  if (window.location.pathname.startsWith('/whse')) return '/whse';
+  if (window.location.pathname.startsWith('/whse'))  return '/whse';
   return '/admin';
 };
 
@@ -71,52 +67,45 @@ const getReportRoutes = (basePath) => ({
 const getSignatoryStage = (user) => {
   if (user?.user_level !== 'Signatory') return null;
   if (user.signatory_role === 'Asst. Branch Manager') return 'asst_bm';
-  if (user.signatory_role === 'Accountant 3') return 'accountant';
-  if (user.signatory_role === 'Branch Manager') return 'branch_m';
+  if (user.signatory_role === 'Accountant 3')         return 'accountant';
+  if (user.signatory_role === 'Branch Manager')       return 'branch_m';
   return null;
 };
 
-// component
+const ITEMS_PER_PAGE = 6
 
 export default function ReportEvaluation() {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
 
   const navigate = useNavigate();
   const currentUser = (() => {
-    try {
-      return JSON.parse(sessionStorage.getItem('user')) || null;
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(sessionStorage.getItem('user')) || null; }
+    catch { return null; }
   })();
-  const basePath = getBasePath();
+  const basePath     = getBasePath();
   const reportRoutes = getReportRoutes(basePath);
 
-  // state
-  const [reports,             setReports]             = useState([]);
-  const [loading,             setLoading]             = useState(true);
-  const [selectedStatus,      setSelectedStatus]      = useState('All Status');
-  const [selectedCerealType,  setSelectedCerealType]  = useState('All Cereal Type');
-  const [selectedWarehouse,   setSelectedWarehouse]   = useState('All Warehouses');
-  const [search,              setSearch]              = useState('');
-  const [openDropdown,        setOpenDropdown]        = useState(null);
-  const [dropdownPos,         setDropdownPos]         = useState({ top: 0, left: 0 });
-  const [toasts,              setToasts]              = useState([]);
-  const [selectedReport,      setSelectedReport]      = useState(null);
-  const [approveOpen,         setApproveOpen]         = useState(false);
-  const [approving,           setApproving]           = useState(false);
-  const [rejectDialogOpen,    setRejectDialogOpen]    = useState(false);
-  const [rejectReason,        setRejectReason]        = useState('');
-  const [rejecting,           setRejecting]           = useState(false);
+  const [reports,            setReports]            = useState([]);
+  const [loading,            setLoading]            = useState(true);
+  const [currentPage,        setCurrentPage]        = useState(1);
+  const [selectedStatus,     setSelectedStatus]     = useState('All Status');
+  const [selectedCerealType, setSelectedCerealType] = useState('All Cereal Type');
+  const [selectedWarehouse,  setSelectedWarehouse]  = useState('All Warehouses');
+  const [search,             setSearch]             = useState('');
+  const [openDropdown,       setOpenDropdown]       = useState(null);
+  const [dropdownPos,        setDropdownPos]        = useState({ top: 0, left: 0 });
+  const [toasts,             setToasts]             = useState([]);
+  const [selectedReport,     setSelectedReport]     = useState(null);
+  const [approveOpen,        setApproveOpen]        = useState(false);
+  const [approving,          setApproving]          = useState(false);
+  const [rejectDialogOpen,   setRejectDialogOpen]   = useState(false);
+  const [rejectReason,       setRejectReason]       = useState('');
+  const [rejecting,          setRejecting]          = useState(false);
 
-  // fetch both report lists on mount 
-  useEffect(() => {
-    fetchReports();
-  }, []);
+  useEffect(() => { fetchReports(); }, []);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -132,7 +121,7 @@ export default function ReportEvaluation() {
 
       const userStage = getSignatoryStage(currentUser);
       if (currentUser?.user_level === 'Admin') {
-        combined = combined.filter((report) => 
+        combined = combined.filter((report) =>
           report.currentStage === 'admin' &&
           (report.status === 'Pending' || report.status === 'Rejected')
         );
@@ -140,7 +129,6 @@ export default function ReportEvaluation() {
         combined = combined.filter((report) => report.currentStage === userStage);
       }
 
-      // Sort newest id first
       combined.sort((a, b) => b._id - a._id);
       setReports(combined);
     } catch (err) {
@@ -151,21 +139,18 @@ export default function ReportEvaluation() {
     }
   };
 
-  // close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = () => setOpenDropdown(null);
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // toast
   const addToast = (message, color) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, color }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   };
 
-  // optimistically update a single row's status in state
   const updateReportStatus = (type, id, newStatus, newReason = '') => {
     setReports(prev => prev.map(r =>
       r._type === type && r._id === id
@@ -174,11 +159,7 @@ export default function ReportEvaluation() {
     ));
   };
 
-  // approve
-  const handleApprove = (report) => {
-    setSelectedReport(report);
-    setApproveOpen(true);
-  };
+  const handleApprove = (report) => { setSelectedReport(report); setApproveOpen(true); };
 
   const handleApproveConfirm = async () => {
     if (!selectedReport) return;
@@ -187,28 +168,20 @@ export default function ReportEvaluation() {
       const endpoint = selectedReport._type === 'WSR'
         ? `/reports/wsr-reports/upd/${selectedReport._id}/`
         : `/reports/wsi-reports/upd/${selectedReport._id}/`;
-
       await api.put(endpoint, { Evaluation: 'Approved', Reason: null });
-
       updateReportStatus(selectedReport._type, selectedReport._id, 'Approved', '');
       await fetchReports();
       setApproveOpen(false);
       addToast('Report has been approved!', '#3E7A43');
     } catch (err) {
-      console.error('Approve failed:', err.response?.data || err);
-      const msg = err.response?.data?.error ?? 'Failed to approve report.';
-      addToast(msg, '#BB2325');
+      setApproveOpen(false);
+      addToast(err.response?.data?.error ?? 'Failed to approve report.', '#BB2325');
     } finally {
       setApproving(false);
     }
   };
 
-  // reject
-  const handleRejectOpen = (report) => {
-    setSelectedReport(report);
-    setRejectReason('');
-    setRejectDialogOpen(true);
-  };
+  const handleRejectOpen = (report) => { setSelectedReport(report); setRejectReason(''); setRejectDialogOpen(true); };
 
   const handleRejectSubmit = async () => {
     if (!selectedReport || !rejectReason.trim()) return;
@@ -217,18 +190,14 @@ export default function ReportEvaluation() {
       const endpoint = selectedReport._type === 'WSR'
         ? `/reports/wsr-reports/upd/${selectedReport._id}/`
         : `/reports/wsi-reports/upd/${selectedReport._id}/`;
-
       await api.put(endpoint, { Evaluation: 'Rejected', Reason: rejectReason.trim() });
-
       updateReportStatus(selectedReport._type, selectedReport._id, 'Rejected', rejectReason.trim());
       await fetchReports();
       setRejectDialogOpen(false);
       setRejectReason('');
       addToast('Report has been rejected.', '#BB2325');
     } catch (err) {
-      console.error('Reject failed:', err.response?.data || err);
-      const msg = err.response?.data?.error ?? 'Failed to reject report.';
-      addToast(msg, '#BB2325');
+      addToast(err.response?.data?.error ?? 'Failed to reject report.', '#BB2325');
     } finally {
       setRejecting(false);
     }
@@ -240,13 +209,23 @@ export default function ReportEvaluation() {
       r.reportType.toLowerCase().includes(search.toLowerCase()) ||
       r.cerealType.toLowerCase().includes(search.toLowerCase()) ||
       r.whse.toLowerCase().includes(search.toLowerCase());
-    const matchStatus      = selectedStatus      === 'All Status'      || r.status     === selectedStatus;
-    const matchCerealType  = selectedCerealType  === 'All Cereal Type' || r.cerealType === selectedCerealType;
-    const matchWarehouse   = selectedWarehouse   === 'All Warehouses'  || r.whse       === selectedWarehouse;
+    const matchStatus     = selectedStatus     === 'All Status'      || r.status     === selectedStatus;
+    const matchCerealType = selectedCerealType === 'All Cereal Type' || r.cerealType === selectedCerealType;
+    const matchWarehouse  = selectedWarehouse  === 'All Warehouses'  || r.whse       === selectedWarehouse;
     return matchSearch && matchStatus && matchCerealType && matchWarehouse;
   });
 
-  // derive unique filter options from live data
+  // pagination
+  const totalPages       = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
+  const startIndex       = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  // reset page on filter/search change
+  const handleStatusChange     = (v) => { setSelectedStatus(v);     setCurrentPage(1) }
+  const handleCerealChange     = (v) => { setSelectedCerealType(v); setCurrentPage(1) }
+  const handleWarehouseChange  = (v) => { setSelectedWarehouse(v);  setCurrentPage(1) }
+  const handleSearchChange     = (e) => { setSearch(e.target.value); setCurrentPage(1) }
+
   const uniqueCerealTypes = [...new Set(reports.map(r => r.cerealType).filter(v => v && v !== '—'))];
   const uniqueWarehouses  = [...new Set(reports.map(r => r.whse).filter(v => v && v !== '—'))];
 
@@ -259,35 +238,28 @@ export default function ReportEvaluation() {
     );
     if (status === 'Approved') return (
       <span className="inline-flex items-center justify-center gap-1.5 px-3.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#8BF093', color: '#3E7A43', border: '1px solid #90EE90' }}>
-        <IoMdCheckmarkCircleOutline size={18} />
-        Approved
+        <IoMdCheckmarkCircleOutline size={18} /> Approved
       </span>
     );
     if (status === 'Rejected') return (
       <span className="inline-flex items-center justify-center gap-1.5 px-4.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#BB2325', color: '#fff', border: '1px solid #F5A0A0' }}>
-        <IoMdCloseCircleOutline size={18} />
-        Rejected
+        <IoMdCloseCircleOutline size={18} /> Rejected
       </span>
     );
     return null;
   };
 
-  // unique key per row
   const rowKey = (r) => `${r._type}-${r._id}`;
 
   return (
     <>
-      <Header
-        pageTitle="Evaluation"
-        unreadCount={unreadCount}
-        notifTo={notifRoute}
-        userName={userName}
-      />
+      <Header pageTitle="Evaluation" unreadCount={unreadCount} notifTo={notifRoute} userName={userName} />
 
+      {/* Outer card */}
       <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
 
-        {/* summary counts */}
-        <div className='flex justify-between font-medium w-150 pt-2.5 pl-4 text-[#2D317F]'>
+        {/* Summary counts — fixed */}
+        <div className='flex justify-between font-medium w-150 pt-2.5 pl-4 text-[#2D317F] flex-shrink-0'>
           <div className="flex gap-4">
             <label>Total Reports:</label>
             <p className="m-0 font-bold">{reports.length}</p>
@@ -302,21 +274,20 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        {/* search + filters */}
-        <div className="flex justify-between items-center h-auto mt-5 mb-4 mx-4 text-[#2D317F] gap-3">
+        {/* Search + filters — fixed */}
+        <div className="flex justify-between items-center mt-5 mb-4 mx-4 text-[#2D317F] gap-3 flex-shrink-0">
           <div className="bg-white border border-[#2D317F] rounded-full py-1.5 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
             <FaBars color={'#2D317F'} size={18} className="shrink-0" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="Search Report"
               className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
             />
             <FaSearch className="text-[#2D317F] shrink" size={20} />
           </div>
-
           <div className="flex gap-2.5 items-center flex-wrap">
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <Select value={selectedStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-35 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
                 <SelectValue />
               </SelectTrigger>
@@ -328,7 +299,7 @@ export default function ReportEvaluation() {
               </SelectContent>
             </Select>
 
-            <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
+            <Select value={selectedCerealType} onValueChange={handleCerealChange}>
               <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-42 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
                 <SelectValue />
               </SelectTrigger>
@@ -340,7 +311,7 @@ export default function ReportEvaluation() {
               </SelectContent>
             </Select>
 
-            <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+            <Select value={selectedWarehouse} onValueChange={handleWarehouseChange}>
               <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-45 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
                 <SelectValue />
               </SelectTrigger>
@@ -354,93 +325,130 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        {/* table */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Table section — flex-1 flex col so it fills remaining space */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           {loading ? (
-            <TableRow className='flex justify-center items-center h-full border-0'>
-              <TableCell colSpan={6} className="text-center py-16">
-                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
-                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm font-medium">Loading reports...</span>
-                </div>
-              </TableCell>
-            </TableRow>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium">Loading reports...</span>
+              </div>
+            </div>
           ) : (
-            <Table>
-              <TableHeader className='text-center'>
-                <TableRow className='bg-[#E2EBFF] text-[#2D317F] font-medium border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]'>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Date</TableHead>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Cereal Type</TableHead>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Report Type</TableHead>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Warehouse</TableHead>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Status</TableHead>
-                  <TableHead className='text-[#2D317F] font-bold text-center h-10 xl:h-12 2xl:h-[50px] text-sm xl:text-base'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredReports.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-gray-400 py-12">
-                      No reports found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredReports.map((report) => (
-                    <TableRow key={rowKey(report)}>
-                      <TableCell className='text-center text-[#2D317F]'>{report.date}</TableCell>
-                      <TableCell className='text-center text-[#2D317F]'>{report.cerealType}</TableCell>
-                      <TableCell className='text-center text-[#2D317F]'>{report.reportType}</TableCell>
-                      <TableCell className='text-center text-[#2D317F]'>{report.whse}</TableCell>
-                      <TableCell className='text-center text-[#2D317F]'>
-                        {getStatusBadge(report.status)}
-                      </TableCell>
-                      <TableCell className='text-center px-0 !w-100'>
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
-                            onClick={() => navigate(
-                              (reportRoutes[report.reportType] ?? '/admin/evaluation'),
-                              { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId, pageTitle:   'Evaluation', } }
-                            )}
-                          >
-                            <GoLinkExternal size={15} /> View
-                          </button>
+            <>
+              {/* Fixed table header */}
+              <table className="w-full table-fixed flex-shrink-0">
+                <colgroup>
+                  <col className="w-[13%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[24%]" />
+                </colgroup>
+                <thead>
+                  <tr className="bg-[#E2EBFF] text-[#2D317F] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report Type</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Warehouse</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
+                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Actions</th>
+                  </tr>
+                </thead>
+              </table>
 
-                          {/* actions dropdown */}
-                          <div className="relative">
-                            <button
-                              className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
-                              disabled={report.status === 'Approved' || report.status === 'Rejected'}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const key = rowKey(report);
-                                if (openDropdown === key) {
-                                  setOpenDropdown(null);
-                                } else {
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  setDropdownPos({
-                                    top:  rect.bottom + window.scrollY + 4,
-                                    left: rect.right  - 144,
-                                  });
-                                  setOpenDropdown(key);
-                                }
-                              }}
-                            >
-                              <span className="text-lg font-bold tracking-widest">···</span>
-                            </button>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+              {/* Scrollable table body */}
+              <div className="overflow-y-auto flex-1">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[13%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[22%]" />
+                    <col className="w-[13%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[24%]" />
+                  </colgroup>
+                  <tbody>
+                    {filteredReports.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center text-gray-400 py-12">No reports found.</td>
+                      </tr>
+                    ) : (
+                      paginatedReports.map((report) => (
+                        <tr key={rowKey(report)} className="border-b border-gray-100 h-[60px]">
+                          <td className="text-center text-[#2D317F] text-sm">{report.date}</td>
+                          <td className="text-center text-[#2D317F] text-sm">{report.cerealType}</td>
+                          <td className="text-center text-[#2D317F] text-sm">{report.reportType}</td>
+                          <td className="text-center text-[#2D317F] text-sm">{report.whse}</td>
+                          <td className="text-center text-[#2D317F]">{getStatusBadge(report.status)}</td>
+                          <td className="text-center px-0">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
+                                onClick={() => navigate(
+                                  reportRoutes[report.reportType] ?? '/admin/evaluation',
+                                  { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId, pageTitle: 'Evaluation' } }
+                                )}
+                              >
+                                <GoLinkExternal size={15} /> View
+                              </button>
+                              <div className="relative">
+                                <button
+                                  className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
+                                  disabled={report.status === 'Approved' || report.status === 'Rejected'}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const key = rowKey(report);
+                                    if (openDropdown === key) {
+                                      setOpenDropdown(null);
+                                    } else {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.right - 144 });
+                                      setOpenDropdown(key);
+                                    }
+                                  }}
+                                >
+                                  <span className="text-lg font-bold tracking-widest">···</span>
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination — sibling of scroll div, always pinned at bottom */}
+              <div className="flex items-center justify-between px-5 py-[12px] flex-shrink-0 border-t border-gray-100">
+                <span className="text-[13px] text-gray-500 font-medium">
+                  {totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : '—'}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    disabled={currentPage === 1 || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-[#2d317f] bg-[#e2e8f0] border-[1.5px] border-[#e2e8f0] cursor-pointer transition-colors duration-150 hover:bg-[#d1d9e6] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-white bg-[#2d317f] border-[1.5px] border-[#2d317f] cursor-pointer transition-colors duration-150 hover:bg-[#222669] hover:border-[#222669] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* approve modal */}
+      {/* Approve modal */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl'>
           <div className='bg-[#3E7A43] py-3 rounded-t-lg' />
@@ -454,19 +462,12 @@ export default function ReportEvaluation() {
             </div>
             <DialogDescription className='flex flex-col gap-5'>
               <div className='flex justify-center gap-3 mt-3 mb-3'>
-                <Button
-                  variant="ghost"
-                  disabled={approving}
-                  onClick={() => setApproveOpen(false)}
-                  className='px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'
-                >
+                <Button variant="ghost" disabled={approving} onClick={() => setApproveOpen(false)}
+                  className='px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'>
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleApproveConfirm}
-                  disabled={approving}
-                  className='px-3 py-4 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'
-                >
+                <Button onClick={handleApproveConfirm} disabled={approving}
+                  className='px-3 py-4 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'>
                   {approving ? 'Approving…' : 'Approve'}
                 </Button>
               </div>
@@ -475,7 +476,7 @@ export default function ReportEvaluation() {
         </DialogContent>
       </Dialog>
 
-      {/* reject modal */}
+      {/* Reject modal */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className='pt-0 px-0 pb-0 overflow-hidden !max-w-[320px] bg-[#E6EEF6] [&>button]:hidden'>
           <div className='h-7 bg-[#BB2325]' />
@@ -497,32 +498,22 @@ export default function ReportEvaluation() {
             />
           </div>
           <DialogFooter className='pb-10 pr-10 flex justify-center gap-3 bg-[#E6EEF6] border-0 -mt-7'>
-            <button
-              onClick={() => setRejectDialogOpen(false)}
-              disabled={rejecting}
-              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'
-            >
+            <button onClick={() => setRejectDialogOpen(false)} disabled={rejecting}
+              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'>
               Cancel
             </button>
-            <button
-              onClick={handleRejectSubmit}
-              disabled={!rejectReason.trim() || rejecting}
-              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'
-            >
+            <button onClick={handleRejectSubmit} disabled={!rejectReason.trim() || rejecting}
+              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'>
               {rejecting ? 'Rejecting…' : 'Reject'}
             </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* toasts */}
+      {/* Toasts */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
         {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
-            style={{ borderLeft: `4px solid ${toast.color}` }}
-          >
+          <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]" style={{ borderLeft: `4px solid ${toast.color}` }}>
             <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
               <FaCheck size={16} color="white" />
             </div>
@@ -536,7 +527,7 @@ export default function ReportEvaluation() {
         ))}
       </div>
 
-      {/* dropdown */}
+      {/* Dropdown portal */}
       {openDropdown && createPortal(
         <div
           className="fixed bg-white border border-gray-200 rounded-xl shadow-xl z-[9999] w-36 overflow-hidden"
@@ -550,20 +541,14 @@ export default function ReportEvaluation() {
               <>
                 <button
                   disabled={isRejected}
-                  onClick={() => {
-                    handleApprove(report);
-                    setOpenDropdown(null);
-                  }}
+                  onClick={() => { handleApprove(report); setOpenDropdown(null); }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#3E7A43] hover:bg-green-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <IoMdCheckmarkCircleOutline size={18} /> Approve
                 </button>
                 <button
                   disabled={isRejected}
-                  onClick={() => {
-                    handleRejectOpen(report);
-                    setOpenDropdown(null);
-                  }}
+                  onClick={() => { handleRejectOpen(report); setOpenDropdown(null); }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <IoMdCloseCircleOutline size={18} /> Reject

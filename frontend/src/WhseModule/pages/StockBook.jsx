@@ -18,10 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input";
-import {
-  TableCell,
-  TableRow,
-} from "@/components/ui/table"
 
 // react
 import { useState, useEffect, useRef } from "react";
@@ -40,7 +36,7 @@ const getStatusStyle = (status) => {
 };
 
 const getStatusIcon = (status) => {
-  if (status === "In Progress")  return (
+  if (status === "In Progress") return (
     <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
   );
   if (status === "Completed")    return <FaRegCircleCheck size={16} />;
@@ -66,26 +62,26 @@ const CEREAL_LABEL = { WD1G50: "Palay", PD1350: "Rice" };
 function AlertModal({ open, onClose, title, message, accentColor = "#BB2325" }) {
   return (
     <AlertDialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
-      <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[500px] xl:max-w-[420px] overflow-hidden rounded-[10px] border-none">
-        <div className="h-7 rounded-t-lg" style={{ backgroundColor: accentColor }} />
+      <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+        <div className="h-5 rounded-t-lg" style={{ backgroundColor: accentColor }} />
         <AlertDialogHeader className="p-5 text-center items-center pb-4">
-          <div className="rounded-full px-5 py-5" style={{ backgroundColor: accentColor }}>
-            <FiAlertCircle color="white" size={55} />
+          <div className="rounded-full px-4 py-4" style={{ backgroundColor: accentColor }}>
+            <FiAlertCircle color="white" size={33} />
           </div>
-          <AlertDialogTitle className="!font-bold text-2xl mx-2" style={{ color: accentColor }}>
+          <AlertDialogTitle className="!font-bold text-[23px] mx-2" style={{ color: accentColor }}>
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm px-2 text-gray-600">
+          <AlertDialogDescription className="text-[12px] text-gray-600">
             {message}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 pb-5">
+        <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 pb-5 -mt-5">
           <AlertDialogAction
-            className="px-10 py-4.5 text-white"
+            className="px-4 py-1.5 text-white"
             style={{ backgroundColor: accentColor }}
             onClick={onClose}
           >
-            OK
+            Okay
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -93,19 +89,18 @@ function AlertModal({ open, onClose, title, message, accentColor = "#BB2325" }) 
   );
 }
 
+const ITEMS_PER_PAGE = 8
+
 export default function StockBook() {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    fetchStocks();
-  }, []);
+  useEffect(() => { fetchStocks(); }, []);
 
   useEffect(() => {
     const handleFocus = () => fetchStocks();
@@ -113,42 +108,38 @@ export default function StockBook() {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") fetchStocks();
     });
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
+    return () => { window.removeEventListener("focus", handleFocus); };
   }, []);
 
+  const [currentPage, setCurrentPage]   = useState(1)
   const [stockReports, setStockReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
 
   const [selectedCereal, setSelectedCereal] = useState("All Cereal Type");
-  const [selectedType, setSelectedType] = useState("");
+  const handleCerealChange = (val) => { setSelectedCereal(val); setCurrentPage(1) }
+  const [selectedType, setSelectedType]     = useState("");
 
-  const [selectedDay, setSelectedDay] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedDay, setSelectedDay]     = useState("");
+  const [selectedYear, setSelectedYear]   = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [unsubmitting, setUnsubmitting] = useState(null);
-
-  const [search, setSearch] = useState("");
+  const [submitting, setSubmitting]       = useState(false);
+  const [unsubmitting, setUnsubmitting]   = useState(null);
+  const [search, setSearch]               = useState("");
 
   const importFileRef = useRef(null)
-  const [importing, setImporting] = useState(false)
-  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importing, setImporting]                     = useState(false)
+  const [importDialogOpen, setImportDialogOpen]       = useState(false)
   const [importedTransactions, setImportedTransactions] = useState([])
-  const [importedFileName, setImportedFileName] = useState('')
+  const [importedFileName, setImportedFileName]       = useState('')
 
-  const [addDialogError, setAddDialogError] = useState('')
+  const [addDialogError, setAddDialogError]       = useState('')
   const [importDialogError, setImportDialogError] = useState('')
 
   const [alertModal, setAlertModal] = useState({ open: false, title: '', message: '', accentColor: '#BB2325' })
-  const showAlert = (title, message, accentColor = '#BB2325') => {
-    setAlertModal({ open: true, title, message, accentColor })
-  }
+  const showAlert  = (title, message, accentColor = '#BB2325') => setAlertModal({ open: true, title, message, accentColor })
   const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }))
 
   const fetchStocks = async () => {
@@ -164,7 +155,7 @@ export default function StockBook() {
     }
   };
 
-  // filter
+  // filters
   const filteredReports = stockReports
     .filter(r => r.Status !== 'Archived')
     .filter(r => selectedCereal === "All Cereal Type" || r.CerealType === selectedCereal)
@@ -177,20 +168,18 @@ export default function StockBook() {
       );
     });
 
+  // pagination
+  const totalPages       = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
+  const startIndex       = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
-  // add report
   const handleAddReportClick = () => {
-    setSelectedType("");
-    setSelectedYear("");
-    setSelectedMonth("");
+    setSelectedType(""); setSelectedYear(""); setSelectedMonth("");
     setAddDialogOpen(true);
   };
 
   const handleImportClick = () => {
-    setSelectedType(""); 
-    setSelectedYear(""); 
-    setSelectedMonth(""); 
-    setSelectedDay("")
+    setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay("")
     setImportDialogOpen(true)
   }
 
@@ -199,44 +188,22 @@ export default function StockBook() {
     return new Date(year || 2024, Number(month), 0).getDate();
   };
 
-  // cereal modal next → create directly
   const handleCerealNext = async () => {
-    if (!selectedType) { 
-      setAddDialogError('Please select a cereal type.')
-      return; 
-    }
-
-    if (!selectedYear || !selectedMonth || !selectedDay) {
-      setAddDialogError('Please fill in all date fields (year, month, and day).')
-      return;
-    }
-
+    if (!selectedType) { setAddDialogError('Please select a cereal type.'); return; }
+    if (!selectedYear || !selectedMonth || !selectedDay) { setAddDialogError('Please fill in all date fields (year, month, and day).'); return; }
     const yearNum = parseInt(selectedYear);
-      if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
-        setAddDialogError('Please enter a valid year (e.g. 2026).')
-        return;
-      }
-
-    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) {
-      setAddDialogError('You cannot create a stock book for a future date.')
-      return
-    }
-
+    if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) { setAddDialogError('Please enter a valid year (e.g. 2026).'); return; }
+    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) { setAddDialogError('You cannot create a stock book for a future date.'); return }
     try {
       setSubmitting(true);
       const month = String(selectedMonth).padStart(2, "0");
-      const day = String(selectedDay).padStart(2, "0");
-      const date = `${selectedYear}-${month}-${day}`;
-      const res = await api.post("/reports/stocks/create/", {
-        CerealType: selectedType,
-        Date: date,
-      });
+      const day   = String(selectedDay).padStart(2, "0");
+      const date  = `${selectedYear}-${month}-${day}`;
+      const res   = await api.post("/reports/stocks/create/", { CerealType: selectedType, Date: date });
       const newStock = res.data;
       await fetchStocks();
       setAddDialogOpen(false);
-      navigate(`/whse/create/${newStock.report_id}`, {
-        state: { stockBook: newStock, mode: "create" },
-      });
+      navigate(`/whse/create/${newStock.report_id}`, { state: { stockBook: newStock, mode: "create" } });
     } catch (err) {
       setAddDialogError(err.response?.data?.error || 'Failed to create stock book.')
     } finally {
@@ -244,40 +211,25 @@ export default function StockBook() {
     }
   };
 
-  // edit button
-  const handleEditClick = (stock) => {
-    navigate(`/whse/create/${stock.report_id}`, {
-      state: { stockBook: stock, mode: "edit" },
-    });
-  };
+  const handleEditClick   = (stock) => navigate(`/whse/create/${stock.report_id}`, { state: { stockBook: stock, mode: "edit" } });
+  const handleViewReport  = (stock) => navigate(`/whse/view/${stock.report_id}`, { state: { stockBook: stock } });
 
-  // unsubmit button 
   const handleUnsubmit = async (stock) => {
     try {
       setUnsubmitting(stock.report_id);
       await api.post(`/reports/stocks/unsubmit/${stock.report_id}/`);
       await fetchStocks();
     } catch (err) {
-      showAlert(
-        'Unsubmit Failed',
-        err.response?.data?.error || 'Failed to unsubmit. Please try again.',
-        '#BB2325'
-      )
+      showAlert('Unsubmit Failed', err.response?.data?.error || 'Failed to unsubmit. Please try again.', '#BB2325')
     } finally {
       setUnsubmitting(null);
     }
   };
 
-  const handleViewReport = (stock) => {
-    navigate(`/whse/view/${stock.report_id}`, { state: { stockBook: stock } });
-  };
-
-  // import stockbook
   const handleImportStockbook = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-
     try {
       setImporting(true)
       const { parseStockbookExcel } = await import('@/utils/importToExcel')
@@ -285,96 +237,43 @@ export default function StockBook() {
       setImportedTransactions(imported)
       setImportedFileName(file.name)
     } catch (err) {
-      // was: alert(err.message || 'Import failed.')
-      showAlert(
-        'Import Failed',
-        err.message || 'Something went wrong while reading the file. Please try again.',
-        '#1D8104'
-      )
+      showAlert('Import Failed', err.message || 'Something went wrong while reading the file. Please try again.', '#1D8104')
     } finally {
       setImporting(false)
     }
   }
 
-  // create the imported stock book
   const handleImportCreate = async () => {
     setImportDialogError('')
-
-    if (!selectedType) { 
-      setImportDialogError('Please select a cereal type.')
-      return 
-
-    }
-    if (!selectedYear || !selectedMonth || !selectedDay) { 
-      setImportDialogError('Please fill in all date fields.')
-      return 
-    }
-    if (importedTransactions.length === 0) {
-      setImportDialogError('Please select an Excel file first.'); 
-      return 
-    }
-
-    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) {
-      setImportDialogError('You cannot create a stock book for a future date.')
-      return
-    }
-
+    if (!selectedType)                        { setImportDialogError('Please select a cereal type.'); return }
+    if (!selectedYear || !selectedMonth || !selectedDay) { setImportDialogError('Please fill in all date fields.'); return }
+    if (importedTransactions.length === 0)    { setImportDialogError('Please select an Excel file first.'); return }
+    if (isDateInFuture(selectedYear, selectedMonth, selectedDay)) { setImportDialogError('You cannot create a stock book for a future date.'); return }
     try {
       setSubmitting(true)
       const month = String(selectedMonth).padStart(2, '0')
       const day   = String(selectedDay).padStart(2, '0')
       const date  = `${selectedYear}-${month}-${day}`
-
-      const res = await api.post('/reports/stocks/create/', {
-        CerealType: selectedType,
-        Date: date,
-      })
+      const res   = await api.post('/reports/stocks/create/', { CerealType: selectedType, Date: date })
       const newStock = res.data
-
-      // Save all imported transactions
       for (const txn of importedTransactions) {
         await api.post('/reports/transactions/create/', {
-          stockbook:        newStock.report_id,
-          type:             txn.wts ? 'WTS' : txn.wsr ? 'WSR' : 'WSI',
-          Particulars:      txn.particulars     || null,
-          Plate_Number:     txn.plateNo         || null,
-          Batch_No:         txn.batchNo         || null,
-          AI_Number:        txn.aiNo            || null,
-          OR_Number:        txn.orNo            || null,
-          Transaction_ref:  txn.transaction     || null,
-          WTS_no:           txn.wts             || null,
-          WSR_no:           txn.wsr             || null,
-          WSI_no:           txn.wsi             || null,
-          Age:              txn.age             || null,
-          Moisture_Content: txn.moistureContent || null,
-          Classifier:       txn.classifier      || null,
-          Pile_No:          txn.pileNo          || null,
-          Fillers:          txn.fillers         || null,
-          R_Bags:           txn.rBags           || null,
-          R_GKG:            txn.rGkg            || null,
-          R_NKG:            txn.rNkg            || null,
-          Cond_R:           txn.rCondition      || null,
-          I_Bags:           txn.iBags           || null,
-          I_GKG:            txn.iGkg            || null,
-          I_NKG:            txn.iNkg            || null,
-          Cond_I:           txn.iCondition      || null,
+          stockbook: newStock.report_id, type: txn.wts ? 'WTS' : txn.wsr ? 'WSR' : 'WSI',
+          Particulars: txn.particulars || null, Plate_Number: txn.plateNo || null, Batch_No: txn.batchNo || null,
+          AI_Number: txn.aiNo || null, OR_Number: txn.orNo || null, Transaction_ref: txn.transaction || null,
+          WTS_no: txn.wts || null, WSR_no: txn.wsr || null, WSI_no: txn.wsi || null,
+          Age: txn.age || null, Moisture_Content: txn.moistureContent || null, Classifier: txn.classifier || null,
+          Pile_No: txn.pileNo || null, Fillers: txn.fillers || null,
+          R_Bags: txn.rBags || null, R_GKG: txn.rGkg || null, R_NKG: txn.rNkg || null, Cond_R: txn.rCondition || null,
+          I_Bags: txn.iBags || null, I_GKG: txn.iGkg || null, I_NKG: txn.iNkg || null, Cond_I: txn.iCondition || null,
         })
       }
-
       await fetchStocks()
       setImportDialogOpen(false)
       setImportedTransactions([])
       setImportedFileName('')
-
-      navigate(`/whse/create/${newStock.report_id}`, {
-        state: { stockBook: newStock, mode: 'edit' }
-      })
-
-      await api.post('/audit/log-import/', { 
-        type: 'StockBook', 
-        id: newStock.report_id, 
-        count: importedTransactions.length
-      })
+      navigate(`/whse/create/${newStock.report_id}`, { state: { stockBook: newStock, mode: 'edit' } })
+      await api.post('/audit/log-import/', { type: 'StockBook', id: newStock.report_id, count: importedTransactions.length })
     } catch (err) {
       setImportDialogError(err.response?.data?.error || 'Failed to create stock book.')
     } finally {
@@ -384,33 +283,27 @@ export default function StockBook() {
 
   return (
     <>
-      <Header
-        pageTitle="Stock Book"
-        unreadCount={unreadCount}
-        notifTo={notifRoute}
-        userName={userName}
-      />
+      <Header pageTitle="Stock Book" unreadCount={unreadCount} notifTo={notifRoute} userName={userName} />
 
-      <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
+      {/* Outer card — flex col, fills height */}
+      <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
 
-        {/* Top controls */}
-        <div className="flex justify-between items-center mb-4 pt-2 mx-3">
-          {/* search */}
+        {/* Top controls — fixed, never shrinks */}
+        <div className="flex justify-between items-center mb-4 pt-2 mx-3 flex-shrink-0">
           <div className='mt-4'>
             <div className="bg-white border border-[#2D317F] rounded-full py-1 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
               <FaBars color={'#2D317F'} size={18} className="shrink-0" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search Report"
-                  className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
-                />
-              <FaSearch className="text-[#2D317F] shrink" size={20}/>
+              <Input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1) }}
+                placeholder="Search Report"
+                className="bg-transparent border-0 placeholder:text-black/50 focus-visible:ring-0 h-8 w-[430px]"
+              />
+              <FaSearch className="text-[#2D317F] shrink" size={20} />
             </div>
           </div>
-
           <div className="flex items-center gap-6 mt-3.5">
-            <Select value={selectedCereal} onValueChange={setSelectedCereal}>
+            <Select value={selectedCereal} onValueChange={handleCerealChange}>
               <SelectTrigger className="w-40 bg-white border-gray-300 py-5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
                 <SelectValue placeholder="All Cereal Type" />
               </SelectTrigger>
@@ -420,43 +313,30 @@ export default function StockBook() {
                 <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
               </SelectContent>
             </Select>
-
-            <button
-              onClick={handleImportClick}
-              className="bg-[#1D8104] px-5 py-2.5 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold"
-            >
-              <div className="flex gap-2 items-center">
-                <CiImport size={20} />
-                <p className="text-sm">Import</p>
-              </div>
+            <button onClick={handleImportClick} className="bg-[#1D8104] px-5 py-2.5 rounded-md text-white shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)] font-semibold">
+              <div className="flex gap-2 items-center"><CiImport size={20} /><p className="text-sm">Import</p></div>
             </button>
-
-            <Button
-              onClick={handleAddReportClick}
-              className="bg-[#2D317F] text-white rounded-md py-5 w-35 font-semibold hover:bg-[#1f2360] shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]"
-            >
+            <Button onClick={handleAddReportClick} className="bg-[#2D317F] text-white rounded-md py-5 w-35 font-semibold hover:bg-[#1f2360] shadow-[0_6px_6px_-2px_rgba(0,0,0,0.2)]">
               + Add Report
             </Button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="flex flex-col h-90">
+        {/* Table section — flex-1 so it fills remaining space, flex col */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           {loading ? (
-            <TableRow className='border-0 flex justify-center items-center h-full'>
-              <TableCell className="text-center py-16">
-                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
-                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm font-medium">Loading stock book...</span>
-                </div>
-              </TableCell>
-            </TableRow>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium">Loading stock book...</span>
+              </div>
+            </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-40 text-gray-400">No Stockbook found.</div>
+            <div className="flex-1 flex items-center justify-center text-gray-400">No Stockbook found.</div>
           ) : (
             <>
-              {/* header */}
-              <table className="w-full table-fixed">
+              {/* Fixed table header */}
+              <table className="w-full table-fixed flex-shrink-0">
                 <colgroup>
                   <col className="w-[15%]" />
                   <col className="w-[20%]" />
@@ -465,7 +345,7 @@ export default function StockBook() {
                   <col className="w-[25%]" />
                 </colgroup>
                 <thead>
-                  <tr className="bg-[#E2EBFF] border-b border-gray-200 h-12 ">
+                  <tr className="bg-[#E2EBFF] border-b border-gray-200 h-12">
                     <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
                     <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Stock Book ID</th>
                     <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
@@ -475,8 +355,8 @@ export default function StockBook() {
                 </thead>
               </table>
 
-              {/* table body */}
-              <div className="">
+              {/* Scrollable table body — flex-1 fills space between header and pagination */}
+              <div className="overflow-y-auto flex-1">
                 <table className="w-full table-fixed">
                   <colgroup>
                     <col className="w-[15%]" />
@@ -488,12 +368,10 @@ export default function StockBook() {
                   <tbody>
                     {filteredReports.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center text-gray-400 py-10">
-                          No stock books found.
-                        </td>
+                        <td colSpan={5} className="text-center text-gray-400 py-10">No stock books found.</td>
                       </tr>
                     ) : (
-                      filteredReports.map((r) => (
+                      paginatedReports.map((r) => (
                         <tr key={r.report_id} className="border-b border-gray-100">
                           <td className="text-center text-[#2D317F] py-3 text-sm">{formatDate(r.Date)}</td>
                           <td className="text-center text-[#2D317F] py-3 text-sm">R-{String(r.report_id).padStart(3, "0")}</td>
@@ -508,52 +386,51 @@ export default function StockBook() {
                             <div className="flex justify-center gap-2">
                               <button
                                 onClick={() => handleViewReport(r)}
-                                className="flex items-center gap-1.5 border border-gray-300 rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
+                                className="flex items-center gap-1.5 border border-[#2D317F] rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300"
                               >
                                 <GoLinkExternal size={14} /> View
                               </button>
                               <button
                                 disabled={r.Status === "Completed" || r.Status === "Under Review"}
                                 onClick={() => handleEditClick(r)}
-                                className="flex items-center gap-1.5 border border-gray-300 rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
+                                className="flex items-center gap-1.5 border border-[#2D317F] rounded-full px-3 py-1.5 text-[#2D317F] text-sm font-medium bg-white hover:bg-[#2D317F] hover:text-white transition-colors duration-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-400"
                               >
                                 <FiEdit size={14} /> Edit
                               </button>
                               {r.Status === "Under Review" && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                 <button
-                                  disabled={unsubmitting === r.report_id}
-                                  className="flex items-center border border-[#BB2325] text-[#BB2325] text-sm rounded-full px-2 py-1.5 bg-white hover:bg-[#BB2325] hover:text-white transition-colors duration-500 disabled:opacity-50"
-                                >
-                                  <IoClose size={18} />
-                                  Unsubmit
-                                </button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[320px] overflow-hidden rounded-[10px] border-none">
-                                  <div className="h-5 bg-[#BB2325] rounded-t-lg" />
-                                  <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                                    <div className="rounded-full px-4 py-4 bg-[#BB2325]">
-                                      <FiRotateCcw color="white" size={33} />
-                                    </div>
-                                    <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mx-2">
-                                      Unsubmit Stockbook?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-[12px] px-2">
-                                      Are you sure you want to unsubmit your stock book?
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter className="mx-0 mb-0 -mt-4 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                                    <AlertDialogCancel className="w-23 px-4 py-1.5">Stay</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      className="w-23 !bg-[#BB2325] text-white hover:bg-[#981416] px-4 py-1.5"
-                                      onClick={() => handleUnsubmit(r)}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      disabled={unsubmitting === r.report_id}
+                                      className="flex items-center border border-[#BB2325] text-[#BB2325] text-sm rounded-full px-2 py-1.5 bg-white hover:bg-[#BB2325] hover:text-white transition-colors duration-500 disabled:opacity-50"
                                     >
-                                      Yes
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                      <IoClose size={18} /> Unsubmit
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                                    <div className="h-5 bg-[#BB2325] rounded-t-lg" />
+                                    <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                                      <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                                        <FiRotateCcw color="white" size={33} />
+                                      </div>
+                                      <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mx-2">
+                                        Unsubmit Stockbook?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription className="text-[12px] px-2">
+                                        Are you sure you want to unsubmit your stock book?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="mx-0 mb-0 -mt-4 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                                      <AlertDialogCancel className="text-xs w-23 px-4 py-1.5">Stay</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="text-xs w-23 !bg-[#BB2325] text-white hover:bg-[#981416] px-4 py-1.5"
+                                        onClick={() => handleUnsubmit(r)}
+                                      >
+                                        Yes
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               )}
                             </div>
                           </td>
@@ -563,6 +440,29 @@ export default function StockBook() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination — sibling of scroll div, always pinned at bottom */}
+              <div className="flex items-center justify-between px-5 py-[12px] flex-shrink-0 border-t border-gray-100">
+                <span className="text-[13px] text-gray-500 font-medium">
+                  {totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : '—'}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    disabled={currentPage === 1 || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-[#2d317f] bg-[#e2e8f0] border-[1.5px] border-[#e2e8f0] cursor-pointer transition-colors duration-150 hover:bg-[#d1d9e6] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-white bg-[#2d317f] border-[1.5px] border-[#2d317f] cursor-pointer transition-colors duration-150 hover:bg-[#222669] hover:border-[#222669] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -570,16 +470,10 @@ export default function StockBook() {
         {/* Add Report modal */}
         <Dialog open={addDialogOpen} onOpenChange={(open) => {
           setAddDialogOpen(open);
-          if (!open) {
-            setSelectedType("");
-            setSelectedYear("");
-            setSelectedMonth("");
-            setSelectedDay("");
-            setAddDialogError('');
-          }
+          if (!open) { setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay(""); setAddDialogError(''); }
         }}>
           <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
-            <div className="bg-[#2D317F] h-8 rounded-t-lg" />
+            <div className="bg-[#2D317F] h-6 rounded-t-lg" />
             <div className="px-5 pb-5">
               <DialogHeader className="mb-3">
                 <DialogTitle className="text-[#2D317F] font-bold py-2">Cereal Type</DialogTitle>
@@ -593,27 +487,15 @@ export default function StockBook() {
                   <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* date */}
               <div className="flex gap-3 mt-3">
-
-                {/* year */}
                 <div className="flex-1">
                   <label className="text-sm font-semibold text-[#2D317F]">Year</label>
                   <Input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="2026"
-                    value={selectedYear}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                      setSelectedYear(val);
-                    }}
+                    type="text" inputMode="numeric" placeholder="2026" value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     className="bg-white border-[#2D317F] text-[#2D317F] mt-1"
                   />
                 </div>
-
-                {/* month */}
                 <div className="flex-1">
                   <label className="text-sm font-semibold text-[#2D317F]">Month</label>
                   <Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val)}>
@@ -621,23 +503,11 @@ export default function StockBook() {
                       <SelectValue placeholder="May" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem className="p-2" value="1">January</SelectItem>
-                      <SelectItem className="p-2" value="2">February</SelectItem>
-                      <SelectItem className="p-2" value="3">March</SelectItem>
-                      <SelectItem className="p-2" value="4">April</SelectItem>
-                      <SelectItem className="p-2" value="5">May</SelectItem>
-                      <SelectItem className="p-2" value="6">June</SelectItem>
-                      <SelectItem className="p-2" value="7">July</SelectItem>
-                      <SelectItem className="p-2" value="8">August</SelectItem>
-                      <SelectItem className="p-2" value="9">September</SelectItem>
-                      <SelectItem className="p-2" value="10">October</SelectItem>
-                      <SelectItem className="p-2" value="11">November</SelectItem>
-                      <SelectItem className="p-2" value="12">December</SelectItem>
+                      {['January','February','March','April','May','June','July','August','September','October','November','December']
+                        .map((m, i) => <SelectItem key={i} className="p-2" value={String(i + 1)}>{m}</SelectItem>)}
                     </SelectContent>
-                  </Select> 
+                  </Select>
                 </div>
-
-                {/* day */}
                 <div className="w-20">
                   <label className="text-sm font-semibold text-[#2D317F]">Day</label>
                   <Select value={selectedDay} onValueChange={setSelectedDay}>
@@ -645,38 +515,20 @@ export default function StockBook() {
                       <SelectValue placeholder="Day" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from(
-                        { length: getDaysInMonth(selectedYear, selectedMonth) },
-                        (_, i) => i + 1
-                      ).map((d) => (
-                        <SelectItem key={d} className="p-2" value={String(d)}>
-                          {d}
-                        </SelectItem>
-                      ))}
+                      {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1)
+                        .map((d) => <SelectItem key={d} className="p-2" value={String(d)}>{d}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-
               {addDialogError && (
                 <p className="flex items-center gap-1.5 text-red-500 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   <span>⊙</span> {addDialogError}
                 </p>
               )}
-
               <div className="flex justify-end gap-3 mt-5">
-                <button
-                  onClick={() => setAddDialogOpen(false)}
-                  className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleCerealNext}
-                  disabled={!selectedType || submitting}
-                  className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
+                <button onClick={() => setAddDialogOpen(false)} className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]">Cancel</button>
+                <button onClick={handleCerealNext} disabled={!selectedType || submitting} className="bg-[#2D317F] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#1f2360] disabled:bg-gray-300 disabled:cursor-not-allowed">
                   {submitting ? "Creating..." : "Create"}
                 </button>
               </div>
@@ -684,24 +536,17 @@ export default function StockBook() {
           </DialogContent>
         </Dialog>
 
-        {/* for import modal */}
+        {/* Import modal */}
         <Dialog open={importDialogOpen} onOpenChange={(open) => {
           setImportDialogOpen(open)
-          if (!open) {
-            setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay("")
-            setImportedTransactions([])
-            setImportedFileName('')
-            setImportDialogError('')
-          }
+          if (!open) { setSelectedType(""); setSelectedYear(""); setSelectedMonth(""); setSelectedDay(""); setImportedTransactions([]); setImportedFileName(''); setImportDialogError('') }
         }}>
           <DialogContent className="pt-0 px-0 pb-0 overflow-hidden max-w-[90vw] sm:max-w-[500px] xl:max-w-[315px] [&>button]:hidden bg-[#DDE4F3]">
-            <div className="bg-[#1D8104] h-8 rounded-t-lg" />
+            <div className="bg-[#1D8104] h-6 rounded-t-lg" />
             <div className="px-5 pb-5">
               <DialogHeader className="mb-3">
                 <DialogTitle className="text-[#1D8104] font-bold py-2">Import Stockbook</DialogTitle>
               </DialogHeader>
-
-              {/* Same cereal + date fields */}
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold py-5">
                   <SelectValue placeholder="Select cereal type" />
@@ -711,38 +556,27 @@ export default function StockBook() {
                   <SelectItem className="p-2" value="PD1350">Rice</SelectItem>
                 </SelectContent>
               </Select>
-
               <div className="flex gap-3 mt-3">
                 <div className="flex-1">
                   <label className="text-sm font-semibold text-[#1D8104]">Year</label>
-                  <Input
-                    type="text" inputMode="numeric" placeholder="2026"
-                    value={selectedYear}
+                  <Input type="text" inputMode="numeric" placeholder="2026" value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    className="bg-white border-[#1D8104] text-[#1D8104] mt-1"
-                  />
+                    className="bg-white border-[#1D8104] text-[#1D8104] mt-1" />
                 </div>
                 <div className="flex-1">
                   <label className="text-sm font-semibold text-[#1D8104]">Month</label>
                   <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1">
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1"><SelectValue placeholder="Month" /></SelectTrigger>
                     <SelectContent>
-                      {['January','February','March','April','May','June',
-                        'July','August','September','October','November','December']
-                        .map((m, i) => (
-                          <SelectItem key={i} className="p-2" value={String(i + 1)}>{m}</SelectItem>
-                      ))}
+                      {['January','February','March','April','May','June','July','August','September','October','November','December']
+                        .map((m, i) => <SelectItem key={i} className="p-2" value={String(i + 1)}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="w-20">
                   <label className="text-sm font-semibold text-[#1D8104]">Day</label>
                   <Select value={selectedDay} onValueChange={setSelectedDay}>
-                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1">
-                      <SelectValue placeholder="Day" />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-full bg-white border-[#1D8104] text-[#1D8104] font-semibold mt-1"><SelectValue placeholder="Day" /></SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: getDaysInMonth(selectedYear, selectedMonth) }, (_, i) => i + 1)
                         .map(d => <SelectItem key={d} className="p-2" value={String(d)}>{d}</SelectItem>)}
@@ -750,16 +584,10 @@ export default function StockBook() {
                   </Select>
                 </div>
               </div>
-
-              {/* File upload area */}
               <div
                 onClick={() => {
                   if (!selectedType || !selectedYear || !selectedMonth || !selectedDay) {
-                    showAlert(
-                      'Missing Information',
-                      'Please select a cereal type and fill in the date fields before uploading a file.',
-                      '#1D8104'
-                    )
+                    showAlert('Missing Information', 'Please select a cereal type and fill in the date fields before uploading a file.', '#1D8104')
                     return
                   }
                   importFileRef.current?.click()
@@ -772,9 +600,7 @@ export default function StockBook() {
                 ) : importedFileName ? (
                   <>
                     <p className="text-sm font-semibold text-[#1D8104]">✓ {importedFileName}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {importedTransactions.length} transaction(s) ready — click Create to proceed
-                    </p>
+                    <p className="text-xs text-gray-400 mt-1">{importedTransactions.length} transaction(s) ready — click Create to proceed</p>
                   </>
                 ) : (
                   <>
@@ -783,26 +609,15 @@ export default function StockBook() {
                   </>
                 )}
               </div>
-
               {importDialogError && (
                 <p className="flex items-center gap-1.5 text-red-500 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   <span>⊙</span> {importDialogError}
                 </p>
               )}
-
-              {/* Footer */}
               <div className="flex justify-end gap-3 mt-4">
-                <button
-                  onClick={() => setImportDialogOpen(false)}
-                  className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleImportCreate}
-                  disabled={submitting || importedTransactions.length === 0}
-                  className="bg-[#1D8104] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#166303] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
+                <button onClick={() => setImportDialogOpen(false)} className="border border-gray-300 px-4 py-1.5 rounded-lg text-sm text-[#919191] bg-[#D9D9D9]">Cancel</button>
+                <button onClick={handleImportCreate} disabled={submitting || importedTransactions.length === 0}
+                  className="bg-[#1D8104] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#166303] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                   {submitting ? 'Creating...' : 'Create'}
                 </button>
               </div>
@@ -812,13 +627,7 @@ export default function StockBook() {
 
       </div>
 
-      <input
-        ref={importFileRef}
-        type="file"
-        accept=".xlsx,.xls"
-        className="hidden"
-        onChange={handleImportStockbook}
-      />
+      <input ref={importFileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportStockbook} />
 
       <AlertModal
         open={alertModal.open}

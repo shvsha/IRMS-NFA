@@ -18,10 +18,7 @@ import { exportWSRToExcel, exportWSIToExcel } from '@/utils/exportToExcel'
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import {
-  TableCell,
-  TableRow,
-} from "@/components/ui/table"
+import { TableCell, TableRow } from "@/components/ui/table"
 
 // api
 import api from "@/api/axios";
@@ -51,36 +48,36 @@ const getStatusIcon = (status) => {
   return null;
 };
 
-// Route map — matches the routes in ReportEvaluation
 const REPORT_ROUTES = {
   "Statement of Receipts": "/whse/status/receipt",
   "Statement of Issuance": "/whse/status/issue",
 }
 
+const ITEMS_PER_PAGE = 8
+
 export default function ReportStatus() {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
 
   const navigate = useNavigate();
 
-  const [reports, setReports]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState(null);
+  const [currentPage, setCurrentPage] = useState(1)
+  const [reports, setReports]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
 
   const [selectedCerealType, setSelectedCerealType] = useState("All Cereal Type");
   const [selectedReportType, setSelectedReportType] = useState("All Report Type");
   const [selectedStatus, setSelectedStatus]         = useState("All Status");
 
-  // Reject reason dialog
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason]         = useState("");
   const [selectedReport, setSelectedReport]     = useState(null);
 
-  const [openDropdown,  setOpenDropdown]  = useState(null)
-  const [dropdownPos,   setDropdownPos]   = useState({ top: 0, left: 0 })
+  const [openDropdown, setOpenDropdown] = useState(null)
+  const [dropdownPos, setDropdownPos]   = useState({ top: 0, left: 0 })
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -92,32 +89,32 @@ export default function ReportStatus() {
         ]);
 
         const wsrMapped = wsrRes.data
-        .filter(r => r.Evaluation !== 'Archive') 
-        .map((r) => ({
-          id:          r.wsr_report_id,
-          _type:       "WSR",
-          reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
-          stockbookId: r.stockbook,
-          date:        formatDate(r.stockbook_date),
-          reportType:  "Statement of Receipts",
-          cereal:      r.stockbook_cereal ?? "—",
-          status:      r.Evaluation ?? "Pending",
-          reason:      r.Reason ?? "",
-        }));
+          .filter(r => r.Evaluation !== 'Archive')
+          .map((r) => ({
+            id:          r.wsr_report_id,
+            _type:       "WSR",
+            reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
+            stockbookId: r.stockbook,
+            date:        formatDate(r.stockbook_date),
+            reportType:  "Statement of Receipts",
+            cereal:      r.stockbook_cereal ?? "—",
+            status:      r.Evaluation ?? "Pending",
+            reason:      r.Reason ?? "",
+          }));
 
         const wsiMapped = wsiRes.data
-        .filter(r => r.Evaluation !== 'Archive') 
-        .map((r) => ({
-          id:          r.wsi_report_id,
-          _type:       "WSI",
-          reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
-          stockbookId: r.stockbook,
-          date:        formatDate(r.stockbook_date),
-          reportType:  "Statement of Issuance",
-          cereal:      r.stockbook_cereal ?? "—",
-          status:      r.Evaluation ?? "Pending",
-          reason:      r.Reason ?? "",
-        }));
+          .filter(r => r.Evaluation !== 'Archive')
+          .map((r) => ({
+            id:          r.wsi_report_id,
+            _type:       "WSI",
+            reportId:    `R-${String(r.stockbook).padStart(3, "0")}`,
+            stockbookId: r.stockbook,
+            date:        formatDate(r.stockbook_date),
+            reportType:  "Statement of Issuance",
+            cereal:      r.stockbook_cereal ?? "—",
+            status:      r.Evaluation ?? "Pending",
+            reason:      r.Reason ?? "",
+          }));
 
         setReports([...wsrMapped, ...wsiMapped].sort((a, b) => b.id - a.id))
       } catch (err) {
@@ -126,9 +123,14 @@ export default function ReportStatus() {
         setLoading(false);
       }
     };
-
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   const handleView = (report) => {
     const route = REPORT_ROUTES[report.reportType];
@@ -153,10 +155,7 @@ export default function ReportStatus() {
     if (!selectedReport) return;
     setRejectDialogOpen(false);
     navigate(`/whse/create/${selectedReport.stockbookId}`, {
-      state: {
-        mode:         'edit',
-        rejectedType: selectedReport._type,
-      },
+      state: { mode: 'edit', rejectedType: selectedReport._type },
     });
   };
 
@@ -173,19 +172,19 @@ export default function ReportStatus() {
         const firstTx   = wsrReport.transactions?.[0] ?? {}
         exportWSRToExcel(
           {
-            date:        stock.Date                              ?? '—',
+            date:        stock.Date             ?? '—',
             region:      'Region 1',
             province:    'La Union',
-            officer:     firstTx.user_full_name                 ?? '—',
+            officer:     firstTx.user_full_name ?? '—',
             whName:      'San Juan GID 2A',
             whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode                    ?? '—',
-            cerealType:  stock.CerealType                       ?? '—',
+            whCode:      firstTx.user_WHCode    ?? '—',
+            cerealType:  stock.CerealType       ?? '—',
             wsrId:       `WSR-${report.id}`,
-            certifiedBy: firstTx.user_full_name                 ?? '—',
-            verifiedBy1: wsrReport.asst_bm_name                 ?? '—',
-            verifiedBy2: wsrReport.accountant_name              ?? '—',
-            notedBy:     wsrReport.branch_m_name                ?? '—',
+            certifiedBy: firstTx.user_full_name ?? '—',
+            verifiedBy1: wsrReport.asst_bm_name ?? '—',
+            verifiedBy2: wsrReport.accountant_name ?? '—',
+            notedBy:     wsrReport.branch_m_name   ?? '—',
           },
           wsrReport.transactions ?? []
         )
@@ -200,19 +199,19 @@ export default function ReportStatus() {
         const firstTx   = wsiReport.transactions?.[0] ?? {}
         exportWSIToExcel(
           {
-            date:        stock.Date                              ?? '—',
+            date:        stock.Date             ?? '—',
             region:      'Region 1',
             province:    'La Union',
-            officer:     firstTx.user_full_name                 ?? '—',
+            officer:     firstTx.user_full_name ?? '—',
             whName:      'San Juan GID 2A',
             whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode                    ?? '—',
-            cerealType:  stock.CerealType                       ?? '—',
+            whCode:      firstTx.user_WHCode    ?? '—',
+            cerealType:  stock.CerealType       ?? '—',
             wsiId:       `WSI-${report.id}`,
-            certifiedBy: firstTx.user_full_name                 ?? '—',
-            verifiedBy1: wsiReport.asst_bm_name                 ?? '—',
-            verifiedBy2: wsiReport.accountant_name              ?? '—',
-            notedBy:     wsiReport.branch_m_name                ?? '—',
+            certifiedBy: firstTx.user_full_name    ?? '—',
+            verifiedBy1: wsiReport.asst_bm_name    ?? '—',
+            verifiedBy2: wsiReport.accountant_name ?? '—',
+            notedBy:     wsiReport.branch_m_name   ?? '—',
           },
           wsiReport.transactions ?? []
         )
@@ -222,12 +221,6 @@ export default function ReportStatus() {
     }
   }
 
-  useEffect(() => {
-    const handleClickOutside = () => setOpenDropdown(null)
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
-  }, [])
-
   // filters
   const filteredReports = reports.filter((r) => {
     const matchCereal = selectedCerealType === "All Cereal Type" || r.cereal     === selectedCerealType;
@@ -235,6 +228,10 @@ export default function ReportStatus() {
     const matchStatus = selectedStatus     === "All Status"      || r.status     === selectedStatus;
     return matchCereal && matchReport && matchStatus;
   });
+
+  const totalPages       = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
+  const startIndex       = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   return (
     <>
@@ -245,11 +242,12 @@ export default function ReportStatus() {
         userName={userName}
       />
 
-      <div className="bg-[#F5F9F9] mx-4 my-4 pb-50 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[650px]">
+      {/* Outer card — flex col, fixed min height */}
+      <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[650px]">
 
         {/* Filters */}
-        <div className="flex justify-end gap-3 pt-2 pb-3 mx-3">
-          <Select value={selectedCerealType} onValueChange={setSelectedCerealType}>
+        <div className="flex justify-end gap-3 pt-2 pb-3 mx-3 flex-shrink-0">
+          <Select value={selectedCerealType} onValueChange={(v) => { setSelectedCerealType(v); setCurrentPage(1) }}>
             <SelectTrigger className="w-40 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
               <SelectValue placeholder="All Cereal Type" />
             </SelectTrigger>
@@ -260,7 +258,7 @@ export default function ReportStatus() {
             </SelectContent>
           </Select>
 
-          <Select value={selectedReportType} onValueChange={setSelectedReportType}>
+          <Select value={selectedReportType} onValueChange={(v) => { setSelectedReportType(v); setCurrentPage(1) }}>
             <SelectTrigger className="w-52 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
               <SelectValue placeholder="All Report Type" />
             </SelectTrigger>
@@ -271,7 +269,7 @@ export default function ReportStatus() {
             </SelectContent>
           </Select>
 
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <Select value={selectedStatus} onValueChange={(v) => { setSelectedStatus(v); setCurrentPage(1) }}>
             <SelectTrigger className="w-36 bg-white border-gray-300 py-5.5 font-semibold text-[#2D317F] rounded-md shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
@@ -284,23 +282,24 @@ export default function ReportStatus() {
           </Select>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Table section — flex-1 so it fills remaining height, flex col */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+
           {loading ? (
-            <TableRow className='border-0 flex justify-center items-center h-full'>
-              <TableCell className="text-center py-16">
-                <div className="flex flex-col items-center gap-3 text-[#2D317F]">
-                  <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm font-medium">Loading reports...</span>
-                </div>
-              </TableCell>
-            </TableRow>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+                <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium">Loading reports...</span>
+              </div>
+            </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-40 text-gray-400">No reports found.</div>
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              No reports found.
+            </div>
           ) : (
             <>
-              {/* Fixed header */}
-              <table className="w-full table-fixed">
+              {/* Fixed table header */}
+              <table className="w-full table-fixed flex-shrink-0">
                 <colgroup>
                   <col className="w-[13%]" />
                   <col className="w-[13%]" />
@@ -321,7 +320,7 @@ export default function ReportStatus() {
                 </thead>
               </table>
 
-              {/* Scrollable body */}
+              {/* Scrollable table body — flex-1 so it fills space between header and pagination */}
               <div className="overflow-y-auto flex-1">
                 <table className="w-full table-fixed">
                   <colgroup>
@@ -340,10 +339,10 @@ export default function ReportStatus() {
                         </td>
                       </tr>
                     ) : (
-                      filteredReports.map((report, i) => (
+                      paginatedReports.map((report, i) => (
                         <tr
                           key={`${report.reportType}-${report.id}-${i}`}
-                          className="text-[#2D317F] font-medium border-b border-gray-100 h-[60px]"
+                          className="text-[#2D317F] font-medium border-b border-gray-100 h-[58px] font-normal"
                         >
                           <td className="text-center">{report.date}</td>
                           <td className="text-center">{report.reportId}</td>
@@ -357,15 +356,12 @@ export default function ReportStatus() {
                           </td>
                           <td className="text-center">
                             <div className="flex justify-center items-center gap-2">
-                              {/* View button */}
                               <button
                                 onClick={() => handleView(report)}
                                 className="border border-[#2D317F] text-[#2D317F] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#2D317F] hover:text-white"
                               >
                                 <GoLinkExternal size={15} /> View
                               </button>
-
-                              {/* ... dropdown */}
                               <div className="relative">
                                 <button
                                   className="font-medium rounded-full bg-transparent py-0.5 px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer border border-[#2D317F] text-[#2D317F]"
@@ -394,6 +390,29 @@ export default function ReportStatus() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between px-5 py-[14px] flex-shrink-0 border-t border-gray-100">
+                <span className="text-[13px] text-gray-500 font-medium">
+                  {totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : '—'}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    disabled={currentPage === 1 || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-[#2d317f] bg-[#e2e8f0] border-[1.5px] border-[#e2e8f0] cursor-pointer transition-colors duration-150 hover:bg-[#d1d9e6] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-white bg-[#2d317f] border-[1.5px] border-[#2d317f] cursor-pointer transition-colors duration-150 hover:bg-[#222669] hover:border-[#222669] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </>
           )}

@@ -4,26 +4,6 @@ from .models import AuditLog
 
 
 # User
-@receiver(post_save, sender='users.User')
-def log_user_save(sender, instance, created, **kwargs):
-    if created:
-        action = f"Created {instance.user_level}: {instance.full_name} ({instance.username})"
-    else:
-        if instance.status == 'Inactive':
-            action = f"Archived User: {instance.full_name} ({instance.username})"
-        else:
-            action = f"Edited User: {instance.full_name} ({instance.username}) - Level: {instance.user_level}, Status: {instance.status}"
-
-    AuditLog.objects.create(User_ID=None, Module="User Management", Action=action)
-
-
-@receiver(post_delete, sender='users.User')
-def log_user_delete(sender, instance, **kwargs):
-    AuditLog.objects.create(
-        User_ID=None,
-        Module="User Management",
-        Action=f"Deleted User: {instance.full_name} ({instance.username})"
-    )
 
 
 # StockBook

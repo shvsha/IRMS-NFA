@@ -8,7 +8,8 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 
 // react icons
 import { FaExclamation } from "react-icons/fa"
-import { IoSend } from "react-icons/io5";
+import { FaCheck } from "react-icons/fa6"
+import { IoSend } from "react-icons/io5"
 
 // for notif
 import { useUnreadCount } from "@/hooks/useUnreadCount";
@@ -81,6 +82,8 @@ export default function ReviewTransaction() {
   const [loadError,         setLoadError]         = useState(null);
   const [submitting,        setSubmitting]        = useState(false);
   const [deletingIndex,     setDeletingIndex]     = useState(null);
+  
+  const [toasts, setToasts] = useState([])
 
   useEffect(() => {
     const fetchId = reportId !== "—" ? reportId : id;
@@ -102,8 +105,7 @@ export default function ReviewTransaction() {
         setLoadError("Could not refresh from server — showing last known data.");
         setLoading(false);
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);   // run once on mount only
+  }, []);
 
   // helpers
   const getDocumentField = (t) => {
@@ -122,8 +124,7 @@ export default function ReviewTransaction() {
       }
       setLocalTransactions(prev => prev.filter((_, i) => i !== indexToDelete));
     } catch (err) {
-      console.error("Delete failed:", err.response?.data || err);
-      alert("Failed to delete transaction. Please try again.");
+      addToast('Failed to delete transaction. Please try again.', '#BB2325')
     } finally {
       setDeletingIndex(null);
     }
@@ -138,8 +139,11 @@ export default function ReviewTransaction() {
         state: { successMessage: `Report R-${String(reportId).padStart(3, "0")} submitted for review.` },
       });
     } catch (err) {
-      console.error("Submit failed:", err.response?.data || err);
-      alert(JSON.stringify(err.response?.data, null, 2) || "Failed to submit report.");
+      const errData = err.response?.data
+      const message = typeof errData === 'object' && errData !== null
+        ? Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+        : errData || 'Failed to submit report.';
+      addToast(message, '#BB2325')
     } finally {
       setSubmitting(false);
     }
@@ -164,6 +168,12 @@ export default function ReviewTransaction() {
       },
     });
   };
+
+  const addToast = (message, color) => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, color }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
+  }
 
   if (loading) {
     return (
@@ -250,21 +260,21 @@ export default function ReviewTransaction() {
                                 X
                               </button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                              <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                            <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                              <div className="h-5 bg-[#BB2325] rounded-t-lg" />
                               <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                                <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                                  <FaExclamation color="white" size={60} />
+                                <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                                  <FaExclamation color="white" size={33} />
                                 </div>
-                                <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px]">
                                   Cannot Delete Last Entry
                                 </AlertDialogTitle>
-                                <AlertDialogDescription className="text-sm px-2">
+                                <AlertDialogDescription className="text-[12px] px-2">
                                   This is the only remaining entry in this stock book. You cannot delete it.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
-                              <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                                <AlertDialogAction className="!bg-[#2D317F] text-white hover:bg-[#1a1f5e] px-5 py-4.5">
+                              <AlertDialogFooter className="-mt-5 mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                                <AlertDialogAction className="!bg-[#BB2325] text-white hover:bg-[#c8191c] text-xs px-1 py-3">
                                   Okay
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -277,23 +287,23 @@ export default function ReviewTransaction() {
                                 X
                               </button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                              <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                            <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                              <div className="h-5 bg-[#BB2325] rounded-t-lg" />
                               <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                                <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                                  <FaExclamation color="white" size={60} />
+                                <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                                  <FaExclamation color="white" size={33} />
                                 </div>
-                                <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                                <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px]">
                                   Delete Entry {i + 1}?
                                 </AlertDialogTitle>
-                                <AlertDialogDescription className="text-sm px-2">
+                                <AlertDialogDescription className="text-[12px] px-2">
                                   Are you sure you want to delete this entry? This cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-5">
-                                <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
+                                <AlertDialogCancel className=" text-xs w-23 px-1 py-3">Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5"
+                                  className=" text-xs w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-1 py-3"
                                   onClick={() => handleDelete(i)}
                                 >
                                   Yes, Delete
@@ -348,23 +358,23 @@ export default function ReviewTransaction() {
                   Cancel
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                <div className="h-5 bg-[#BB2325] rounded-t-lg" />
                 <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                  <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                    <FaExclamation color="white" size={60} />
+                  <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                    <FaExclamation color="white" size={33} />
                   </div>
-                  <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                  <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mx-2">
                     Go Back to Form?
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-sm px-2">
+                  <AlertDialogDescription className="text-[12px] px-2">
                     Your entries are still saved. You will be taken back to the form to continue editing.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                  <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-4.5">
+                  <AlertDialogCancel className="text-xs w-23 px-3 py-2">Stay</AlertDialogCancel>
                   <AlertDialogAction
-                    className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-15 py-4.5"
+                    className="text-xs w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-3 py-2"
                     onClick={handleGoBack}
                   >
                     Yes, Go Back
@@ -383,23 +393,23 @@ export default function ReviewTransaction() {
                 Submit All ({localTransactions.length})
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                <div className="h-7 bg-[#3E7A43] rounded-t-lg" />
+              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                <div className="h-5 bg-[#3E7A43] rounded-t-lg" />
                 <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                  <div className="rounded-full px-5 py-5 bg-[#3E7A43]">
-                    <IoSend color="white" size={55} />
+                  <div className="rounded-full px-4 py-4 bg-[#3E7A43]">
+                    <IoSend color="white" size={33} />
                   </div>
-                  <AlertDialogTitle className="!font-bold text-[#3E7A43] text-2xl mx-2">
+                  <AlertDialogTitle className="!font-bold text-[#3E7A43] text-[23px] mx-2">
                     Submit Stockbook?
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-sm px-2">
+                  <AlertDialogDescription className="text-[12px] px-2">
                     Are you sure you want to submit your stock book?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                  <AlertDialogCancel className="w-23 px-5 py-4.5">Stay</AlertDialogCancel>
+                <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-4">
+                  <AlertDialogCancel className="text-xs w-23 px-3 py-2">Stay</AlertDialogCancel>
                   <AlertDialogAction
-                    className="w-23 !bg-[#3E7A43] text-white hover:bg-[#28602c] px-10 py-4.5"
+                    className="text-xs w-23 !bg-[#3E7A43] text-white hover:bg-[#28602c] px-3 py-2"
                     onClick={handleSubmitAll}
                   >
                     Yes
@@ -410,6 +420,27 @@ export default function ReviewTransaction() {
           </div>
         </div>
 
+      </div>
+
+      {/* toast */}
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
+            style={{ borderLeft: `4px solid ${toast.color}` }}
+          >
+            <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
+              <FaCheck size={16} color="white" />
+            </div>
+            <div>
+              <p className="font-bold text-sm" style={{ color: toast.color }}>
+                {toast.color === '#BB2325' ? 'Error!' : 'Success!'}
+              </p>
+              <p className="text-gray-500 text-xs">{toast.message}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </>
   );

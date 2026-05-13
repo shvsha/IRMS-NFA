@@ -260,7 +260,6 @@ export default function CreateReport() {
   const isFirstTransaction = currentIndex === 0;
   const isLastTransaction  = currentIndex === transactions.length - 1;
 
-  // Is the ENTIRE current transaction read-only due to rejection guard?
   const txnLocked = isTransactionLocked(currentTransaction, currentRejectedType);
 
   const saveTransaction = useCallback(async (snapshot, idxToSave) => {
@@ -270,7 +269,6 @@ export default function CreateReport() {
     const current = snapshot[idxToSave];
     if (!txnHasData(current)) return snapshot;
 
-    // Don't save locked (non-rejected) transactions
     if (isTransactionLocked(current, currentRejectedType)) return snapshot;
 
     try {
@@ -287,12 +285,11 @@ export default function CreateReport() {
         return updated;
       }
     } catch (err) {
-      console.error('Save failed:', err.response?.data || err);
       const errData = err.response?.data;
-      const message = typeof errData === 'string'
-        ? 'Server error. Please check your input and try again.'
-        : JSON.stringify(errData, null, 2) || 'Failed to save transaction.';
-      alert(message);
+      const message = typeof errData === 'object' && errData !== null
+        ? Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+        : errData || 'Failed to save transaction.';
+      addToast(message, '#BB2325');
       return snapshot;
     } finally {
       setSaving(false);

@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 
 from .models import User
 from .serializers import UserSerializer, SignatorySerializer
+from audit.models import AuditLog
 
 SIGNATORY_LEVEL = 'Signatory'
 
@@ -24,7 +25,6 @@ def get_user_from_token(request):
 
 
 def admin_required(request):
-    """Returns (user, error_response). error_response is None if user is Admin."""
     user = get_user_from_token(request)
     if not user:
         return None, Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -32,50 +32,41 @@ def admin_required(request):
         return None, Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
     return user, None
 
+
 class CreateAdminView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # Only allow if NO admin exists yet
         if User.objects.filter(user_level='Admin').exists():
             return Response(
                 {'error': 'Admin already exists. Use the normal login flow.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-
         data = request.data.copy()
         data['user_level'] = 'Admin'
-
         serializer = UserSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UserListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        """
-        Returns all non-Admin users (WS + signatories).
-        Admin can see everyone except themselves.
-        """
         _, err = admin_required(request)
         if err:
             return err
-
         users = User.objects.exclude(user_level='Admin')
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+        return Response(UserSerializer(users, many=True).data)
 
     def post(self, request):
-        """Create a Warehouse Supervisor account."""
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
         data = request.data.copy()
-
         if data.get('user_level') == 'Signatory':
             return Response(
                 {'error': 'Use /users/signatories/ to create signatory accounts.'},
@@ -84,7 +75,12 @@ class UserListView(APIView):
 
         serializer = UserSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            AuditLog.objects.create(
+                User_ID = user,
+                Module  = 'User Management',
+                Action  = f"Created {instance.user_level}: {instance.full_name} ({instance.username})"
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -99,8 +95,7 @@ class UserDetailView(APIView):
             return None
 
     def put(self, request, pk):
-        """Edit a Warehouse Supervisor."""
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
@@ -116,13 +111,17 @@ class UserDetailView(APIView):
 
         serializer = UserSerializer(target, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            AuditLog.objects.create(
+                User_ID = user,
+                Module  = 'User Management',
+                Action  = f"Edited User: {instance.full_name} ({instance.username}) - Level: {instance.user_level}, Status: {instance.status}"
+            )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        """Toggle Active / Inactive for a Warehouse Supervisor."""
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
@@ -133,6 +132,11 @@ class UserDetailView(APIView):
         new_status = request.data.get('status', 'Inactive')
         target.status = new_status
         target.save()
+        AuditLog.objects.create(
+            User_ID = user,
+            Module  = 'User Management',
+            Action  = f"{'Archived' if new_status == 'Inactive' else 'Activated'} User: {target.full_name} ({target.username})"
+        )
         return Response({'message': f'User status updated to {new_status}.'})
 
 
@@ -140,28 +144,25 @@ class SignatoryListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        """List all signatory accounts (all statuses)."""
         _, err = admin_required(request)
         if err:
             return err
-
         signatories = User.objects.filter(user_level='Signatory')
-        serializer  = SignatorySerializer(signatories, many=True, context={'request': request})
-        return Response(serializer.data)
+        return Response(SignatorySerializer(signatories, many=True, context={'request': request}).data)
 
     def post(self, request):
-        """
-        Create a new signatory.
-        RULE: An active signatory of the same user_level must not exist.
-              Admin must deactivate the current one first.
-        """
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
         serializer = SignatorySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            AuditLog.objects.create(
+                User_ID = user,
+                Module  = 'User Management',
+                Action  = f"Created Signatory: {instance.full_name} ({instance.username}) - Role: {instance.signatory_role}"
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -176,21 +177,16 @@ class SignatoryDetailView(APIView):
             return None
 
     def get(self, request, pk):
-        """Retrieve a single signatory."""
         _, err = admin_required(request)
         if err:
             return err
-
         target = self.get_object(pk)
         if not target:
             return Response({'error': 'Signatory not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = SignatorySerializer(target)
-        return Response(serializer.data)
+        return Response(SignatorySerializer(target).data)
 
     def put(self, request, pk):
-        """Edit a signatory's details (not status — use PATCH for that)."""
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
@@ -200,16 +196,17 @@ class SignatoryDetailView(APIView):
 
         serializer = SignatorySerializer(target, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            AuditLog.objects.create(
+                User_ID = user,
+                Module  = 'User Management',
+                Action  = f"Edited Signatory: {instance.full_name} ({instance.username}) - Role: {instance.signatory_role}, Status: {instance.status}"
+            )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        """
-        Deactivate (or reactivate) a signatory.
-        Deactivating is the prerequisite before the Admin can add a new one of the same level.
-        """
-        _, err = admin_required(request)
+        user, err = admin_required(request)  # capture user
         if err:
             return err
 
@@ -233,15 +230,18 @@ class SignatoryDetailView(APIView):
 
             if conflict:
                 return Response(
-                    {
-                        'error': (
-                            f"Cannot activate: {conflict.full_name} is already the active "
-                            f"{target.signatory_role}. Deactivate them first."
-                        )
-                    },
+                    {'error': (
+                        f"Cannot activate: {conflict.full_name} is already the active "
+                        f"{target.signatory_role}. Deactivate them first."
+                    )},
                     status=status.HTTP_409_CONFLICT
-                )      
+                )
 
         target.status = new_status
         target.save()
+        AuditLog.objects.create(
+            User_ID = user,
+            Module  = 'User Management',
+            Action  = f"{'Deactivated' if new_status == 'Inactive' else 'Activated'} Signatory: {target.full_name} ({target.username}) - Role: {target.signatory_role}"
+        )
         return Response({'message': f'Signatory status updated to {new_status}.'})
