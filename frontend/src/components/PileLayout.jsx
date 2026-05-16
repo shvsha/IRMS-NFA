@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { CiExport } from "react-icons/ci";
 
 import Header from '@/components/Header'
 import api from '@/api/axios'
 
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import { exportPileLayoutToPDF } from '@/utils/exportPileLayout'
 
 // for notif
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -435,38 +435,31 @@ export default function PileLayout() {
     const element = pileLayoutRef.current
     if (!element) return
 
-    const canvas = await html2canvas(element, {
+    const imgData = await toPng(element, {
       scale: 2,
-      useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false,
-      onclone: (clonedDoc) => {
-      const sheets = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]')
-      sheets.forEach(sheet => {
-        if (sheet.textContent?.includes('oklch')) {
-          sheet.remove()
-        }
-      })
-    },
-  })
-    const imgData = canvas.toDataURL('image/png')
+    })
+
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-    const pageWidth  = pdf.internal.pageSize.getWidth()
+    const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth   = pageWidth - 20
-    const imgHeight  = (canvas.height * imgWidth) / canvas.width
+    const imgWidth  = pageWidth - 20
 
-    // Add title
+    // Get natural image dimensions
+    const img = new Image()
+    img.src = imgData
+    await new Promise(res => { img.onload = res })
+    const imgHeight = (img.height * imgWidth) / img.width
+
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(11)
-    pdf.text('NATIONAL FOOD AUTHORITY', pageWidth / 2, 12, { align: 'center' })
+    pdf.text('NATIONAL FOOD AUTHORITY', pageWidth / 2, 10, { align: 'center' })
     pdf.setFontSize(9)
-    pdf.text('WAREHOUSE STOCK PILING LAY-OUT OF SAN JUAN GID 1-A WAREHOUSE', pageWidth / 2, 17, { align: 'center' })
-    pdf.text(`AS OF ${selectedMonth.toUpperCase()} ${monthlyYear}`, pageWidth / 2, 22, { align: 'center' })
+    pdf.text('WAREHOUSE STOCK PILING LAY-OUT OF SAN JUAN GID 1-A WAREHOUSE', pageWidth / 2, 15, { align: 'center' })
+    pdf.text(`AS OF ${selectedMonth.toUpperCase()} ${monthlyYear}`, pageWidth / 2, 20, { align: 'center' })
 
-    pdf.addImage(imgData, 'PNG', 10, 26, imgWidth, Math.min(imgHeight, pageHeight - 36))
-
+    pdf.addImage(imgData, 'PNG', 10, 25, imgWidth, Math.min(imgHeight, pageHeight - 30))
     pdf.save(`PILE-LAYOUT-${selectedMonth}-${monthlyYear}.pdf`)
   }
 
@@ -543,9 +536,9 @@ export default function PileLayout() {
 
             <div className="ml-auto">
               <button
-                onClick={handleExportPDF}
+                onClick={() => exportPileLayoutToPDF(pileMap, { month: selectedMonth, year: monthlyYear })}
                 className="inline-flex items-center gap-[5px] rounded-full border border-[#BB2325] px-[14px] py-[6px] text-[13px] font-semibold text-[#BB2325] transition-colors hover:bg-[#BB2325] hover:text-white">
-                ↓ Export PDF
+                <CiExport size={17} />Export
               </button>
             </div>
           </div>
