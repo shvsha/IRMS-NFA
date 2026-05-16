@@ -55,13 +55,26 @@ const getLockedDocs = (txn) => {
   return { wts: false, wsr: false, wsi: false };
 };
 
-const getSectionLock = (txn) => {
+const getSectionLock = (txn, rejectedType) => {
   const hasWTS = txn.wts && String(txn.wts).trim() !== '';
   const hasWSR = txn.wsr && String(txn.wsr).trim() !== '';
   const hasWSI = txn.wsi && String(txn.wsi).trim() !== '';
-  if (hasWTS) return { receipt: false, issue: false };
-  if (hasWSR) return { receipt: false, issue: true  };
-  if (hasWSI) return { receipt: true,  issue: false };
+
+  // Pure WSR transaction 
+  if (hasWSR) return { receipt: false, issue: true };
+  // Pure WSI transaction
+  if (hasWSI) return { receipt: true, issue: false };
+
+  // WTS transaction 
+  if (hasWTS && rejectedType === 'WSR') {
+    // WSR (receipt) was rejected
+    return { receipt: false, issue: true };
+  }
+  if (hasWTS && rejectedType === 'WSI') {
+    // WSI (issue) was rejected
+    return { receipt: true, issue: false };
+  }
+
   return { receipt: false, issue: false };
 };
 
@@ -204,8 +217,8 @@ export default function CreateReport() {
     if (initialRejectedType) return initialRejectedType;
     if (!stockBook) return null;
 
-    const wsrRejected = stockBook.wsr_report?.Evaluation === 'Rejected';
-    const wsiRejected = stockBook.wsi_report?.Evaluation === 'Rejected';
+    const wsrRejected = stockBook.wsr_report_status === 'Rejected';
+    const wsiRejected = stockBook.wsi_report_status === 'Rejected';
     if (wsrRejected && !wsiRejected) return 'WSR';
     if (wsiRejected && !wsrRejected) return 'WSI';
     return null;
@@ -255,12 +268,11 @@ export default function CreateReport() {
 
   // Derived values
   const currentTransaction = transactions[currentIndex] ?? { ...emptyTransaction };
-  const lockedDocs         = getLockedDocs(currentTransaction);
-  const sectionLock        = getSectionLock(currentTransaction);
+  const lockedDocs  = getLockedDocs(currentTransaction);
+  const sectionLock = getSectionLock(currentTransaction, currentRejectedType);
+  const txnLocked   = isTransactionLocked(currentTransaction, currentRejectedType);
   const isFirstTransaction = currentIndex === 0;
   const isLastTransaction  = currentIndex === transactions.length - 1;
-
-  const txnLocked = isTransactionLocked(currentTransaction, currentRejectedType);
 
   const saveTransaction = useCallback(async (snapshot, idxToSave) => {
     const stockbookId = stockBookRef.current?.report_id;
@@ -832,23 +844,23 @@ export default function CreateReport() {
                   Cancel
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-                <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+              <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                <div className="h-5 bg-[#BB2325] rounded-t-lg" />
                 <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                  <div className="rounded-full px-5 py-5 bg-[#BB2325]">
-                    <FaExclamation color="white" size={60} />
+                  <div className="rounded-full px-4 py-4 bg-[#BB2325]">
+                    <FaExclamation color="white" size={33} />
                   </div>
-                  <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2">
+                  <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mx-2">
                     {isEditMode ? 'Cancel Editing?' : 'Cancel Creating?'}
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-sm px-2">
+                  <AlertDialogDescription className="text-[12px] px-2">
                     {isEditMode ? 'Are you sure you want to quit editing?' : 'Are you sure you want to quit creating a report?'}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-5">
-                  <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="w-23 px-1.5 py-2">Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5"
+                    className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-1.5 py-2"
                     onClick={() => navigate('/whse/management', { state: { refresh: Date.now() } })}
                   >Yes</AlertDialogAction>
                 </AlertDialogFooter>

@@ -214,9 +214,7 @@ class Summary(models.Model):
 
     def _primary_stockbook(self):
         """Latest completed stockbook in this summary, for signatory info."""
-        return self.stockbooks.filter(
-            Status__in=['Completed', 'Archived']
-        ).order_by('-completed_at').first()
+        return self.stockbooks.order_by('-completed_at', '-report_id').first()
 
     @property
     def Assist_BM(self):
@@ -246,9 +244,7 @@ class Summary(models.Model):
     def compute_and_save(self):
         from reports.models import WSRReport, WSIReport
 
-        all_stockbooks = self.stockbooks.filter(
-            Status__in=['Completed', 'Archived']
-        )
+        all_stockbooks = self.stockbooks.all()
 
         total_R_Bags = Decimal('0')
         total_R_NKG  = Decimal('0')
@@ -258,8 +254,9 @@ class Summary(models.Model):
 
         for stockbook in all_stockbooks:
             wsr_report = WSRReport.objects.filter(
-                date_covered=self.date_covered,
-                Evaluation__in=['Approved', 'Archive']
+                stockbooks=stockbook,
+                date_covered=stockbook.Date,
+                Evaluation__in=['Approved', 'Archive'],
             ).order_by('-wsr_report_id').first()
 
             if wsr_report:
@@ -272,8 +269,9 @@ class Summary(models.Model):
                         all_conditions.append(t.Cond_R)
 
             wsi_report = WSIReport.objects.filter(
-                date_covered=self.date_covered,
-                Evaluation__in=['Approved', 'Archive']
+                stockbooks=stockbook,
+                date_covered=stockbook.Date,
+                Evaluation__in=['Approved', 'Archive'],
             ).order_by('-wsi_report_id').first()
 
             if wsi_report:

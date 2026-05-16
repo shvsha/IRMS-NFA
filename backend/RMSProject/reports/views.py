@@ -55,7 +55,7 @@ def check_all_remaining_evaluators(current_stage):
         return None
 
     current_index = stage_order.index(current_stage)
-    remaining_stages = stage_order[current_index + 1:]  # all stages after current
+    remaining_stages = stage_order[current_index + 1:] 
 
     missing = []
     for stage in remaining_stages:
@@ -270,45 +270,42 @@ def upd_transaction(request, pk):
         if not user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if txn.stockbook.Status in ['Under Review', 'Completed']:
+        if txn.stockbook.Status == 'Under Review':
             return Response(
-                {'error': 'Cannot edit transaction. StockBook is locked.'},
+                {'error': 'Cannot edit transaction. StockBook is under review.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        if txn.type == 'WSR':
-            try:
-                wsr = WSRReport.objects.filter(
-                    date_covered=txn.stockbook.Date,
-                    CerealType=txn.stockbook.CerealType,
-                    Evaluation='Approved'
-                ).first()
-                if wsr:
-                    return Response(
-                        {'error': 'Cannot edit WSR transaction. Receipt is already approved.'},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-            except Exception:
-                pass
+        if txn.wsr_report and txn.wsr_report.Evaluation == 'Approved':
+            return Response(
+                {'error': 'Cannot edit transaction. Its Statement of Receipts is already approved.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-        if txn.type == 'WSI':
-            try:
-                wsi = WSIReport.objects.filter(
-                    date_covered=txn.stockbook.Date,
-                    CerealType=txn.stockbook.CerealType,
-                    Evaluation='Approved'
-                ).first()
-                if wsi:
-                    return Response(
-                        {'error': 'Cannot edit WSI transaction. Issue is already approved.'},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-            except Exception:
-                pass
+        if txn.wsi_report and txn.wsi_report.Evaluation == 'Approved':
+            return Response(
+                {'error': 'Cannot edit transaction. Its Statement of Issues is already approved.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if txn.type == 'WTS':
+            wsr_approved = WSRReport.objects.filter(
+                transactions=txn,
+                Evaluation='Approved',
+            ).exists()
+            wsi_approved = WSIReport.objects.filter(
+                transactions=txn,
+                Evaluation='Approved',
+            ).exists()
+            if wsr_approved or wsi_approved:
+                return Response(
+                    {'error': 'Cannot edit transaction. A report containing this transaction is already approved.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         try:
-            safe_data = {k: v for k, v in request.data.items() 
-                        if k not in ['Assist_BM', 'Account_II', 'Branch_M', 
+            safe_data = {k: v for k, v in request.data.items()
+                        if k not in ['Assist_BM', 'Account_II', 'Branch_M',
                                       'user_full_name', 'user_WHCode',
                                       'wsr_report', 'wsi_report']}
 
@@ -319,7 +316,6 @@ def upd_transaction(request, pk):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            # This will now return JSON instead of HTML so you can see the real error
             return Response(
                 {'error': str(e), 'trace': traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -330,12 +326,40 @@ def upd_transaction(request, pk):
         if not user:
             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if txn.stockbook.Status in ['Under Review', 'Completed']:
+        # Same guards for delete
+        if txn.stockbook.Status == 'Under Review':
             return Response(
-                {'error': 'Cannot delete transaction. StockBook is locked.'},
+                {'error': 'Cannot delete transaction. StockBook is under review.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
+        if txn.wsr_report and txn.wsr_report.Evaluation == 'Approved':
+            return Response(
+                {'error': 'Cannot delete transaction. Its Statement of Receipts is already approved.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if txn.wsi_report and txn.wsi_report.Evaluation == 'Approved':
+            return Response(
+                {'error': 'Cannot delete transaction. Its Statement of Issues is already approved.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if txn.type == 'WTS':
+            wsr_approved = WSRReport.objects.filter(
+                transactions=txn,
+                Evaluation='Approved',
+            ).exists()
+            wsi_approved = WSIReport.objects.filter(
+                transactions=txn,
+                Evaluation='Approved',
+            ).exists()
+            if wsr_approved or wsi_approved:
+                return Response(
+                    {'error': 'Cannot delete transaction. A report containing this transaction is already approved.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
         txn._deleted_by = user
         txn.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -428,6 +452,17 @@ def upd_wsr_report(request, pk):
             setattr(report, approval_field, 'Approved')
             report.reviewed_by = user
             report._acted_by = user
+
+            sibling_rejected = WSIReport.objects.filter(
+                stockbooks__in=report.stockbooks.all(),
+                date_covered=report.stockbooks.first().Date,
+                Evaluation='Rejected',
+            ).exists()
+            if sibling_rejected:
+                return Response(
+                    {'error': 'Cannot approve this report. The paired WSI report was already rejected. The warehouse supervisor must resubmit first.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             if next_stage == 'done':
                 report.Evaluation     = 'Approved'
@@ -546,6 +581,17 @@ def upd_wsi_report(request, pk):
             report.reviewed_by = user
             report._acted_by = user
 
+            sibling_rejected = WSRReport.objects.filter(
+                stockbooks__in=report.stockbooks.all(),
+                date_covered=report.stockbooks.first().Date,
+                Evaluation='Rejected',
+            ).exists()
+            if sibling_rejected:
+                return Response(
+                    {'error': 'Cannot approve this report. The paired WSR report was already rejected. The warehouse supervisor must resubmit first.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             if next_stage == 'done':
                 report.Evaluation     = 'Approved'
                 report.current_stage  = 'done'
@@ -586,7 +632,7 @@ def upd_wsi_report(request, pk):
 @api_view(['GET'])
 def get_summary(request):
     summaries = Summary.objects.all()
-    return Response(SummarySerializer(summaries, many=True).data)
+    return Response(SummarySerializer(summaries, many=True, context={'request': request}).data)
 
 
 @api_view(['POST'])
@@ -614,7 +660,7 @@ def upd_summary(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        return Response(SummarySerializer(summary).data)
+        return Response(SummarySerializer(summary, context={'request': request}).data)
 
     elif request.method == 'PUT':
         serializer = SummarySerializer(summary, data=request.data, partial=True)
@@ -705,28 +751,58 @@ def get_wsr_by_stockbook(request, pk):
         stock = StockBook.objects.get(pk=pk)
     except StockBook.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-
+ 
     wsr_report = WSRReport.objects.filter(
         date_covered=stock.Date,
         stockbooks=stock,
     ).order_by('-wsr_report_id').first()
-
+ 
     transactions = []
     if wsr_report:
         for t in wsr_report.transactions.filter(type__in=['WSR', 'WTS']):
             txn_data = TransactionSerializer(t).data
             txn_data['cereal_type'] = t.stockbook.CerealType if t.stockbook else '—'
             transactions.append(txn_data)
-
+ 
+    def sig_url(user_obj):
+        if not user_obj:
+            return None
+        sig = getattr(user_obj, 'e_signature', None)
+        if not sig:
+            return None
+        req = request
+        try:
+            return req.build_absolute_uri(sig.url)
+        except Exception:
+            return None
+ 
+    asst_bm_approved    = (wsr_report.asst_bm_approval    == 'Approved') if wsr_report else False
+    accountant_approved = (wsr_report.accountant_approval == 'Approved') if wsr_report else False
+    branch_m_approved   = (wsr_report.branch_m_approval   == 'Approved') if wsr_report else False
+ 
     data = {
         'date':            str(stock.Date),
         'cereal':          stock.CerealType,
         'user_full_name':  stock.user_full_name,
         'user_WHCode':     stock.user_WHCode,
+        'ws_signature':    sig_url(stock.name),
+ 
+        # Signatory names
         'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
         'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
         'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
-        'transactions':    transactions,
+ 
+        # Per-stage approval flags
+        'asst_bm_approved':    asst_bm_approved,
+        'accountant_approved': accountant_approved,
+        'branch_m_approved':   branch_m_approved,
+ 
+        # Signature URLs — only when that stage is approved
+        'asst_bm_signature':    sig_url(stock.Assist_BM)  if asst_bm_approved    else None,
+        'accountant_signature': sig_url(stock.Account_II) if accountant_approved else None,
+        'branch_m_signature':   sig_url(stock.Branch_M)   if branch_m_approved   else None,
+ 
+        'transactions': transactions,
     }
     return Response(data)
 
@@ -738,28 +814,54 @@ def get_wsi_by_stockbook(request, pk):
         stock = StockBook.objects.get(pk=pk)
     except StockBook.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-
+ 
     wsi_report = WSIReport.objects.filter(
         date_covered=stock.Date,
         stockbooks=stock,
     ).order_by('-wsi_report_id').first()
-
+ 
     transactions = []
     if wsi_report:
         for t in wsi_report.transactions.filter(type__in=['WSI', 'WTS']):
             txn_data = TransactionSerializer(t).data
             txn_data['cereal_type'] = t.stockbook.CerealType if t.stockbook else '—'
             transactions.append(txn_data)
-
+ 
+    def sig_url(user_obj):
+        if not user_obj:
+            return None
+        sig = getattr(user_obj, 'e_signature', None)
+        if not sig:
+            return None
+        try:
+            return request.build_absolute_uri(sig.url)
+        except Exception:
+            return None
+ 
+    asst_bm_approved    = (wsi_report.asst_bm_approval    == 'Approved') if wsi_report else False
+    accountant_approved = (wsi_report.accountant_approval == 'Approved') if wsi_report else False
+    branch_m_approved   = (wsi_report.branch_m_approval   == 'Approved') if wsi_report else False
+ 
     data = {
         'date':            str(stock.Date),
         'cereal':          stock.CerealType,
         'user_full_name':  stock.user_full_name,
         'user_WHCode':     stock.user_WHCode,
+        'ws_signature':    sig_url(stock.name),
+ 
         'asst_bm_name':    stock.Assist_BM.full_name  if stock.Assist_BM  else '—',
         'accountant_name': stock.Account_II.full_name if stock.Account_II else '—',
         'branch_m_name':   stock.Branch_M.full_name   if stock.Branch_M   else '—',
-        'transactions':    transactions,
+ 
+        'asst_bm_approved':    asst_bm_approved,
+        'accountant_approved': accountant_approved,
+        'branch_m_approved':   branch_m_approved,
+ 
+        'asst_bm_signature':    sig_url(stock.Assist_BM)  if asst_bm_approved    else None,
+        'accountant_signature': sig_url(stock.Account_II) if accountant_approved else None,
+        'branch_m_signature':   sig_url(stock.Branch_M)   if branch_m_approved   else None,
+ 
+        'transactions': transactions,
     }
     return Response(data)
 

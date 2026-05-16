@@ -60,6 +60,7 @@ export default function UserManagement() {
     .filter(u => u.user_level === 'Warehouse Supervisor')
     .filter(u => u.status === userStatus)
     .filter(u => `${u.fname} ${u.lname}`.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => b.user_id - a.user_id) 
 
   const handleBack = () => {
     setView('list')

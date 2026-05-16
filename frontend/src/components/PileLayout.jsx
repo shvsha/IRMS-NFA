@@ -3,6 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react'
 import Header from '@/components/Header'
 import api from '@/api/axios'
 
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+
 // for notif
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getNotifRoute } from '@/utils/getNotifRoute'
@@ -335,6 +338,7 @@ function InsightModal({ pile, onClose }) {
 }
 
 export default function PileLayout() {
+  const pileLayoutRef = React.useRef(null)
   const user        = useCurrentUser()
   const notifRoute  = getNotifRoute(user)
   const userName    = user ? `${user.fname} ${user.lname}` : 'User'
@@ -427,6 +431,45 @@ export default function PileLayout() {
     [transactions, cerealType]
   )
 
+  const handleExportPDF = async () => {
+    const element = pileLayoutRef.current
+    if (!element) return
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (clonedDoc) => {
+      const sheets = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]')
+      sheets.forEach(sheet => {
+        if (sheet.textContent?.includes('oklch')) {
+          sheet.remove()
+        }
+      })
+    },
+  })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+    const pageWidth  = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgWidth   = pageWidth - 20
+    const imgHeight  = (canvas.height * imgWidth) / canvas.width
+
+    // Add title
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(11)
+    pdf.text('NATIONAL FOOD AUTHORITY', pageWidth / 2, 12, { align: 'center' })
+    pdf.setFontSize(9)
+    pdf.text('WAREHOUSE STOCK PILING LAY-OUT OF SAN JUAN GID 1-A WAREHOUSE', pageWidth / 2, 17, { align: 'center' })
+    pdf.text(`AS OF ${selectedMonth.toUpperCase()} ${monthlyYear}`, pageWidth / 2, 22, { align: 'center' })
+
+    pdf.addImage(imgData, 'PNG', 10, 26, imgWidth, Math.min(imgHeight, pageHeight - 36))
+
+    pdf.save(`PILE-LAYOUT-${selectedMonth}-${monthlyYear}.pdf`)
+  }
+
   return (
     <>
       <Header
@@ -499,16 +542,18 @@ export default function PileLayout() {
             </span>
 
             <div className="ml-auto">
-              <button className="inline-flex items-center gap-[5px] rounded-full border border-[#3E7A43] px-[14px] py-[6px] text-[13px] font-semibold text-[#3E7A43] transition-colors hover:bg-[#1D8104] hover:text-white">
-                ↓ Export
+              <button
+                onClick={handleExportPDF}
+                className="inline-flex items-center gap-[5px] rounded-full border border-[#BB2325] px-[14px] py-[6px] text-[13px] font-semibold text-[#BB2325] transition-colors hover:bg-[#BB2325] hover:text-white">
+                ↓ Export PDF
               </button>
             </div>
           </div>
         </div>
 
         {/* Map area */}
-        <div className="flex-1 px-3 pb-4 flex flex-col gap-3 overflow-auto">
-          <div className="bg-white rounded-lg border border-black/10 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.1)] flex flex-col flex-1 p-4">
+        <div ref={pileLayoutRef} className="flex-1 px-3 pb-4 flex flex-col gap-3 overflow-auto">
+          <div ref={pileLayoutRef} className="bg-white rounded-lg border border-black/10 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.1)] flex flex-col flex-1 p-4">
 
             {loading ? (
               <div className="flex flex-col items-center justify-center flex-1 gap-3 text-[#2D317F]">

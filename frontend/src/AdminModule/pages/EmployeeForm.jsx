@@ -15,24 +15,23 @@ import { getNotifRoute } from "@/utils/getNotifRoute"
 import { useUnreadCount } from "@/hooks/useUnreadCount"
 
 // icons
-import { FaExclamation } from "react-icons/fa6";
-import { FaCheck } from "react-icons/fa6";
+import { FaExclamation } from "react-icons/fa6"
+import { FaCheck } from "react-icons/fa6"
 import { CiUser } from "react-icons/ci"
+import { ImageUp } from "lucide-react"
 
 // components
 import Header from '../../components/Header'
 
 export default function EmployeeForm({ mode = 'add', employeeData = null, onCancel }) {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
 
-  const isEdit = mode === 'edit';
+  const isEdit = mode === 'edit'
 
-  const [toasts, setToasts] = useState([])
-  // inline field errors
+  const [toasts,      setToasts]      = useState([])
   const [fieldErrors, setFieldErrors] = useState({})
 
   const addToast = (message) => {
@@ -41,54 +40,63 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
   }
 
-  // fields
   const [formData, setFormData] = useState({
-    fname: isEdit ? employeeData?.fname : "",
-    mI: isEdit ? employeeData?.mI : "",
-    lname: isEdit ? employeeData?.lname : "",
-    email: isEdit ? employeeData?.email : "",
-    user_level: "Warehouse Supervisor",
-    dept: isEdit ? employeeData?.dept : "Quality Assurance",
-    position:   "Warehouse Supervisor",  
-    WHCode: isEdit ? employeeData?.WHCode : "010501A",
-    Office_id: isEdit ? employeeData?.Office_id : "",
-    username: isEdit ? employeeData?.username : "",
+    fname:      isEdit ? employeeData?.fname      : '',
+    mI:         isEdit ? employeeData?.mI         : '',
+    lname:      isEdit ? employeeData?.lname      : '',
+    email:      isEdit ? employeeData?.email      : '',
+    user_level: 'Warehouse Supervisor',
+    dept:       isEdit ? employeeData?.dept       : 'Quality Assurance',
+    position:   'Warehouse Supervisor',
+    WHCode:     isEdit ? employeeData?.WHCode     : '010501A',
+    Office_id:  isEdit ? employeeData?.Office_id  : '',
+    username:   isEdit ? employeeData?.username   : '',
   })
 
-  // dropdown for form
   const [selectedDepartment, setSelectedDepartment] = useState(
-    isEdit ? employeeData?.dept : "Quality Assurance"
+    isEdit ? employeeData?.dept   : 'Quality Assurance'
   )
   const [selectedWhseCode, setSelectedWhseCode] = useState(
-    isEdit ? employeeData?.WHCode : "010501A"
+    isEdit ? employeeData?.WHCode : '010501A'
   )
 
-  const handleDeptChange = (val) => { 
-    setSelectedDepartment(val);
-    setFormData( prev => ({ ...prev, dept: val }));
-    setFieldErrors(prev => ({ ...prev, dept: '' }));
-  }
-  const handleWhseCodeChange = (val) => { 
-    setSelectedWhseCode(val); 
-    setFormData( prev => ({ ...prev, WHCode: val }));
-    setFieldErrors(prev => ({ ...prev, WHCode: '' }));
-  }
+  // e-signature state — mirrors SignatoryForm
+  const [signatureFile,    setSignatureFile]    = useState(null)
+  const [signaturePreview, setSignaturePreview] = useState(
+    isEdit && employeeData?.e_signature_url ? employeeData.e_signature_url : null
+  )
 
+  const handleDeptChange = (val) => {
+    setSelectedDepartment(val)
+    setFormData(prev => ({ ...prev, dept: val }))
+    setFieldErrors(prev => ({ ...prev, dept: '' }))
+  }
+  const handleWhseCodeChange = (val) => {
+    setSelectedWhseCode(val)
+    setFormData(prev => ({ ...prev, WHCode: val }))
+    setFieldErrors(prev => ({ ...prev, WHCode: '' }))
+  }
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }));
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }))
+  }
+  const handleSignatureChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setSignatureFile(file)
+    setSignaturePreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Build inline errors for all required fields
-    const requiredFields = ['fname', 'lname', 'email', 'dept', 'WHCode', 'Office_id', 'username'];
+    const requiredFields = ['fname', 'lname', 'email', 'dept', 'WHCode', 'Office_id', 'username']
     const errors = {}
     for (const field of requiredFields) {
-      if (!formData[field]?.trim()) {
-        errors[field] = 'This field is required.'
-      }
+      if (!formData[field]?.trim()) errors[field] = 'This field is required.'
+    }
+    if (!signaturePreview) {
+      errors.e_signature = 'E-signature is required.'
     }
 
     if (Object.keys(errors).length > 0) {
@@ -97,30 +105,38 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
     }
 
     try {
+      // Use FormData so the signature image can be sent as multipart
+      const payload = new FormData()
+      Object.entries(formData).forEach(([k, v]) => { if (v !== '' && v != null) payload.append(k, v) })
+      if (signatureFile) payload.append('e_signature', signatureFile)
+
       if (isEdit) {
-        await api.put(`/api/users/${employeeData.user_id}/`, formData);
+        await api.put(`/api/users/${employeeData.user_id}/`, payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
       } else {
-        await api.post('api/users/', formData);
+        await api.post('/api/users/', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
       }
+
       addToast(isEdit ? 'Employee successfully updated.' : 'New employee successfully added.')
       setTimeout(() => onCancel(), 3000)
 
     } catch (error) {
-      const errors = error.response?.data;
+      const errors = error.response?.data
       if (errors) {
-        // Map server errors back to field-level errors if possible
         const serverErrors = {}
         Object.entries(errors).forEach(([key, val]) => {
           serverErrors[key] = Array.isArray(val) ? val[0] : val
         })
         setFieldErrors(serverErrors)
       } else {
-        setFieldErrors({ general: "Something went wrong. Please try again." })
+        setFieldErrors({ general: 'Something went wrong. Please try again.' })
       }
     }
   }
 
-  // Helper: renders the red inline error message
   const FieldError = ({ name }) =>
     fieldErrors[name] ? (
       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -130,28 +146,33 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
 
   return (
     <>
-     <Header
+      <Header
         pageTitle="Supervisor"
         notifTo={notifRoute}
         userName={userName}
         unreadCount={unreadCount}
       />
-      
-      <div className="px-6 py-4 ">
+
+      <div className="px-6 py-4">
         <form onSubmit={handleSubmit}>
-          <div className="text-[#2D317F]  pb-4 overflow-auto">
-            <h2 className="m-0 font-semibold text-[25px]">{isEdit ? "Edit Employee" : "Add Employee"}</h2>
+          <div className="text-[#2D317F] pb-4 overflow-auto">
+            <h2 className="m-0 font-semibold text-[25px]">{isEdit ? 'Edit Employee' : 'Add Employee'}</h2>
 
             <div className="bg-[#F5F9F9] shadow border border-black/5 rounded-lg p-6 px-8 pt-4 mt-1 !min-h-[565px] text-black">
-              {/* header */}
+
+              {/* Header */}
               <div className="flex items-center justify-between mb-1.5">
                 <p className="font-bold text-lg text-[#2D317F]">
-                  {isEdit ? `${employeeData?.fname} ${employeeData?.mI} ${employeeData?.lname}` : "New Employee"}
+                  {isEdit
+                    ? `${employeeData?.fname} ${employeeData?.mI} ${employeeData?.lname}`
+                    : 'New Employee'}
                 </p>
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  (isEdit ? employeeData?.status : 'Active') === 'Active' ? 'bg-green-100 text-[#1D8104]' : 'bg-red-100 text-[#BB2325]'
+                  (isEdit ? employeeData?.status : 'Active') === 'Active'
+                    ? 'bg-green-100 text-[#1D8104]'
+                    : 'bg-red-100 text-[#BB2325]'
                 }`}>
-                  <CiUser className='h-4 w-4'/>
+                  <CiUser className="h-4 w-4" />
                   {isEdit ? employeeData?.status : 'Active'}
                 </span>
               </div>
@@ -160,49 +181,45 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 <span>Office ID: {isEdit ? employeeData?.Office_id : '-----'}</span>
               </div>
 
-              {/* personal information */}
+              {/* Personal Information */}
               <div className="mb-3">
                 <p className="text-xs text-[#2D317F] font-semibold tracking-widest mb-2">PERSONAL INFORMATION</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
-                  {/* name */}
                   <div className="flex flex-row gap-4 mb-3">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="firstName">First Name<span className="text-red-500">*</span></FieldLabel>
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium">First Name <span className="text-red-500">*</span></FieldLabel>
                       <Input
+                        name="fname" value={formData.fname} onChange={handleChange} placeholder="e.g. Febrose"
                         className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.fname ? 'border-red-500' : 'border-gray-300'}`}
-                        id="firstName" name="fname" value={formData.fname} onChange={handleChange} type="text" placeholder="e.g. Febrose"
                       />
                       <FieldError name="fname" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="middleInitial">Middle Initial</FieldLabel>
-                      <Input className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" id="middleInitial" name="mI" value={formData.mI} onChange={handleChange} type="text" placeholder="e.g. C" />
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium">Middle Initial</FieldLabel>
+                      <Input name="mI" value={formData.mI} onChange={handleChange} placeholder="e.g. C"
+                        className="text-[#2D317F] rounded border-gray-300 text-sm bg-white !font-normal" />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="lastName">Last Name<span className="text-red-500">*</span></FieldLabel>
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium">Last Name <span className="text-red-500">*</span></FieldLabel>
                       <Input
+                        name="lname" value={formData.lname} onChange={handleChange} placeholder="e.g. Valenzuela"
                         className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.lname ? 'border-red-500' : 'border-gray-300'}`}
-                        id="lastName" name="lname" value={formData.lname} onChange={handleChange} type="text" placeholder="e.g. Valenzuela"
                       />
                       <FieldError name="lname" />
                     </Field>
                   </div>
-
-                  {/* email */}
-                  <div className="flex flex-row gap-4">
-                    <Field className="flex gap-1.5 flex-col w-[320px]">
-                      <FieldLabel className="text-[#2D317F] text-sm font-medium" htmlFor="email">Email <span className="text-red-500">*</span></FieldLabel>
-                      <Input
-                        className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
-                        id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph"
-                      />
-                      <FieldError name="email" />
-                    </Field>
-                  </div>
+                  <Field className="flex gap-1.5 flex-col w-[320px]">
+                    <FieldLabel className="text-[#2D317F] text-sm font-medium">Email <span className="text-red-500">*</span></FieldLabel>
+                    <Input
+                      name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. febvalenzuela@nfa.gov.ph"
+                      className={`text-[#2D317F] rounded text-sm bg-white !font-normal ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    <FieldError name="email" />
+                  </Field>
                 </div>
               </div>
 
-              {/* department & assignment */}
+              {/* Department & Assignment */}
               <div className="mb-3 text-[#2D317F]">
                 <p className="text-xs font-semibold tracking-widest mb-2">DEPARTMENT & ASSIGNMENT</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
@@ -214,8 +231,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem className='text-[#2D317F] p-2' value="Quality Assurance">Quality Assurance</SelectItem>
-                          <SelectItem className='text-[#2D317F] p-2' value="Buffer Stock Management">Buffer Stock Management</SelectItem>
+                          <SelectItem className="text-[#2D317F] p-2" value="Quality Assurance">Quality Assurance</SelectItem>
+                          <SelectItem className="text-[#2D317F] p-2" value="Buffer Stock Management">Buffer Stock Management</SelectItem>
                         </SelectContent>
                       </Select>
                       <FieldError name="dept" />
@@ -227,8 +244,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem className='p-2' value="010501A">010501A</SelectItem>
-                          <SelectItem className='p-2' value="010502A">010502A</SelectItem>
+                          <SelectItem className="p-2" value="010501A">010501A</SelectItem>
+                          <SelectItem className="p-2" value="010502A">010502A</SelectItem>
                         </SelectContent>
                       </Select>
                       <FieldError name="WHCode" />
@@ -236,8 +253,8 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                     <Field className="flex gap-1.5 flex-col flex-1 min-w-[120px]">
                       <FieldLabel className="text-sm font-medium">Office ID <span className="text-red-500">*</span></FieldLabel>
                       <Input
+                        name="Office_id" value={formData.Office_id} onChange={handleChange} placeholder="e.g. 645328"
                         className={`rounded text-sm bg-white !font-normal ${fieldErrors.Office_id ? 'border-red-500' : 'border-gray-300'}`}
-                        name="Office_id" value={formData.Office_id} onChange={handleChange} type="text" placeholder="e.g. 645328"
                       />
                       <FieldError name="Office_id" />
                     </Field>
@@ -245,67 +262,111 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
                 </div>
               </div>
 
-              {/* login credentials */}
-              <div className="mb-3 text-[#2D317F]">
-                <p className="text-xs font-semibold tracking-widest mb-2">LOGIN CREDENTIALS</p>
-                <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
-                  <div className="flex flex-row gap-4 flex-wrap">
+              {/* Login Credentials + E-Signature — side by side, matching SignatoryForm */}
+              <div className="mb-3 flex gap-3">
+
+                {/* Login Credentials */}
+                <div className="flex-1">
+                  <p className="text-xs text-[#2D317F] font-semibold tracking-widest mb-2">LOGIN CREDENTIALS</p>
+                  <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm h-[calc(100%-24px)]">
                     <Field className="flex gap-1.5 flex-col w-[250px]">
-                      <FieldLabel className="text-sm font-medium" htmlFor="username">Username <span className="text-red-500">*</span></FieldLabel>
+                      <FieldLabel className="text-[#2D317F] text-sm font-medium">Username <span className="text-red-500">*</span></FieldLabel>
                       <Input
+                        name="username" value={formData.username} onChange={handleChange} placeholder="e.g. FebValenzuela"
                         className={`rounded text-sm bg-white !font-normal ${fieldErrors.username ? 'border-red-500' : 'border-gray-300'}`}
-                        id="username" name="username" value={formData.username} onChange={handleChange} type="text" placeholder="e.g. FebValenzuela"
                       />
                       <FieldError name="username" />
                     </Field>
                   </div>
                 </div>
+
+                {/* E-Signature — identical to SignatoryForm */}
+                <div className="flex-1">
+                  <p className="text-xs text-[#2D317F] font-semibold tracking-widest mb-2">E-SIGNATURE</p>
+                  <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm h-[calc(100%-24px)]">
+                    <div className="flex gap-4 items-center">
+                      {/* Preview box */}
+                      <div className="flex items-center justify-center w-36 h-14 bg-[#F5F9F9] rounded border border-dashed border-gray-300 shrink-0">
+                        {signaturePreview ? (
+                          <img
+                            src={signaturePreview}
+                            alt="signature preview"
+                            className="max-h-14 object-contain"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-gray-400">
+                            <ImageUp className="w-5 h-5" />
+                            <span className="text-[10px]">No signature</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Upload button */}
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs text-gray-500">PNG or JPG recommended.</p>
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-[#2D317F] text-white text-xs rounded-lg w-fit hover:opacity-80 transition-opacity">
+                          <ImageUp className="w-3.5 h-3.5" />
+                          {signaturePreview ? 'Change' : 'Upload'}
+                          <input type="file" accept="image/*" onChange={handleSignatureChange} className="hidden" />
+                        </label>
+                        {fieldErrors.e_signature && (
+                          <p className="text-red-500 text-xs flex items-center gap-1">
+                            <span>⊙</span> {fieldErrors.e_signature}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
-              {/* general server error */}
+              {/* General server error */}
               {fieldErrors.general && (
                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                   <span>⊙</span> {fieldErrors.general}
                 </p>
               )}
 
+              {/* Buttons */}
               <div className="mt-4 flex justify-end gap-4">
-                {/* cancel btn */}
                 <AlertDialog>
-                  <AlertDialogTrigger className='flex items-center justify-center pr-7.5' asChild>
-                    <Button className="px-4 py-5 bg-[#D9D9D9] text-[#5B5B5B]" type='button'>Cancel</Button>
+                  <AlertDialogTrigger className="flex items-center justify-center pr-7.5" asChild>
+                    <Button className="px-4 py-5 bg-[#D9D9D9] text-[#5B5B5B]" type="button">Cancel</Button>
                   </AlertDialogTrigger>
-
-                  <AlertDialogContent className='pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none'>
-                    <div className='h-7 bg-[#BB2325] rounded-t-lg'></div>
-                    <AlertDialogHeader className='p-5 text-center items-center pb-4'>
-                      <div className="rounded-full px-5 py-5 my-2 bg-[#BB2325]"><FaExclamation color={'white'} size={60} /></div>
-                      <AlertDialogTitle className='!font-bold text-[#BB2325] text-2xl mx-2 mt-2'>{isEdit ? "Cancel Editing?" : "Cancel Adding?"}</AlertDialogTitle>
+                  <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
+                    <div className="h-7 bg-[#BB2325] rounded-t-lg" />
+                    <AlertDialogHeader className="p-5 text-center items-center pb-4">
+                      <div className="rounded-full px-5 py-5 my-2 bg-[#BB2325]"><FaExclamation color="white" size={60} /></div>
+                      <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mx-2 mt-2">
+                        {isEdit ? 'Cancel Editing?' : 'Cancel Adding?'}
+                      </AlertDialogTitle>
                       <AlertDialogDescription className="text-sm px-2 mt-3 -mb-2">
-                        {isEdit ? 
-                          <>Your data won't be saved! Are you sure you want to quit editing?</> : 
-                          <>Your data won't be saved! Are you sure you want to quit adding new employee?</>
-                        }
+                        {isEdit
+                          ? "Your data won't be saved! Are you sure you want to quit editing?"
+                          : "Your data won't be saved! Are you sure you want to quit adding new employee?"}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-
-                    <AlertDialogFooter className='mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0'>
-                      <AlertDialogCancel className='w-23 px-5 py-4.5'>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className='w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5 mb-3' onClick={onCancel}>Yes</AlertDialogAction>
+                    <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
+                      <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5 mb-3"
+                        onClick={onCancel}
+                      >Yes</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
 
                 <Button className="px-4 py-5 bg-[#2D317F] text-white" type="submit">
-                  {isEdit ? "Save Changes" : "Add Employee"}
+                  {isEdit ? 'Save Changes' : 'Add Employee'}
                 </Button>
               </div>
+
             </div>
-          </div>  
-        </form> 
+          </div>
+        </form>
       </div>
 
-      {/* toasts */}
+      {/* Toasts */}
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
         {toasts.map(toast => (
           <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px] border-l-4 border-[#3E7A43]">
@@ -319,7 +380,6 @@ export default function EmployeeForm({ mode = 'add', employeeData = null, onCanc
           </div>
         ))}
       </div>
-        
     </>
   )
 }

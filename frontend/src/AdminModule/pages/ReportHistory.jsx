@@ -272,61 +272,54 @@ export default function ReportHistory() {
     try {
       if (report.reporttype === 'Statement of Receipts') {
         await api.post('/audit/log-export/', { type: 'WSR', id: report.wsrId })
-        const [wsrRes, stockRes] = await Promise.all([
-          api.get(`/reports/wsr-reports/upd/${report.wsrId}/`),
-          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
-        ])
-        const wsrReport = wsrRes.data
-        const stock     = stockRes.data
-        const firstTx   = wsrReport.transactions?.[0] ?? {}
+        const grouped = await api.get(`/reports/stocks/wsr-grouped/${report.stockbookId}/`)
+        const g = grouped.data
 
-        exportWSRToExcel(
-          {
-            date:        stock.Date                        ?? '—',
-            region:      'Region 1',
-            province:    'La Union',
-            officer:     firstTx.user_full_name            ?? '—',
-            whName:      'San Juan GID 2A',
-            whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode               ?? '—',
-            cerealType:  stock.CerealType                  ?? '—',
-            wsrId:       `WSR-${report.wsrId}`,
-            certifiedBy: firstTx.user_full_name            ?? '—',
-            verifiedBy1: wsrReport.wsr_report?.asst_bm_name      ?? wsrReport.asst_bm_name      ?? '—',
-            verifiedBy2: wsrReport.wsr_report?.accountant_name   ?? wsrReport.accountant_name   ?? '—',
-            notedBy:     wsrReport.wsr_report?.branch_m_name     ?? wsrReport.branch_m_name     ?? '—',
-          },
-          wsrReport.transactions ?? []
-        )
+        exportWSRToExcel({
+          date:                 g.date,
+          region:               'Region 1',
+          province:             'La Union',
+          officer:              g.user_full_name       ?? '—',
+          whName:               'San Juan GID 2A',
+          whAddress:            'San Juan, La Union',
+          whCode:               g.user_WHCode          ?? '—',
+          cerealType:           g.cereal               ?? '—',
+          wsrId:                `WSR-${report.wsrId}`,
+          certifiedBy:          g.user_full_name       ?? '—',
+          verifiedBy1:          g.asst_bm_name         ?? '—',
+          verifiedBy2:          g.accountant_name      ?? '—',
+          notedBy:              g.branch_m_name        ?? '—',
+          ws_signature:         g.ws_signature         ?? null,
+          asst_bm_signature:    g.asst_bm_approved     ? (g.asst_bm_signature    ?? null) : null,
+          accountant_signature: g.accountant_approved  ? (g.accountant_signature ?? null) : null,
+          branch_m_signature:   g.branch_m_approved    ? (g.branch_m_signature   ?? null) : null,
+        }, g.transactions ?? [])
 
-      } else if (report.reporttype === 'Statement of Issuance') {
-        await api.post('/audit/log-export/', { type: 'WSR', id: report.wsrId })
-        const [wsiRes, stockRes] = await Promise.all([
-          api.get(`/reports/wsi-reports/upd/${report.wsiId}/`),
-          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
-        ])
-        const wsiReport = wsiRes.data
-        const stock     = stockRes.data
-        const firstTx   = wsiReport.transactions?.[0] ?? {}
+        } else if (report.reporttype === 'Statement of Issuance') {
+          await api.post('/audit/log-export/', { type: 'WSI', id: report.wsiId })
+          const grouped = await api.get(`/reports/stocks/wsi-grouped/${report.stockbookId}/`)
+          const g = grouped.data
 
-        exportWSIToExcel(
-          {
-            date:        stock.Date                               ?? '—',
-            region:      'Region 1',
-            province:    'La Union',
-            officer:     firstTx.user_full_name                   ?? '—',
-            whName:      'San Juan GID 2A',
-            whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode                      ?? '—',
-            cerealType:  stock.CerealType                         ?? '—',
-            wsiId:       `WSI-${report.wsiId}`,
-            certifiedBy: firstTx.user_full_name                   ?? '—',
-            verifiedBy1: wsiReport.wsi_report?.asst_bm_name      ?? wsiReport.asst_bm_name      ?? '—',
-            verifiedBy2: wsiReport.wsi_report?.accountant_name   ?? wsiReport.accountant_name   ?? '—',
-            notedBy:     wsiReport.wsi_report?.branch_m_name     ?? wsiReport.branch_m_name     ?? '—',
-          },
-          wsiReport.transactions ?? []
-        )
+          exportWSIToExcel({
+            date:                 g.date,
+            region:               'Region 1',
+            province:             'La Union',
+            officer:              g.user_full_name       ?? '—',
+            whName:               'San Juan GID 2A',
+            whAddress:            'San Juan, La Union',
+            whCode:               g.user_WHCode          ?? '—',
+            cerealType:           g.cereal               ?? '—',
+            wsiId:                `WSI-${report.wsiId}`,
+            certifiedBy:          g.user_full_name       ?? '—',
+            verifiedBy1:          g.asst_bm_name         ?? '—',
+            verifiedBy2:          g.accountant_name      ?? '—',
+            notedBy:              g.branch_m_name        ?? '—',
+            ws_signature:         g.ws_signature         ?? null,
+            asst_bm_signature:    g.asst_bm_approved     ? (g.asst_bm_signature    ?? null) : null,
+            accountant_signature: g.accountant_approved  ? (g.accountant_signature ?? null) : null,
+            branch_m_signature:   g.branch_m_approved    ? (g.branch_m_signature   ?? null) : null,
+          }, g.transactions ?? [])
+
       } else if (report.reporttype === 'Summary of Warehouse Reports') {
         await api.post('/audit/log-export/', { type: 'Summary', id: report.summaryId })
         const summaryRes = await api.get(`/reports/summary/upd/${report.summaryId}/`)

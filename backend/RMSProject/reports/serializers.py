@@ -121,6 +121,22 @@ class StockBookListSerializer(serializers.ModelSerializer):
 
 class StockBookSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(many=True, read_only=True)
+    wsr_report_status = serializers.SerializerMethodField()
+    wsi_report_status = serializers.SerializerMethodField()
+
+    def get_wsr_report_status(self, obj):
+        report = WSRReport.objects.filter(
+            stockbooks=obj,
+            date_covered=obj.Date,
+        ).order_by('-wsr_report_id').first()
+        return report.Evaluation if report else None
+
+    def get_wsi_report_status(self, obj):
+        report = WSIReport.objects.filter(
+            stockbooks=obj,
+            date_covered=obj.Date,
+        ).order_by('-wsi_report_id').first()
+        return report.Evaluation if report else None
 
     class Meta:
         model  = StockBook
@@ -138,12 +154,15 @@ class SummarySerializer(serializers.ModelSerializer):
     WHCode        = serializers.SerializerMethodField()
     rows = serializers.SerializerMethodField()
 
+    WS_signature = serializers.SerializerMethodField()
+    Assist_BM_signature  = serializers.SerializerMethodField()
+    Account_II_signature = serializers.SerializerMethodField()
+    Branch_M_signature   = serializers.SerializerMethodField()
+
     def get_rows(self, obj):
         from reports.models import WSRReport, WSIReport
 
-        stockbooks = list(obj.stockbooks.filter(
-            Status__in=['Completed', 'Archived']
-        ).order_by('Date', 'report_id'))
+        stockbooks = list(obj.stockbooks.all().order_by('Date', 'report_id'))
 
         if not stockbooks:
             return []
@@ -156,15 +175,16 @@ class SummarySerializer(serializers.ModelSerializer):
             total_R_Bags = total_R_NKG = total_I_Bags = total_I_NKG = 0
             condition = ''
 
-            # Match by BOTH date AND cereal type
             wsr_report = WSRReport.objects.filter(
+                stockbooks=stockbook,
                 date_covered=stockbook.Date,
-                Evaluation__in=['Approved', 'Archive']
+                Evaluation__in=['Approved', 'Archive'],
             ).order_by('-wsr_report_id').first()
 
             wsi_report = WSIReport.objects.filter(
+                stockbooks=stockbook,
                 date_covered=stockbook.Date,
-                Evaluation__in=['Approved', 'Archive']
+                Evaluation__in=['Approved', 'Archive'],
             ).order_by('-wsi_report_id').first()
 
             if wsr_report:
@@ -219,7 +239,9 @@ class SummarySerializer(serializers.ModelSerializer):
             'ending_B_Bags', 'ending_B_NKG',
             'Assist_BM', 'Account_II', 'Branch_M', 'Name', 'WHCode',
             'stockbook',
-            'rows'
+            'rows',
+            'WS_signature',
+            'Assist_BM_signature', 'Account_II_signature', 'Branch_M_signature',
         ]
 
     def get_ending_B_Bags(self, obj):
@@ -252,3 +274,38 @@ class SummarySerializer(serializers.ModelSerializer):
 
     def get_WHCode(self, obj):
         return obj.WHCode
+    
+    def get_WS_signature(self, obj):
+        sb = obj._primary_stockbook()
+        return self._build_sig_url(sb.name if sb else None)
+    
+    def _build_sig_url(self, user_obj):
+        """Return absolute URL for a user's e_signature, or None."""
+        if not user_obj:
+            return None
+        sig = getattr(user_obj, 'e_signature', None)
+        if not sig:
+            return None
+        request = self.context.get('request')
+        if request:
+            try:
+                return request.build_absolute_uri(sig.url)
+            except Exception:
+                pass
+        # Fallback: relative URL
+        try:
+            return sig.url
+        except Exception:
+            return None
+ 
+    def get_Assist_BM_signature(self, obj):
+        sb = obj._primary_stockbook()
+        return self._build_sig_url(sb.Assist_BM if sb else None)
+ 
+    def get_Account_II_signature(self, obj):
+        sb = obj._primary_stockbook()
+        return self._build_sig_url(sb.Account_II if sb else None)
+ 
+    def get_Branch_M_signature(self, obj):
+        sb = obj._primary_stockbook()
+        return self._build_sig_url(sb.Branch_M if sb else None)

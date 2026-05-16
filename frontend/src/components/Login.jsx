@@ -1,5 +1,5 @@
 // react
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
@@ -41,9 +41,11 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState('')
   const [emailError, setEmailError] = useState('')
   const [isLoadingEmail, setIsLoadingEmail] = useState(false)
+  const [resetPasswordError, setResetPasswordError] = useState('')
 
   // otp
   const [otp, setOtp] = useState(Array(6).fill(''))
+  const [resendError, setResendError] = useState('')
   const [codeError, setCodeError] = useState('')
   const [isLoadingCode, setIsLoadingCode] = useState(false)
   const inputRefs = useRef([])
@@ -63,6 +65,22 @@ export default function Login() {
   const [resendSuccess, setResendSuccess] = useState(false)
   const [isLoadingResend, setIsLoadingResend] = useState(false)
 
+  // error
+  const [errorDialog, setErrorDialog] = useState({ open: false, message: '' })
+  const showError = (message) => setErrorDialog({ open: true, message })
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('access_token')
+    const user = sessionStorage.getItem('user')
+    if (token && user) {
+      const parsed = JSON.parse(user)
+      if (parsed.user_level === "Admin") navigate("/admin/dashboard", { replace: true })
+      else if (parsed.user_level === "Warehouse Supervisor") navigate("/whse/management", { replace: true })
+      else if (parsed.user_level === "Signatory") navigate("/signa/evaluation", { replace: true })
+    }
+  }, [])
+
+  // handlers
   const handleCredentials = (e) => {
     const { name, value } = e.target
     if (name === "username") setUsername(value)
@@ -87,11 +105,11 @@ export default function Login() {
       sessionStorage.setItem('user', JSON.stringify(response.data.user))
       const userLevel = response.data.user.user_level
       if (userLevel === "Admin") {
-        navigate("/admin/dashboard")
+        navigate("/admin/dashboard", { replace: true })
       } else if (userLevel === "Warehouse Supervisor") {
-        navigate("/whse/management")
+        navigate("/whse/management", { replace: true })
       } else if (userLevel === "Signatory") {
-        navigate("/signa/evaluation")
+        navigate("/signa/evaluation", { replace: true })
       } else {
         setLoginError('Unknown user level.')
       }
@@ -223,8 +241,12 @@ export default function Login() {
       setOtp(Array(6).fill(''))
       setResetEmail('')
     } catch (err) {
-      alert('Something went wrong. Please try again.')
-    } finally {
+        const msg = err.response?.data?.error
+        if (msg) {
+          setValidationError(true)
+          showError(msg)
+        }
+      } finally {
       setIsLoadingReset(false)
     }
   }
@@ -239,6 +261,7 @@ export default function Login() {
       setOtp(Array(6).fill(''))
       setCodeError('')
       setResendSuccess(true)
+      setResendError('') 
       setTimeout(() => setResendSuccess(false), 3000)
       inputRefs.current[0]?.focus()
 
@@ -249,7 +272,7 @@ export default function Login() {
         startCooldown(RESEND_COOLDOWNS[nextCount])
       }
     } catch (err) {
-      alert('Failed to resend code. Please try again.')
+      setResendError('Failed to resend code. Please try again.')
     } finally {
       setIsLoadingResend(false)
     }
@@ -466,10 +489,17 @@ export default function Login() {
                     <p className='text-[#2D317F] text-xs'>Sending new code...</p>
                   </div>
                 ) : (
-                  <p className='text-black text-xs text-center'>
-                    Didn't get any code?{' '}
-                    <a onClick={handleResendCode} className='text-[#2D317F] cursor-pointer'>Click to resend</a>
-                  </p>
+                  <div className='flex flex-col items-center gap-1'>
+                    {resendError && (
+                      <p className='text-red-500 text-xs flex items-center justify-center gap-1'>
+                        <span>⊙</span> {resendError}
+                      </p>
+                    )}
+                    <p className='text-black text-xs text-center'>
+                      Didn't get any code?{' '}
+                      <a onClick={handleResendCode} className='text-[#2D317F] cursor-pointer'>Click to resend</a>
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -521,7 +551,15 @@ export default function Login() {
                   <Field className='px-10 -mb-3'>
                     <FieldLabel className='text-[#2D317F] -mb-1 mt-7' htmlFor="new-password">New Password</FieldLabel>
                     <div className="relative">
-                      <Input className="rounded-md border-[#ccc] text-xs bg-black/6 !font-normal text-[#2D317F] py-4.5 pr-10" id="new-password" type={showNewPassword ? "text" : "password"} placeholder="*****" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                      <Input 
+                        className="rounded-md border-[#ccc] text-xs bg-black/6 !font-normal text-[#2D317F] py-4.5 pr-10" 
+                        id="new-password" 
+                        type={showNewPassword ? "text" : "password"} 
+                        placeholder="*****" 
+                        value={newPassword}
+                        onChange={e => { setNewPassword(e.target.value); setResetPasswordError('') }}
+                      />
+
                       <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D317F] cursor-pointer">
                         {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -560,6 +598,7 @@ export default function Login() {
                   <Button
                     className='!rounded-md mx-10 bg-[#2D317F] shadow-[0_8px_6px_-4px_rgba(0,0,0,0.3)] py-4.5 cursor-pointer font-bold'
                     onClick={handleSuccessChangePasswordOpen}
+                    disabled={isLoadingReset}
                   >
                     Reset Password
                   </Button>
@@ -599,6 +638,32 @@ export default function Login() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+
+      {/* error dialog */}
+      <Dialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden py-6 px-0 !max-w-[340px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]'>
+          <div className='bg-[#FFE1E1] py-4 rounded-full flex justify-center mx-33 mb-2'>
+            <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <DialogHeader>
+            <div className='text-center px-8'>
+              <p className='text-red-500 font-bold text-lg mb-2'>Error!</p>
+              <p className='text-xs text-gray-500'>{errorDialog.message}</p>
+            </div>
+            <DialogDescription className='flex flex-col px-10 mt-4'>
+              <Button
+                className='!rounded-md bg-[#2D317F] shadow-[0_8px_6px_-4px_rgba(0,0,0,0.3)] py-4.5 cursor-pointer font-bold'
+                onClick={() => setErrorDialog({ open: false, message: '' })}
+              >
+                Okay
+              </Button>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
+    
   )
 }

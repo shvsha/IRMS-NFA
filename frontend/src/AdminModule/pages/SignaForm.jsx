@@ -81,6 +81,10 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
         errors[field] = 'This field is required.'
       }
     }
+    
+    if (!signaturePreview) {
+      errors.e_signature = 'E-signature is required.'
+    } 
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
@@ -254,6 +258,11 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                           {signaturePreview ? 'Change' : 'Upload'}
                           <input type="file" accept="image/*" onChange={handleSignatureChange} className="hidden" />
                         </label>
+                        {fieldErrors.e_signature && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <span>⊙</span> {fieldErrors.e_signature}
+                        </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -274,20 +283,20 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   <AlertDialogTrigger asChild>
                     <Button className="px-4 py-5 bg-[#D9D9D9] text-[#5B5B5B]" type="button">Cancel</Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 max-w-[600px] overflow-hidden rounded-[10px] border-none">
-                    <div className="h-7 bg-[#BB2325] rounded-t-lg" />
-                    <AlertDialogHeader className="p-5 text-center items-center pb-4">
-                      <div className="rounded-full px-5 py-5 my-2 bg-[#BB2325]"><FaExclamation color="white" size={60} /></div>
-                      <AlertDialogTitle className="!font-bold text-[#BB2325] text-2xl mt-2">
+                  <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
+                    <div className="h-5 bg-[#BB2325] rounded-t-lg" />
+                    <AlertDialogHeader className="p-5 text-center items-center">
+                      <div className="rounded-full px-4 py-4 bg-[#BB2325]"><FaExclamation color="white" size={33} /></div>
+                      <AlertDialogTitle className="!font-bold text-[#BB2325] text-[23px] mt-1">
                         {isEdit ? 'Cancel Editing?' : 'Cancel Adding?'}
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-sm px-2 mt-3 -mb-2">
+                      <AlertDialogDescription className="text-[12px] px-1 mt-1 -mb-2">
                         Your data won't be saved. Are you sure you want to go back?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="mx-0 mb-0 bg-transparent flex flex-row !justify-center gap-3 border-0">
-                      <AlertDialogCancel className="w-23 px-5 py-4.5">Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-5 py-4.5 mb-3" onClick={onCancel}>Yes</AlertDialogAction>
+                    <AlertDialogFooter className="mx-0 -mb-2 bg-transparent flex flex-row !justify-center gap-3 border-0 -mt-3">
+                      <AlertDialogCancel className="w-23 px-3 py-3">Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="w-23 !bg-[#BB2325] text-white hover:bg-[#770e10] px-3 py-3 mb-3" onClick={onCancel}>Yes</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

@@ -3,29 +3,28 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from '../../components/Header'
 import api from "@/api/axios";
 
-// for notif
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getNotifRoute } from "@/utils/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
+import { exportSummaryToExcel } from "@/utils/exportToExcel";
+
 export default function NFAWarehouseReceipt() {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
 
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Accept a summaryId or stockbookId from navigation state
-  const summaryId    = location.state?.summaryId    ?? null;
-  const stockbookId  = location.state?.stockbookId  ?? null;
+  const summaryId   = location.state?.summaryId   ?? null;
+  const stockbookId = location.state?.stockbookId ?? null;
   const pageTitle   = location.state?.pageTitle   ?? 'Summary';
 
-  const [summary,  setSummary]  = useState(null);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -40,9 +39,7 @@ export default function NFAWarehouseReceipt() {
           const res = await api.get('/reports/summary/');
           const id = Number(stockbookId);
           data = res.data.find(s =>
-            Array.isArray(s.stockbooks)
-              ? s.stockbooks.includes(id)
-              : s.stockbook === id
+            Array.isArray(s.stockbooks) ? s.stockbooks.includes(id) : s.stockbook === id
           ) ?? null;
         } else {
           const res = await api.get('/reports/summary/');
@@ -63,39 +60,57 @@ export default function NFAWarehouseReceipt() {
 
   if (loading) return (
     <>
-      <Header pageTitle="Summary" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header pageTitle={pageTitle} notifTo={notifRoute} unreadCount={unreadCount} userName={userName} />
       <div className="flex items-center justify-center h-64 text-[#2D317F]">Loading summary...</div>
     </>
   );
 
   if (error || !summary) return (
     <>
-      <Header pageTitle="Summary" notifTo="/admin/notif" unreadCount={5} userName="Raph Nigos" />
+      <Header pageTitle={pageTitle} notifTo={notifRoute} unreadCount={unreadCount} userName={userName} />
       <div className="flex items-center justify-center h-64 text-red-500">{error ?? 'No summary found.'}</div>
     </>
   );
 
-  // Derived values from summary
   const formattedDate = summary.date_covered
     ? new Date(summary.date_covered + 'T00:00:00')
         .toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
         .toUpperCase()
     : '—';
 
-  const whCode    = summary.WHCode    ?? '—';
-  const wsName    = summary.Name      ?? '—';
-  const cerealType = summary.CerealType ?? '—';
-  const condition  = summary.Condition  ?? '—';
+  const whCode  = summary.WHCode ?? '—';
+  const wsName  = summary.Name   ?? '—';
 
-  // Signatories from summary
+  // Summary
   const SIGNATURES = [
-    { label: 'Certified Correct:', name: summary.Name      ?? '—', title: 'Warehouse Supervisor' },
-    { label: 'Verified Correct:',  name: summary.Assist_BM ?? '—', title: 'Asst. Branch Manager' },
-    { label: 'Verified Correct:',  name: summary.Account_II ?? '—', title: 'Accountant III' },
-    { label: 'Noted by:',          name: summary.Branch_M  ?? '—', title: 'Branch Manager' },
+    {
+      label:        'Certified Correct:',
+      name:         summary.Name       ?? '—',
+      title:        'Warehouse Supervisor',
+      signatureUrl: summary.WS_signature ?? null,
+    },
+    {
+      label:        'Verified Correct:',
+      name:         summary.Assist_BM  ?? '—',
+      title:        'Asst. Branch Manager',
+      signatureUrl: summary.Assist_BM_signature  ?? null,
+    },
+    {
+      label:        'Verified Correct:',
+      name:         summary.Account_II ?? '—',
+      title:        'Accountant III',
+      signatureUrl: summary.Account_II_signature ?? null,
+    },
+    {
+      label:        'Noted by:',
+      name:         summary.Branch_M   ?? '—',
+      title:        'Branch Manager',
+      signatureUrl: summary.Branch_M_signature   ?? null,
+    },
   ];
 
-  const MIN_ROWS = 8
+
+  const MIN_ROWS = 8;
   const dataRows = (summary.rows ?? []).map(row => ({
     cerealType:  row.cerealType,
     condition:   row.condition,
@@ -107,39 +122,39 @@ export default function NFAWarehouseReceipt() {
     issueNkg:    row.I_NKG,
     endBags:     row.endBags,
     endNkg:      row.endNkg,
-  }))
+  }));
 
-  const fillerCount = Math.max(0, MIN_ROWS - dataRows.length)
+  const fillerCount = Math.max(0, MIN_ROWS - dataRows.length);
   const rows = [
     ...dataRows,
     ...Array(fillerCount).fill(null).map(() => ({
       cerealType: '', condition: '', beginBags: '', beginNkg: '',
       receiptBags: '', receiptNkg: '', issueBags: '', issueNkg: '',
       endBags: '', endNkg: '',
-    }))
-  ]
+    })),
+  ];
 
-  const totalBeginBags   = dataRows.reduce((s, r) => s + parseFloat(r.beginBags   || 0), 0)
-  const totalBeginNkg    = dataRows.reduce((s, r) => s + parseFloat(r.beginNkg    || 0), 0)
-  const totalReceiptBags = dataRows.reduce((s, r) => s + parseFloat(r.receiptBags || 0), 0)
-  const totalReceiptNkg  = dataRows.reduce((s, r) => s + parseFloat(r.receiptNkg  || 0), 0)
-  const totalIssueBags   = dataRows.reduce((s, r) => s + parseFloat(r.issueBags   || 0), 0)
-  const totalIssueNkg    = dataRows.reduce((s, r) => s + parseFloat(r.issueNkg    || 0), 0)
-  const totalEndBags     = dataRows.reduce((s, r) => s + parseFloat(r.endBags     || 0), 0)
-  const totalEndNkg      = dataRows.reduce((s, r) => s + parseFloat(r.endNkg      || 0), 0)
+  const totalBeginBags   = dataRows.reduce((s, r) => s + parseFloat(r.beginBags   || 0), 0);
+  const totalBeginNkg    = dataRows.reduce((s, r) => s + parseFloat(r.beginNkg    || 0), 0);
+  const totalReceiptBags = dataRows.reduce((s, r) => s + parseFloat(r.receiptBags || 0), 0);
+  const totalReceiptNkg  = dataRows.reduce((s, r) => s + parseFloat(r.receiptNkg  || 0), 0);
+  const totalIssueBags   = dataRows.reduce((s, r) => s + parseFloat(r.issueBags   || 0), 0);
+  const totalIssueNkg    = dataRows.reduce((s, r) => s + parseFloat(r.issueNkg    || 0), 0);
+  const totalEndBags     = dataRows.reduce((s, r) => s + parseFloat(r.endBags     || 0), 0);
+  const totalEndNkg      = dataRows.reduce((s, r) => s + parseFloat(r.endNkg      || 0), 0);
 
-  const thClass = "border border-black text-center bg-[#ADCEFF] font-bold text-[10.5px] py-1 px-[5px]";
-  const tdClass = "border border-black text-center text-[11px] bg-white px-[5px]";
+  const thClass  = "border border-black text-center bg-[#ADCEFF] font-bold text-[10.5px] py-1 px-[5px]";
+  const tdClass  = "border border-black text-center text-[11px] bg-white px-[5px]";
   const metaClass = "text-[12px] font-bold underline";
 
   return (
     <>
-      <Header 
-      pageTitle={pageTitle} 
-      notifTo={notifRoute}
-      userName={userName}
-      unreadCount={unreadCount} 
-    />
+      <Header
+        pageTitle={pageTitle}
+        notifTo={notifRoute}
+        userName={userName}
+        unreadCount={unreadCount}
+      />
 
       <div
         className="shadow-2xl border border-black/10 !min-h-[650px] mx-4 my-4 overflow-auto p-3 xl:p-5"
@@ -197,18 +212,16 @@ export default function NFAWarehouseReceipt() {
                   <tr key={i}>
                     <td className={tdClass} style={{ height: 26 }}>{row.cerealType}</td>
                     <td className={tdClass} style={{ height: 26 }}>{row.condition}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.beginBags !== '' ? Number(row.beginBags).toLocaleString() : ''}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.beginNkg  !== '' ? Number(row.beginNkg).toLocaleString()  : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.beginBags   !== '' ? Number(row.beginBags).toLocaleString()   : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.beginNkg    !== '' ? Number(row.beginNkg).toLocaleString()    : ''}</td>
                     <td className={tdClass} style={{ height: 26 }}>{row.receiptBags !== '' ? Number(row.receiptBags).toLocaleString() : ''}</td>
                     <td className={tdClass} style={{ height: 26 }}>{row.receiptNkg  !== '' ? Number(row.receiptNkg).toLocaleString()  : ''}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.issueBags !== '' ? Number(row.issueBags).toLocaleString() : ''}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.issueNkg  !== '' ? Number(row.issueNkg).toLocaleString()  : ''}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.endBags !== '' ? Number(row.endBags).toLocaleString() : ''}</td>
-                    <td className={tdClass} style={{ height: 26 }}>{row.endNkg  !== '' ? Number(row.endNkg).toLocaleString()  : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.issueBags   !== '' ? Number(row.issueBags).toLocaleString()   : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.issueNkg    !== '' ? Number(row.issueNkg).toLocaleString()    : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.endBags     !== '' ? Number(row.endBags).toLocaleString()     : ''}</td>
+                    <td className={tdClass} style={{ height: 26 }}>{row.endNkg      !== '' ? Number(row.endNkg).toLocaleString()      : ''}</td>
                   </tr>
                 ))}
-
-                {/* Totals row */}
                 <tr className="font-bold text-[11px]">
                   <td className={tdClass} colSpan={2} style={{ height: 26 }}>TOTAL</td>
                   <td className={tdClass}>{Number(totalBeginBags).toLocaleString()}</td>
@@ -225,9 +238,20 @@ export default function NFAWarehouseReceipt() {
           </div>
 
           {/* Signatures */}
-          <div className="flex justify-between flex-wrap mt-23 text-[11px] text-black" style={{ gap: 16 }}>
+          <div className="flex justify-between flex-wrap mt-16 text-[11px] text-black" style={{ gap: 16 }}>
             {SIGNATURES.map((sig, i) => (
-              <div key={i} className="text-center w-[22%] mb-7 min-w-25">
+              <div key={i} className="text-center w-[22%] min-w-[100px] flex flex-col items-center mb-7">
+                <div className="h-14 flex items-end justify-center mb-1">
+                  {sig.signatureUrl ? (
+                    <img
+                      src={sig.signatureUrl}
+                      alt={`${sig.name} signature`}
+                      className="max-h-14 max-w-[120px] object-contain"
+                    />
+                  ) : (
+                    <div className="h-14" />
+                  )}
+                </div>
                 <div className="text-[#555] mb-1">{sig.label}</div>
                 <div className="font-bold underline mb-0.5 uppercase">{sig.name}</div>
                 <div className="text-[11px] text-[#444]">{sig.title}</div>

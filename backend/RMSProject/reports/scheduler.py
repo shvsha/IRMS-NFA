@@ -44,7 +44,7 @@ def start():
 
     scheduler.add_job(
         archive_completed_reports,
-        trigger=CronTrigger(hour=18, minute=0),
+        trigger=CronTrigger(hour=20, minute=26),
         id='archive_reports_6pm',
         name='Archive completed reports at 6 PM',
         jobstore='default',

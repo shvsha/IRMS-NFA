@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function isTokenExpired(token) {
   try {
@@ -20,8 +21,23 @@ function getUser() {
 export default function ProtectedRoute({ children, allowedRoles }) {
   const token = sessionStorage.getItem('access_token');
   const user  = getUser();
+  const [expired, setExpired] = useState(false);
 
-  if (!token || isTokenExpired(token)) {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const t = sessionStorage.getItem('access_token');
+      if (!t || isTokenExpired(t)) {
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('user');
+        setExpired(true);
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, []);
+  
+  if (expired || !token || isTokenExpired(token)) {
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
     sessionStorage.removeItem('user');

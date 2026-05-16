@@ -9,8 +9,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
 import random
-from users.models import User, PasswordResetCode
-from django.contrib.auth.hashers import make_password
+from users.models import User, PasswordResetCode, PasswordHistory
+from django.contrib.auth.hashers import make_password, check_password
 
 from audit.models import AuditLog
 
@@ -135,6 +135,28 @@ class ResetPasswordView(APIView):
             )
                         
             return Response({'error': 'Invalid or expired code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if check_password(new_password, user.password):
+            return Response(
+                {'error': 'New password must be different from your current password.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        recent_history = PasswordHistory.objects.filter(user=user)[:5]
+        for record in recent_history:
+            if check_password(new_password, record.password):
+                return Response(
+                    {'error': 'You have used this password recently. Please choose a different one.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        PasswordHistory.objects.create(user=user, password=user.password)
+
+        history_ids = list(
+            PasswordHistory.objects.filter(user=user).values_list('id', flat=True)
+        )
+        if len(history_ids) > 5:
+            PasswordHistory.objects.filter(id__in=history_ids[5:]).delete()
 
         user.password = make_password(new_password)
         user.save()

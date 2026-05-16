@@ -163,59 +163,55 @@ export default function ReportStatus() {
     try {
       if (report.reportType === 'Statement of Receipts') {
         await api.post('/audit/log-export/', { type: 'WSR', id: report.id })
-        const [wsrRes, stockRes] = await Promise.all([
-          api.get(`/reports/wsr-reports/upd/${report.id}/`),
-          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
-        ])
-        const wsrReport = wsrRes.data
-        const stock     = stockRes.data
-        const firstTx   = wsrReport.transactions?.[0] ?? {}
-        exportWSRToExcel(
-          {
-            date:        stock.Date             ?? '—',
-            region:      'Region 1',
-            province:    'La Union',
-            officer:     firstTx.user_full_name ?? '—',
-            whName:      'San Juan GID 2A',
-            whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode    ?? '—',
-            cerealType:  stock.CerealType       ?? '—',
-            wsrId:       `WSR-${report.id}`,
-            certifiedBy: firstTx.user_full_name ?? '—',
-            verifiedBy1: wsrReport.asst_bm_name ?? '—',
-            verifiedBy2: wsrReport.accountant_name ?? '—',
-            notedBy:     wsrReport.branch_m_name   ?? '—',
-          },
-          wsrReport.transactions ?? []
-        )
+        const grouped = await api.get(`/reports/stocks/wsr-grouped/${report.stockbookId}/`)
+        const g = grouped.data
+
+        exportWSRToExcel({
+          date:                 g.date,
+          region:               'Region 1',
+          province:             'La Union',
+          officer:              g.user_full_name       ?? '—',
+          whName:               'San Juan GID 2A',
+          whAddress:            'San Juan, La Union',
+          whCode:               g.user_WHCode          ?? '—',
+          cerealType:           g.cereal               ?? '—',
+          wsrId:                `WSR-${report.id}`,
+          certifiedBy:          g.user_full_name       ?? '—',
+          verifiedBy1:          g.asst_bm_name         ?? '—',
+          verifiedBy2:          g.accountant_name      ?? '—',
+          notedBy:              g.branch_m_name        ?? '—',
+          ws_signature:         g.ws_signature         ?? null,
+          asst_bm_signature:    g.asst_bm_approved     ? (g.asst_bm_signature    ?? null) : null,
+          accountant_signature: g.accountant_approved  ? (g.accountant_signature ?? null) : null,
+          branch_m_signature:   g.branch_m_approved    ? (g.branch_m_signature   ?? null) : null,
+        }, g.transactions ?? [])
+        
       } else if (report.reportType === 'Statement of Issuance') {
         await api.post('/audit/log-export/', { type: 'WSI', id: report.id })
-        const [wsiRes, stockRes] = await Promise.all([
-          api.get(`/reports/wsi-reports/upd/${report.id}/`),
-          api.get(`/reports/stocks/upd/${report.stockbookId}/`),
-        ])
-        const wsiReport = wsiRes.data
-        const stock     = stockRes.data
-        const firstTx   = wsiReport.transactions?.[0] ?? {}
-        exportWSIToExcel(
-          {
-            date:        stock.Date             ?? '—',
-            region:      'Region 1',
-            province:    'La Union',
-            officer:     firstTx.user_full_name ?? '—',
-            whName:      'San Juan GID 2A',
-            whAddress:   'San Juan, La Union',
-            whCode:      firstTx.user_WHCode    ?? '—',
-            cerealType:  stock.CerealType       ?? '—',
-            wsiId:       `WSI-${report.id}`,
-            certifiedBy: firstTx.user_full_name    ?? '—',
-            verifiedBy1: wsiReport.asst_bm_name    ?? '—',
-            verifiedBy2: wsiReport.accountant_name ?? '—',
-            notedBy:     wsiReport.branch_m_name   ?? '—',
-          },
-          wsiReport.transactions ?? []
-        )
+        const grouped = await api.get(`/reports/stocks/wsi-grouped/${report.stockbookId}/`)
+        const g = grouped.data
+
+        exportWSIToExcel({
+          date:                 g.date,
+          region:               'Region 1',
+          province:             'La Union',
+          officer:              g.user_full_name       ?? '—',
+          whName:               'San Juan GID 2A',
+          whAddress:            'San Juan, La Union',
+          whCode:               g.user_WHCode          ?? '—',
+          cerealType:           g.cereal               ?? '—',
+          wsiId:                `WSI-${report.id}`,
+          certifiedBy:          g.user_full_name       ?? '—',
+          verifiedBy1:          g.asst_bm_name         ?? '—',
+          verifiedBy2:          g.accountant_name      ?? '—',
+          notedBy:              g.branch_m_name        ?? '—',
+          ws_signature:         g.ws_signature         ?? null,
+          asst_bm_signature:    g.asst_bm_approved     ? (g.asst_bm_signature    ?? null) : null,
+          accountant_signature: g.accountant_approved  ? (g.accountant_signature ?? null) : null,
+          branch_m_signature:   g.branch_m_approved    ? (g.branch_m_signature   ?? null) : null,
+        }, g.transactions ?? [])
       }
+      
     } catch (err) {
       console.error('Export failed:', err)
     }

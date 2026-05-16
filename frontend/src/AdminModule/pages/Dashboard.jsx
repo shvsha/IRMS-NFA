@@ -122,7 +122,7 @@ export default function Dashboard() {
         const allReports = [...wsrRes.data, ...wsiRes.data]
 
         const total    = allReports.length
-        const approved = allReports.filter(r => r.Evaluation === 'Approved').length
+        const approved = allReports.filter(r => r.Evaluation === 'Approved' || r.Evaluation === 'Archive').length
         const pending  = allReports.filter(r => r.Evaluation === 'Pending').length
         const rejected = allReports.filter(r => r.Evaluation === 'Rejected').length
         setStats({ total, approved, pending, rejected })
@@ -141,12 +141,12 @@ export default function Dashboard() {
         const bar = knownCereals.map(cereal => ({
           warehouse: cereal,
           receipts: wsrRes.data.filter(r =>
-            r.stockbook_cereal === cereal ||
-            r.stockbook_cereal === 'Mixed Cereal'
+            (r.stockbook_cereal === cereal || r.stockbook_cereal === 'Mixed Cereal') &&
+            (r.Evaluation === 'Approved' || r.Evaluation === 'Archive')
           ).length,
           issues: wsiRes.data.filter(r =>
-            r.stockbook_cereal === cereal ||
-            r.stockbook_cereal === 'Mixed Cereal'
+            (r.stockbook_cereal === cereal || r.stockbook_cereal === 'Mixed Cereal') &&
+            (r.Evaluation === 'Approved' || r.Evaluation === 'Archive')
           ).length,
         }))
 

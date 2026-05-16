@@ -1,12 +1,12 @@
+import logging
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from datetime import timedelta
 from .models import StockBook, WSRReport, WSIReport, Summary, Transaction
-import logging
 logger = logging.getLogger(__name__)
 _recomputing = set()
 from django.db import models
+
 
 @receiver(post_save, sender=StockBook)
 def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
@@ -21,98 +21,110 @@ def handle_stockbook_submit(sender, instance, created, update_fields, **kwargs):
     has_wsi = instance.transactions.filter(type__in=['WSI', 'WTS']).exists()
 
     if has_wsr:
-        wsr_report = WSRReport.objects.filter(
+        # Find existing WSR linked to this stockbook
+        existing_wsr = WSRReport.objects.filter(
+            stockbooks=instance,
             date_covered=instance.Date,
-            Evaluation__in=['Rejected', 'Pending']
         ).order_by('-wsr_report_id').first()
 
-        if wsr_report:
-            created_wsr = False
-            wsr_report.Evaluation          = 'Pending'
-            wsr_report.current_stage       = 'admin'
-            wsr_report.Reason              = ''
-            wsr_report.reviewed_by         = None
-            wsr_report.admin_approval      = 'Pending'
-            wsr_report.asst_bm_approval    = 'Pending'
-            wsr_report.accountant_approval = 'Pending'
-            wsr_report.branch_m_approval   = 'Pending'
-            wsr_report.save(update_fields=[
-                'Evaluation', 'current_stage', 'Reason', 'reviewed_by',
-                'admin_approval', 'asst_bm_approval',
-                'accountant_approval', 'branch_m_approval',
-            ])
+        # Skip entirely if already approved — independent report, don't touch
+        if existing_wsr and existing_wsr.Evaluation == 'Approved':
+            pass
         else:
-            wsr_report = WSRReport.objects.create(
-                date_covered=instance.Date,
-                Evaluation='Pending',
-                current_stage='admin',
-            )
-            created_wsr = True
+            if existing_wsr and existing_wsr.Evaluation in ['Rejected', 'Pending']:
+                created_wsr = False
+                existing_wsr.Evaluation          = 'Pending'
+                existing_wsr.current_stage       = 'admin'
+                existing_wsr.Reason              = ''
+                existing_wsr.reviewed_by         = None
+                existing_wsr.admin_approval      = 'Pending'
+                existing_wsr.asst_bm_approval    = 'Pending'
+                existing_wsr.accountant_approval = 'Pending'
+                existing_wsr.branch_m_approval   = 'Pending'
+                existing_wsr.save(update_fields=[
+                    'Evaluation', 'current_stage', 'Reason', 'reviewed_by',
+                    'admin_approval', 'asst_bm_approval',
+                    'accountant_approval', 'branch_m_approval',
+                ])
+                wsr_report = existing_wsr
+            else:
+                wsr_report = WSRReport.objects.create(
+                    date_covered=instance.Date,
+                    Evaluation='Pending',
+                    current_stage='admin',
+                )
+                created_wsr = True
 
-        if not wsr_report.stockbook:
-            wsr_report.stockbook = instance
-            wsr_report.save(update_fields=['stockbook'])
+            if not wsr_report.stockbook:
+                wsr_report.stockbook = instance
+                wsr_report.save(update_fields=['stockbook'])
 
-        wsr_report.stockbooks.add(instance)
-        instance.transactions.filter(
-            type__in=['WSR', 'WTS']
-        ).update(wsr_report=wsr_report)
+            wsr_report.stockbooks.add(instance)
+            instance.transactions.filter(
+                type__in=['WSR', 'WTS']
+            ).update(wsr_report=wsr_report)
 
-        if submitted_by:
-            from audit.models import AuditLog
-            action = "Created" if created_wsr else "Updated"
-            AuditLog.objects.create(
-                User_ID=submitted_by,
-                Module="WSR Report",
-                Action=f"WSR Report #{wsr_report.wsr_report_id} {action} - StockBook R-{str(instance.report_id).zfill(3)}"
-            )
+            if submitted_by:
+                from audit.models import AuditLog
+                action = "Created" if created_wsr else "Updated"
+                AuditLog.objects.create(
+                    User_ID=submitted_by,
+                    Module="WSR Report",
+                    Action=f"WSR Report #{wsr_report.wsr_report_id} {action} - StockBook R-{str(instance.report_id).zfill(3)}"
+                )
 
     if has_wsi:
-        wsi_report = WSIReport.objects.filter(
+        # Find existing WSI linked to this stockbook
+        existing_wsi = WSIReport.objects.filter(
+            stockbooks=instance,
             date_covered=instance.Date,
-            Evaluation__in=['Rejected', 'Pending']
         ).order_by('-wsi_report_id').first()
 
-        if wsi_report:
-            created_wsi = False
-            wsi_report.Evaluation          = 'Pending'
-            wsi_report.current_stage       = 'admin'
-            wsi_report.Reason              = ''
-            wsi_report.reviewed_by         = None
-            wsi_report.admin_approval      = 'Pending'
-            wsi_report.asst_bm_approval    = 'Pending'
-            wsi_report.accountant_approval = 'Pending'
-            wsi_report.branch_m_approval   = 'Pending'
-            wsi_report.save(update_fields=[
-                'Evaluation', 'current_stage', 'Reason', 'reviewed_by',
-                'admin_approval', 'asst_bm_approval',
-                'accountant_approval', 'branch_m_approval',
-            ])
+        # Skip entirely if already approved — independent report, don't touch
+        if existing_wsi and existing_wsi.Evaluation == 'Approved':
+            pass
         else:
-            wsi_report = WSIReport.objects.create(
-                date_covered=instance.Date,
-                Evaluation='Pending',
-                current_stage='admin',
-            )
-            created_wsi = True
+            if existing_wsi and existing_wsi.Evaluation in ['Rejected', 'Pending']:
+                created_wsi = False
+                existing_wsi.Evaluation          = 'Pending'
+                existing_wsi.current_stage       = 'admin'
+                existing_wsi.Reason              = ''
+                existing_wsi.reviewed_by         = None
+                existing_wsi.admin_approval      = 'Pending'
+                existing_wsi.asst_bm_approval    = 'Pending'
+                existing_wsi.accountant_approval = 'Pending'
+                existing_wsi.branch_m_approval   = 'Pending'
+                existing_wsi.save(update_fields=[
+                    'Evaluation', 'current_stage', 'Reason', 'reviewed_by',
+                    'admin_approval', 'asst_bm_approval',
+                    'accountant_approval', 'branch_m_approval',
+                ])
+                wsi_report = existing_wsi
+            else:
+                wsi_report = WSIReport.objects.create(
+                    date_covered=instance.Date,
+                    Evaluation='Pending',
+                    current_stage='admin',
+                )
+                created_wsi = True
 
-        if not wsi_report.stockbook:
-            wsi_report.stockbook = instance
-            wsi_report.save(update_fields=['stockbook'])
+            if not wsi_report.stockbook:
+                wsi_report.stockbook = instance
+                wsi_report.save(update_fields=['stockbook'])
 
-        wsi_report.stockbooks.add(instance)
-        instance.transactions.filter(
-            type__in=['WSI', 'WTS']
-        ).update(wsi_report=wsi_report)
+            wsi_report.stockbooks.add(instance)
+            instance.transactions.filter(
+                type__in=['WSI', 'WTS']
+            ).update(wsi_report=wsi_report)
 
-        if submitted_by:
-            from audit.models import AuditLog
-            action = "Created" if created_wsi else "Updated"
-            AuditLog.objects.create(
-                User_ID=submitted_by,
-                Module="WSI Report",
-                Action=f"WSI Report #{wsi_report.wsi_report_id} {action} - StockBook R-{str(instance.report_id).zfill(3)}"
-            )
+            if submitted_by:
+                from audit.models import AuditLog
+                action = "Created" if created_wsi else "Updated"
+                AuditLog.objects.create(
+                    User_ID=submitted_by,
+                    Module="WSI Report",
+                    Action=f"WSI Report #{wsi_report.wsi_report_id} {action} - StockBook R-{str(instance.report_id).zfill(3)}"
+                )
 
 
 @receiver(post_save, sender=WSRReport)
@@ -138,7 +150,6 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
             )
         ).first()
 
-
         wsi_report = WSIReport.objects.filter(
             date_covered=stockbook.Date,
             stockbooks=stockbook,
@@ -150,25 +161,25 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
                 output_field=models.IntegerField(),
             )
         ).first()
-        
 
         wsr_eval = wsr_report.Evaluation if wsr_report else None
         wsi_eval = wsi_report.Evaluation if wsi_report else None
 
-        both_exist = wsr_eval is not None and wsi_eval is not None
-        one_exists = wsr_eval is not None or wsi_eval is not None
+        # Determine stockbook status independently per report
+        # A stockbook is Completed only when all its existing reports are Approved
+        # If either existing report is Rejected → In Progress
+        any_rejected = 'Rejected' in [wsr_eval, wsi_eval]
+        all_approved = all(
+            e == 'Approved'
+            for e in [wsr_eval, wsi_eval]
+            if e is not None  # only consider reports that actually exist
+        )
 
-        if both_exist:
-            if wsr_eval == 'Approved' and wsi_eval == 'Approved':
-                stockbook.Status = 'Completed'
-            elif 'Rejected' in [wsr_eval, wsi_eval]:
-                stockbook.Status = 'In Progress'
-        elif one_exists:
-            current_eval = wsr_eval or wsi_eval
-            if current_eval == 'Approved':
-                stockbook.Status = 'Completed'
-            elif current_eval == 'Rejected':
-                stockbook.Status = 'In Progress'
+        if any_rejected:
+            stockbook.Status = 'In Progress'
+        elif all_approved:
+            stockbook.Status = 'Completed'
+        # else: still Pending somewhere, leave status as-is (Under Review)
 
         if stockbook.Status == 'Completed' and not stockbook.completed_at:
             stockbook.completed_at = timezone.now()
@@ -176,12 +187,14 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
         else:
             stockbook.save(update_fields=['Status'])
 
+    # Add stockbook to summary and recompute whenever ANY report is Approved
+    # (not just when stockbook is Completed — reports are now independent)
     if instance.Evaluation == 'Approved':
         ref = linked_stockbooks.first()
         summary, created_summary = Summary.objects.get_or_create(
             date_covered=ref.Date,
         )
-        for stockbook in linked_stockbooks.filter(Status='Completed'):
+        for stockbook in linked_stockbooks:
             summary.stockbooks.add(stockbook)
         summary.compute_and_save()
 
@@ -193,7 +206,7 @@ def recompute_summary_on_approval(sender, instance, **kwargs):
             Action=f"Summary #{summary.summary_id} {action} - {summary.CerealType} ({summary.date_covered})"
         )
 
-# inherit the balance of the previous stock book
+
 @receiver(post_save, sender=StockBook)
 def carry_previous_balance(sender, instance, created, **kwargs):
     if instance.Status != 'Completed':
@@ -224,7 +237,7 @@ def carry_previous_balance(sender, instance, created, **kwargs):
         instance.B_NKG  = prev.B_NKG
         instance.save(update_fields=['B_Bags', 'B_GKG', 'B_NKG'])
 
-# update or delete the balance data
+
 def recompute_stockbook_balance(stockbook):
     if stockbook.pk in _recomputing:
         return

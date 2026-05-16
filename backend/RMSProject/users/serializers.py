@@ -6,10 +6,19 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     password  = serializers.CharField(write_only=True, required=False)
     confirmPassword = serializers.CharField(write_only=True, required=False)
+    e_signature_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = '__all__'
+
+    def get_e_signature_url(self, obj):
+        if obj.e_signature:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.e_signature.url)
+            return f"http://localhost:8000{obj.e_signature.url}"
+        return None
 
     def validate(self, data):
         return data
