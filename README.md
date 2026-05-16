@@ -20,8 +20,8 @@ Make sure you have the following installed before setting up the project:
 1. Clone the Repository
 
 ```bash
-git clone https://github.com/shvsha/Integrated-Report-Monitoring-System---QA-BSM.git
-cd Integrated-Report-Monitoring-System---QA-BSM
+git clone https://github.com/shvsha/IRMS-NFA.git
+cd IRMS-NFA
 ```
 
 ---
