@@ -6,12 +6,12 @@ import { TbXboxX } from 'react-icons/tb'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Header from './Header'
+import Header from '../Header'
 import api from '@/api/axios'
 
 // for notif
 import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { getNotifRoute } from '@/utils/getNotifRoute'
+import { getNotifRoute } from '@/utils/Import & Export/getNotifRoute'
 
 // shadcn components
 import {

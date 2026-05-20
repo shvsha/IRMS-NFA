@@ -9,7 +9,7 @@ import { FaSearch, FaBars } from "react-icons/fa";
 
 // for notif
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getNotifRoute } from "@/utils/getNotifRoute";
+import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 // shadcn
@@ -232,7 +232,7 @@ export default function StockBook() {
     e.target.value = ''
     try {
       setImporting(true)
-      const { parseStockbookExcel } = await import('@/utils/importToExcel')
+      const { parseStockbookExcel } = await import('@/utils/Import & Export/importToExcel')
       const imported = await parseStockbookExcel(file)
       setImportedTransactions(imported)
       setImportedFileName(file.name)

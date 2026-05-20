@@ -4,9 +4,9 @@ import { Route } from "react-router-dom"
 import ReportEvaluation from "@/AdminModule/pages/ReportEvaluation"
 
 // general pages
-import ReportSummarization from "@/components/ReportSummarization"
-import Notifications from "@/components/Notifications"
-import PileLayout from "@/components/PileLayout"
+import ReportSummarization from "@/components/General Pages/ReportSummarization"
+import Notifications from "@/components/General Pages/Notifications"
+import PileLayout from "@/components/General Pages/PileLayout"
 
 // reports
 import ReceiptReport from '@/components/Reports/ReceiptReport'

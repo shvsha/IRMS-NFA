@@ -1,16 +1,19 @@
-// react icon
+// react icons
 import { GoLinkExternal } from "react-icons/go";
 import { IoMdCheckmarkCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
-import { FaCheck } from "react-icons/fa6";
 import { TbXboxX } from "react-icons/tb";
 import { FaSearch, FaBars } from "react-icons/fa";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useReducer } from 'react'
 import Header from '../../components/Header'
+
+// toast
+import { useToast } from "@/hooks/useToast";
+import { Toast } from "@/components/Toast";
 
 // for notif
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getNotifRoute } from "@/utils/getNotifRoute";
+import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 // react router
@@ -25,7 +28,6 @@ import { Button } from "@/components/ui/button"
 
 // api
 import api from "@/api/axios";
-
 
 const mapWSR = (r) => ({
   _type:        'WSR',
@@ -72,21 +74,231 @@ const getSignatoryStage = (user) => {
   return null;
 };
 
-const ITEMS_PER_PAGE = 6
+const rowKey = (r) => `${r._type}-${r._id}`;
+
+const ITEMS_PER_PAGE = 6;
+
+function StatusBadge({ status }) {
+  if (status === 'Pending') return (
+    <span className="inline-flex items-center justify-center gap-3.5 px-4.5 py-1.5 rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#F0E48B', color: '#856404', border: '1px solid #FFE08A' }}>
+      <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+      Pending
+    </span>
+  );
+  if (status === 'Approved') return (
+    <span className="inline-flex items-center justify-center gap-1.5 px-3.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#8BF093', color: '#3E7A43', border: '1px solid #90EE90' }}>
+      <IoMdCheckmarkCircleOutline size={18} /> Approved
+    </span>
+  );
+  if (status === 'Rejected') return (
+    <span className="inline-flex items-center justify-center gap-1.5 px-4.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#BB2325', color: '#fff', border: '1px solid #F5A0A0' }}>
+      <IoMdCloseCircleOutline size={18} /> Rejected
+    </span>
+  );
+  return null;
+}
+
+function ApproveModal({ open, onClose, onConfirm, loading }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl'>
+        <div className='bg-[#3E7A43] py-3 rounded-t-lg' />
+        <div className='bg-[#3E7A43] py-4 rounded-full flex justify-center mx-31 mb-1.5 mt-3'>
+          <IoMdCheckmarkCircleOutline className="w-9 h-9" color='white' />
+        </div>
+        <DialogHeader>
+          <div className='text-center'>
+            <p className='text-[#3E7A43] font-bold text-[20px]'>Approve Report?</p>
+            <p className='text-[12px] mx-5 mt-0.5 text-[#051F52]'>Are you sure you want to approve this report?</p>
+          </div>
+          <DialogDescription className='flex flex-col gap-5'>
+            <div className='flex justify-center gap-3 mt-3 mb-3'>
+              <Button variant="ghost" disabled={loading} onClick={onClose}
+                className='px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'>
+                Cancel
+              </Button>
+              <Button onClick={onConfirm} disabled={loading}
+                className='px-3 py-4 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'>
+                {loading ? 'Approving…' : 'Approve'}
+              </Button>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RejectModal({ open, onClose, onSubmit, loading, reason, onReasonChange }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className='pt-0 px-0 pb-0 overflow-hidden !max-w-[320px] bg-[#E6EEF6] [&>button]:hidden'>
+        <div className='h-7 bg-[#BB2325]' />
+        <DialogHeader className='p-5 text-center items-center pb-2'>
+          <div className="rounded-full p-3.5 bg-[#BB2325] w-fit -mt-3">
+            <TbXboxX size={35} color='white' />
+          </div>
+          <DialogTitle className='font-bold text-[#BB2325] text-[20px] mt-2'>Reject Report?</DialogTitle>
+          <DialogDescription className='text-[12px] text-gray-600 px-2'>
+            Please provide the reason for rejecting this report:
+          </DialogDescription>
+        </DialogHeader>
+        <div className='px-6 pb-2 -mt-2'>
+          <textarea
+            value={reason}
+            onChange={(e) => onReasonChange(e.target.value)}
+            placeholder="Type your reason here..."
+            className="w-full border bg-white rounded-md p-3 text-sm resize-none h-20 focus:outline-none focus:border-[#BB2325]"
+          />
+        </div>
+        <DialogFooter className='pb-10 pr-10 flex justify-center gap-3 bg-[#E6EEF6] border-0 -mt-7'>
+          <button onClick={onClose} disabled={loading}
+            className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'>
+            Cancel
+          </button>
+          <button onClick={onSubmit} disabled={!reason.trim() || loading}
+            className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'>
+            {loading ? 'Rejecting…' : 'Reject'}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const COL_WIDTHS = ['13%', '13%', '22%', '13%', '15%', '24%'];
+
+function ReportTable({ reports, paginatedReports, currentPage, totalPages, onPageChange, onView, onAction, openDropdown, onDropdownToggle, dropdownPos, reportRoutes, filteredReports }) {
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+      {/* Fixed table header */}
+      <table className="w-full table-fixed flex-shrink-0">
+        <colgroup>{COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
+        <thead>
+          <tr className="bg-[#E2EBFF] text-[#2D317F] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
+            {['Date', 'Cereal Type', 'Report Type', 'Warehouse', 'Status', 'Actions'].map(h => (
+              <th key={h} className="text-[#2D317F] font-bold text-center text-sm xl:text-base">{h}</th>
+            ))}
+          </tr>
+        </thead>
+      </table>
+
+      {/* Scrollable table body */}
+      <div className="overflow-y-auto flex-1">
+        <table className="w-full table-fixed">
+          <colgroup>{COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
+          <tbody>
+            {filteredReports.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center text-gray-400 py-12">No reports found.</td>
+              </tr>
+            ) : (
+              paginatedReports.map((report) => (
+                <tr key={rowKey(report)} className="border-b border-gray-100 h-[60px]">
+                  <td className="text-center text-[#2D317F] text-sm">{report.date}</td>
+                  <td className="text-center text-[#2D317F] text-sm">{report.cerealType}</td>
+                  <td className="text-center text-[#2D317F] text-sm">{report.reportType}</td>
+                  <td className="text-center text-[#2D317F] text-sm">{report.whse}</td>
+                  <td className="text-center text-[#2D317F]"><StatusBadge status={report.status} /></td>
+                  <td className="text-center px-0">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
+                        onClick={() => onView(report)}
+                      >
+                        <GoLinkExternal size={15} /> View
+                      </button>
+                      <button
+                        className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
+                        disabled={report.status === 'Approved' || report.status === 'Rejected'}
+                        onClick={(e) => onDropdownToggle(e, report)}
+                      >
+                        <span className="text-lg font-bold tracking-widest">···</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-5 py-[12px] flex-shrink-0 border-t border-gray-100">
+        <span className="text-[13px] text-gray-500 font-medium">
+          {totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : '—'}
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onPageChange(p => p - 1)}
+            disabled={currentPage === 1 || totalPages === 0}
+            className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-[#2d317f] bg-[#e2e8f0] border-[1.5px] border-[#e2e8f0] cursor-pointer transition-colors duration-150 hover:bg-[#d1d9e6] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => onPageChange(p => p + 1)}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-white bg-[#2d317f] border-[1.5px] border-[#2d317f] cursor-pointer transition-colors duration-150 hover:bg-[#222669] hover:border-[#222669] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const approvalInitialState = {
+  selectedReport:   null,
+  approveOpen:      false,
+  approving:        false,
+  rejectDialogOpen: false,
+  rejectReason:     '',
+  rejecting:        false,
+};
+
+function approvalReducer(state, action) {
+  switch (action.type) {
+    case 'OPEN_APPROVE':
+      return { ...state, selectedReport: action.report, approveOpen: true };
+    case 'CLOSE_APPROVE':
+      return { ...state, approveOpen: false };
+    case 'SET_APPROVING':
+      return { ...state, approving: action.value };
+    case 'OPEN_REJECT':
+      return { ...state, selectedReport: action.report, rejectReason: '', rejectDialogOpen: true };
+    case 'CLOSE_REJECT':
+      return { ...state, rejectDialogOpen: false, rejectReason: '' };
+    case 'SET_REJECT_REASON':
+      return { ...state, rejectReason: action.value };
+    case 'SET_REJECTING':
+      return { ...state, rejecting: action.value };
+    default:
+      return state;
+  }
+}
 
 export default function ReportEvaluation() {
   const user        = useCurrentUser()
   const notifRoute  = getNotifRoute(user)
   const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
+  const navigate    = useNavigate()
+  const { toasts, addToast } = useToast()
 
-  const navigate = useNavigate();
-  const currentUser = (() => {
+  // Parse currentUser once, not on every render
+  const currentUser = useMemo(() => {
     try { return JSON.parse(sessionStorage.getItem('user')) || null; }
     catch { return null; }
-  })();
+  }, []);
+
   const basePath     = getBasePath();
   const reportRoutes = getReportRoutes(basePath);
+
+  // Approval/reject state consolidated into a reducer
+  const [approval, dispatchApproval] = useReducer(approvalReducer, approvalInitialState);
 
   const [reports,            setReports]            = useState([]);
   const [loading,            setLoading]            = useState(true);
@@ -97,15 +309,14 @@ export default function ReportEvaluation() {
   const [search,             setSearch]             = useState('');
   const [openDropdown,       setOpenDropdown]       = useState(null);
   const [dropdownPos,        setDropdownPos]        = useState({ top: 0, left: 0 });
-  const [toasts,             setToasts]             = useState([]);
-  const [selectedReport,     setSelectedReport]     = useState(null);
-  const [approveOpen,        setApproveOpen]        = useState(false);
-  const [approving,          setApproving]          = useState(false);
-  const [rejectDialogOpen,   setRejectDialogOpen]   = useState(false);
-  const [rejectReason,       setRejectReason]       = useState('');
-  const [rejecting,          setRejecting]          = useState(false);
 
   useEffect(() => { fetchReports(); }, []);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -133,22 +344,10 @@ export default function ReportEvaluation() {
       setReports(combined);
     } catch (err) {
       console.error('Failed to fetch reports:', err);
-      addToast('Failed to load reports. Please refresh.', '#BB2325');
+      addToast('Failed to load reports. Please refresh.', 'error');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = () => setOpenDropdown(null);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  const addToast = (message, color) => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, color }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   };
 
   const updateReportStatus = (type, id, newStatus, newReason = '') => {
@@ -159,11 +358,11 @@ export default function ReportEvaluation() {
     ));
   };
 
-  const handleApprove = (report) => { setSelectedReport(report); setApproveOpen(true); };
-
+  // Approve handlers
   const handleApproveConfirm = async () => {
+    const { selectedReport } = approval;
     if (!selectedReport) return;
-    setApproving(true);
+    dispatchApproval({ type: 'SET_APPROVING', value: true });
     try {
       const endpoint = selectedReport._type === 'WSR'
         ? `/reports/wsr-reports/upd/${selectedReport._id}/`
@@ -171,21 +370,21 @@ export default function ReportEvaluation() {
       await api.put(endpoint, { Evaluation: 'Approved', Reason: null });
       updateReportStatus(selectedReport._type, selectedReport._id, 'Approved', '');
       await fetchReports();
-      setApproveOpen(false);
-      addToast('Report has been approved!', '#3E7A43');
+      dispatchApproval({ type: 'CLOSE_APPROVE' });
+      addToast('Report has been approved!');
     } catch (err) {
-      setApproveOpen(false);
-      addToast(err.response?.data?.error ?? 'Failed to approve report.', '#BB2325');
+      dispatchApproval({ type: 'CLOSE_APPROVE' });
+      addToast(err.response?.data?.error ?? 'Failed to approve report.', 'error');
     } finally {
-      setApproving(false);
+      dispatchApproval({ type: 'SET_APPROVING', value: false });
     }
   };
 
-  const handleRejectOpen = (report) => { setSelectedReport(report); setRejectReason(''); setRejectDialogOpen(true); };
-
+  // Reject handlers
   const handleRejectSubmit = async () => {
+    const { selectedReport, rejectReason } = approval;
     if (!selectedReport || !rejectReason.trim()) return;
-    setRejecting(true);
+    dispatchApproval({ type: 'SET_REJECTING', value: true });
     try {
       const endpoint = selectedReport._type === 'WSR'
         ? `/reports/wsr-reports/upd/${selectedReport._id}/`
@@ -193,17 +392,37 @@ export default function ReportEvaluation() {
       await api.put(endpoint, { Evaluation: 'Rejected', Reason: rejectReason.trim() });
       updateReportStatus(selectedReport._type, selectedReport._id, 'Rejected', rejectReason.trim());
       await fetchReports();
-      setRejectDialogOpen(false);
-      setRejectReason('');
-      addToast('Report has been rejected.', '#BB2325');
+      dispatchApproval({ type: 'CLOSE_REJECT' });
+      addToast('Report has been rejected.');
     } catch (err) {
-      addToast(err.response?.data?.error ?? 'Failed to reject report.', '#BB2325');
+      addToast(err.response?.data?.error ?? 'Failed to reject report.', 'error');
     } finally {
-      setRejecting(false);
+      dispatchApproval({ type: 'SET_REJECTING', value: false });
     }
   };
 
-  // filtering
+  // Dropdown toggle
+  const handleDropdownToggle = (e, report) => {
+    e.stopPropagation();
+    const key = rowKey(report);
+    if (openDropdown === key) {
+      setOpenDropdown(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.right - 144 });
+      setOpenDropdown(key);
+    }
+  };
+
+  // Navigate to report detail
+  const handleViewReport = (report) => {
+    navigate(
+      reportRoutes[report.reportType] ?? '/admin/evaluation',
+      { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId, pageTitle: 'Evaluation' } }
+    );
+  };
+
+  // Filtering
   const filteredReports = reports.filter(r => {
     const matchSearch =
       r.reportType.toLowerCase().includes(search.toLowerCase()) ||
@@ -215,41 +434,19 @@ export default function ReportEvaluation() {
     return matchSearch && matchStatus && matchCerealType && matchWarehouse;
   });
 
-  // pagination
-  const totalPages       = Math.ceil(filteredReports.length / ITEMS_PER_PAGE)
-  const startIndex       = (currentPage - 1) * ITEMS_PER_PAGE
-  const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  // Pagination
+  const totalPages       = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
+  const startIndex       = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // reset page on filter/search change
-  const handleStatusChange     = (v) => { setSelectedStatus(v);     setCurrentPage(1) }
-  const handleCerealChange     = (v) => { setSelectedCerealType(v); setCurrentPage(1) }
-  const handleWarehouseChange  = (v) => { setSelectedWarehouse(v);  setCurrentPage(1) }
-  const handleSearchChange     = (e) => { setSearch(e.target.value); setCurrentPage(1) }
+  // Reset page on filter/search change
+  const handleStatusChange    = (v) => { setSelectedStatus(v);     setCurrentPage(1); };
+  const handleCerealChange    = (v) => { setSelectedCerealType(v); setCurrentPage(1); };
+  const handleWarehouseChange = (v) => { setSelectedWarehouse(v);  setCurrentPage(1); };
+  const handleSearchChange    = (e) => { setSearch(e.target.value); setCurrentPage(1); };
 
   const uniqueCerealTypes = [...new Set(reports.map(r => r.cerealType).filter(v => v && v !== '—'))];
   const uniqueWarehouses  = [...new Set(reports.map(r => r.whse).filter(v => v && v !== '—'))];
-
-  const getStatusBadge = (status) => {
-    if (status === 'Pending') return (
-      <span className="inline-flex items-center justify-center gap-3.5 px-4.5 py-1.5 rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#F0E48B', color: '#856404', border: '1px solid #FFE08A' }}>
-        <div className="w-3 h-3 border-2 border-[#856404] border-t-transparent rounded-full animate-spin flex-shrink-0" />
-        Pending
-      </span>
-    );
-    if (status === 'Approved') return (
-      <span className="inline-flex items-center justify-center gap-1.5 px-3.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#8BF093', color: '#3E7A43', border: '1px solid #90EE90' }}>
-        <IoMdCheckmarkCircleOutline size={18} /> Approved
-      </span>
-    );
-    if (status === 'Rejected') return (
-      <span className="inline-flex items-center justify-center gap-1.5 px-4.5 py-[5px] rounded-full font-medium text-xs min-w-[100px]" style={{ backgroundColor: '#BB2325', color: '#fff', border: '1px solid #F5A0A0' }}>
-        <IoMdCloseCircleOutline size={18} /> Rejected
-      </span>
-    );
-    return null;
-  };
-
-  const rowKey = (r) => `${r._type}-${r._id}`;
 
   return (
     <>
@@ -258,7 +455,7 @@ export default function ReportEvaluation() {
       {/* Outer card */}
       <div className="bg-[#F5F9F9] mx-4 my-4 flex flex-col shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] border border-black/10 rounded-lg !min-h-[653px]">
 
-        {/* Summary counts — fixed */}
+        {/* Summary counts */}
         <div className='flex justify-between font-medium w-150 pt-2.5 pl-4 text-[#2D317F] flex-shrink-0'>
           <div className="flex gap-4">
             <label>Total Reports:</label>
@@ -274,7 +471,7 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        {/* Search + filters — fixed */}
+        {/* Search + filters */}
         <div className="flex justify-between items-center mt-5 mb-4 mx-4 text-[#2D317F] gap-3 flex-shrink-0">
           <div className="bg-white border border-[#2D317F] rounded-full py-1.5 px-5 flex items-center gap-2 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]">
             <FaBars color={'#2D317F'} size={18} className="shrink-0" />
@@ -325,207 +522,49 @@ export default function ReportEvaluation() {
           </div>
         </div>
 
-        {/* Table section — flex-1 flex col so it fills remaining space */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {loading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-3 text-[#2D317F]">
-                <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm font-medium">Loading reports...</span>
-              </div>
+        {/* Table section */}
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-[#2D317F]">
+              <div className="w-8 h-8 border-4 border-[#2D317F] border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium">Loading reports...</span>
             </div>
-          ) : (
-            <>
-              {/* Fixed table header */}
-              <table className="w-full table-fixed flex-shrink-0">
-                <colgroup>
-                  <col className="w-[13%]" />
-                  <col className="w-[13%]" />
-                  <col className="w-[22%]" />
-                  <col className="w-[13%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[24%]" />
-                </colgroup>
-                <thead>
-                  <tr className="bg-[#E2EBFF] text-[#2D317F] border-b border-gray-200 h-10 xl:h-12 2xl:h-[50px]">
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Date</th>
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Cereal Type</th>
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Report Type</th>
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Warehouse</th>
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Status</th>
-                    <th className="text-[#2D317F] font-bold text-center text-sm xl:text-base">Actions</th>
-                  </tr>
-                </thead>
-              </table>
-
-              {/* Scrollable table body */}
-              <div className="overflow-y-auto flex-1">
-                <table className="w-full table-fixed">
-                  <colgroup>
-                    <col className="w-[13%]" />
-                    <col className="w-[13%]" />
-                    <col className="w-[22%]" />
-                    <col className="w-[13%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[24%]" />
-                  </colgroup>
-                  <tbody>
-                    {filteredReports.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center text-gray-400 py-12">No reports found.</td>
-                      </tr>
-                    ) : (
-                      paginatedReports.map((report) => (
-                        <tr key={rowKey(report)} className="border-b border-gray-100 h-[60px]">
-                          <td className="text-center text-[#2D317F] text-sm">{report.date}</td>
-                          <td className="text-center text-[#2D317F] text-sm">{report.cerealType}</td>
-                          <td className="text-center text-[#2D317F] text-sm">{report.reportType}</td>
-                          <td className="text-center text-[#2D317F] text-sm">{report.whse}</td>
-                          <td className="text-center text-[#2D317F]">{getStatusBadge(report.status)}</td>
-                          <td className="text-center px-0">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                className="font-medium rounded-full bg-transparent py-1.5 px-3.5 text-sm inline-flex items-center gap-2 cursor-pointer whitespace-nowrap transition ease-in-out duration-300 border border-[#2D317F] text-[#2D317F]"
-                                onClick={() => navigate(
-                                  reportRoutes[report.reportType] ?? '/admin/evaluation',
-                                  { state: { reportId: report._id, reportType: report._type, stockbookId: report.stockbookId, pageTitle: 'Evaluation' } }
-                                )}
-                              >
-                                <GoLinkExternal size={15} /> View
-                              </button>
-                              <div className="relative">
-                                <button
-                                  className="font-medium rounded-full bg-transparent py-[3px] px-3.5 text-sm inline-flex items-center gap-1 cursor-pointer whitespace-nowrap border border-[#2D317F] text-[#2D317F] disabled:opacity-40 disabled:cursor-not-allowed"
-                                  disabled={report.status === 'Approved' || report.status === 'Rejected'}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const key = rowKey(report);
-                                    if (openDropdown === key) {
-                                      setOpenDropdown(null);
-                                    } else {
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.right - 144 });
-                                      setOpenDropdown(key);
-                                    }
-                                  }}
-                                >
-                                  <span className="text-lg font-bold tracking-widest">···</span>
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination — sibling of scroll div, always pinned at bottom */}
-              <div className="flex items-center justify-between px-5 py-[12px] flex-shrink-0 border-t border-gray-100">
-                <span className="text-[13px] text-gray-500 font-medium">
-                  {totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : '—'}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentPage(p => p - 1)}
-                    disabled={currentPage === 1 || totalPages === 0}
-                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-[#2d317f] bg-[#e2e8f0] border-[1.5px] border-[#e2e8f0] cursor-pointer transition-colors duration-150 hover:bg-[#d1d9e6] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(p => p + 1)}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="px-[18px] py-[7px] rounded-md text-[13px] font-semibold text-white bg-[#2d317f] border-[1.5px] border-[#2d317f] cursor-pointer transition-colors duration-150 hover:bg-[#222669] hover:border-[#222669] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        ) : (
+          <ReportTable
+            reports={reports}
+            paginatedReports={paginatedReports}
+            filteredReports={filteredReports}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            onView={handleViewReport}
+            onDropdownToggle={handleDropdownToggle}
+            openDropdown={openDropdown}
+            dropdownPos={dropdownPos}
+            reportRoutes={reportRoutes}
+          />
+        )}
       </div>
 
-      {/* Approve modal */}
-      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <DialogContent className='bg-[#F8F8F8] [&>button]:hidden px-0 !pt-0 !max-w-[320px] shadow-2xl'>
-          <div className='bg-[#3E7A43] py-3 rounded-t-lg' />
-          <div className='bg-[#3E7A43] py-4 rounded-full flex justify-center mx-31 mb-1.5 mt-3'>
-            <IoMdCheckmarkCircleOutline className="w-9 h-9" color='white' />
-          </div>
-          <DialogHeader>
-            <div className='text-center'>
-              <p className='text-[#3E7A43] font-bold text-[20px]'>Approve Report?</p>
-              <p className='text-[12px] mx-5 mt-0.5 text-[#051F52]'>Are you sure you want to approve this report?</p>
-            </div>
-            <DialogDescription className='flex flex-col gap-5'>
-              <div className='flex justify-center gap-3 mt-3 mb-3'>
-                <Button variant="ghost" disabled={approving} onClick={() => setApproveOpen(false)}
-                  className='px-3 py-4 rounded-md bg-[#D9D9D9] text-black font-medium hover:bg-gray-300'>
-                  Cancel
-                </Button>
-                <Button onClick={handleApproveConfirm} disabled={approving}
-                  className='px-3 py-4 rounded-md bg-[#3E7A43] text-white font-medium hover:bg-green-700 disabled:opacity-50'>
-                  {approving ? 'Approving…' : 'Approve'}
-                </Button>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reject modal */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className='pt-0 px-0 pb-0 overflow-hidden !max-w-[320px] bg-[#E6EEF6] [&>button]:hidden'>
-          <div className='h-7 bg-[#BB2325]' />
-          <DialogHeader className='p-5 text-center items-center pb-2'>
-            <div className="rounded-full p-3.5 bg-[#BB2325] w-fit -mt-3">
-              <TbXboxX size={35} color='white' />
-            </div>
-            <DialogTitle className='font-bold text-[#BB2325] text-[20px] mt-2'>Reject Report?</DialogTitle>
-            <DialogDescription className='text-[12px] text-gray-600 px-2'>
-              Please provide the reason for rejecting this report:
-            </DialogDescription>
-          </DialogHeader>
-          <div className='px-6 pb-2 -mt-2'>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Type your reason here..."
-              className="w-full border bg-white rounded-md p-3 text-sm resize-none h-20 focus:outline-none focus:border-[#BB2325]"
-            />
-          </div>
-          <DialogFooter className='pb-10 pr-10 flex justify-center gap-3 bg-[#E6EEF6] border-0 -mt-7'>
-            <button onClick={() => setRejectDialogOpen(false)} disabled={rejecting}
-              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#D9D9D9] text-[#5B5B5B] disabled:opacity-50'>
-              Cancel
-            </button>
-            <button onClick={handleRejectSubmit} disabled={!rejectReason.trim() || rejecting}
-              className='px-4 py-1.5 rounded-md text-sm font-medium bg-[#BB2325] text-white disabled:opacity-50 disabled:cursor-not-allowed'>
-              {rejecting ? 'Rejecting…' : 'Reject'}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modals */}
+      <ApproveModal
+        open={approval.approveOpen}
+        onClose={() => dispatchApproval({ type: 'CLOSE_APPROVE' })}
+        onConfirm={handleApproveConfirm}
+        loading={approval.approving}
+      />
+      <RejectModal
+        open={approval.rejectDialogOpen}
+        onClose={() => dispatchApproval({ type: 'CLOSE_REJECT' })}
+        onSubmit={handleRejectSubmit}
+        loading={approval.rejecting}
+        reason={approval.rejectReason}
+        onReasonChange={(v) => dispatchApproval({ type: 'SET_REJECT_REASON', value: v })}
+      />
 
       {/* Toasts */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
-        {toasts.map(toast => (
-          <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]" style={{ borderLeft: `4px solid ${toast.color}` }}>
-            <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
-              <FaCheck size={16} color="white" />
-            </div>
-            <div>
-              <p className="font-bold text-sm" style={{ color: toast.color }}>
-                {toast.color === '#BB2325' ? 'Rejected!' : 'Success!'}
-              </p>
-              <p className="text-gray-500 text-xs">{toast.message}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <Toast toasts={toasts} />
 
       {/* Dropdown portal */}
       {openDropdown && createPortal(
@@ -541,14 +580,14 @@ export default function ReportEvaluation() {
               <>
                 <button
                   disabled={isRejected}
-                  onClick={() => { handleApprove(report); setOpenDropdown(null); }}
+                  onClick={() => { dispatchApproval({ type: 'OPEN_APPROVE', report }); setOpenDropdown(null); }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#3E7A43] hover:bg-green-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <IoMdCheckmarkCircleOutline size={18} /> Approve
                 </button>
                 <button
                   disabled={isRejected}
-                  onClick={() => { handleRejectOpen(report); setOpenDropdown(null); }}
+                  onClick={() => { dispatchApproval({ type: 'OPEN_REJECT', report }); setOpenDropdown(null); }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#BB2325] hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <IoMdCloseCircleOutline size={18} /> Reject

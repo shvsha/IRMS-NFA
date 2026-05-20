@@ -3,6 +3,15 @@ import { useState } from 'react'
 import api from '../../api/axios'
 import Header from '../../components/Header'
 
+// notif
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { getNotifRoute } from '@/utils/Import & Export/getNotifRoute'
+import { useUnreadCount } from '@/hooks/useUnreadCount'
+
+// toast
+import { useToast } from '@/hooks/useToast'
+import { Toast } from '@/components/Toast'
+
 // shadcn
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -10,53 +19,52 @@ import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 // icons
-import { FaExclamation, FaCheck } from "react-icons/fa"
+import { FaExclamation } from "react-icons/fa"
 import { CiUser } from "react-icons/ci"
 import { ImageUp } from "lucide-react"
 
-import { useUnreadCount } from '@/hooks/useUnreadCount'
-import { getNotifRoute } from '@/utils/getNotifRoute'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
+/** Displays a field-level validation error message */
+function FieldError({ name, fieldErrors }) {
+  if (!fieldErrors[name]) return null
+  return (
+    <p className="text-red-500 text-xs flex items-center gap-1">
+      <span>⊙</span> {fieldErrors[name]}
+    </p>
+  )
+}
 
-const SIGNATORY_ROLES = ['Asst. Branch Manager', 'Accountant 3', 'Branch Manager']
-
+/** Form for adding or editing a signatory account */
 export default function SignatoryForm({ mode = 'add', role = null, signatoryData = null, onCancel }) {
-  // for notif
-  const user       = useCurrentUser()
-  const notifRoute = getNotifRoute(user)
-  const userName   = user ? `${user.fname} ${user.lname}` : 'User'
+  // notif
+  const user        = useCurrentUser()
+  const notifRoute  = getNotifRoute(user)
+  const userName    = user ? `${user.fname} ${user.lname}` : 'User'
   const unreadCount = useUnreadCount()
+
+  // toast
+  const { toasts, addToast } = useToast()
 
   const isEdit = mode === 'edit'
 
-  const [toasts, setToasts] = useState([])
-  // inline field errors
-  const [fieldErrors, setFieldErrors] = useState({})
-
-  const addToast = (message, color = '#1D8104') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
-  }
+  const [fieldErrors,  setFieldErrors]  = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
-    fname: isEdit ? signatoryData?.fname: '',
-    mI: isEdit ? signatoryData?.mI: '',
-    lname: isEdit ? signatoryData?.lname: '',
-    email: isEdit ? signatoryData?.email: '',
-    user_level: 'Signatory',
+    fname:          isEdit ? signatoryData?.fname          : '',
+    mI:             isEdit ? signatoryData?.mI             : '',
+    lname:          isEdit ? signatoryData?.lname          : '',
+    email:          isEdit ? signatoryData?.email          : '',
+    user_level:     'Signatory',
     signatory_role: isEdit ? signatoryData?.signatory_role : (role ?? ''),
-    dept: isEdit ? signatoryData?.dept: '',
-    position: isEdit ? signatoryData?.position: (role ?? ''),
-    Office_id: isEdit ? signatoryData?.Office_id: '',
-    username: isEdit ? signatoryData?.username: '',
+    dept:           isEdit ? signatoryData?.dept           : '',
+    position:       isEdit ? signatoryData?.position       : (role ?? ''),
+    Office_id:      isEdit ? signatoryData?.Office_id      : '',
+    username:       isEdit ? signatoryData?.username       : '',
   })
 
-  const [signatureFile, setSignatureFile]     = useState(null)
+  const [signatureFile,    setSignatureFile]    = useState(null)
   const [signaturePreview, setSignaturePreview] = useState(
-    isEdit && signatoryData?.e_signature_url
-      ? signatoryData.e_signature_url
-      : null
+    isEdit && signatoryData?.e_signature_url ? signatoryData.e_signature_url : null
   )
 
   const handleChange = (e) => {
@@ -74,67 +82,57 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Client-side validation
     const required = ['fname', 'lname', 'dept', 'Office_id', 'email', 'signatory_role', 'username']
     const errors = {}
     for (const field of required) {
-      if (!formData[field]?.trim()) {
-        errors[field] = 'This field is required.'
-      }
+      if (!formData[field]?.trim()) errors[field] = 'This field is required.'
     }
-    
-    if (!signaturePreview) {
-      errors.e_signature = 'E-signature is required.'
-    } 
+    if (!signaturePreview) errors.e_signature = 'E-signature is required.'
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
       return
     }
 
+    setIsSubmitting(true)
     try {
       const payload = new FormData()
       Object.entries(formData).forEach(([k, v]) => { if (v) payload.append(k, v) })
       if (signatureFile) payload.append('e_signature', signatureFile)
 
+      const headers = { 'Content-Type': 'multipart/form-data' }
+
       if (isEdit) {
-        await api.put(`/api/users/signatories/${signatoryData.user_id}/`, payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        await api.put(`/api/users/signatories/${signatoryData.user_id}/`, payload, { headers })
       } else {
-        await api.post('/api/users/signatories/', payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        await api.post('/api/users/signatories/', payload, { headers })
       }
 
-      addToast(isEdit ? 'Signatory successfully updated.' : 'New signatory successfully added.')
+      addToast(isEdit ? 'Signatory successfully updated.' : 'New signatory successfully added.', 'success')
       setTimeout(() => onCancel(), 3000)
 
     } catch (err) {
-      const errors = err.response?.data
-      if (errors) {
-        // Map server errors to field-level errors
-        const serverErrors = {}
-        Object.entries(errors).forEach(([key, val]) => {
-          serverErrors[key] = Array.isArray(val) ? val[0] : val
+      const serverErrors = err.response?.data
+      if (serverErrors) {
+        // Map server validation errors to field-level errors
+        const mapped = {}
+        Object.entries(serverErrors).forEach(([key, val]) => {
+          mapped[key] = Array.isArray(val) ? val[0] : val
         })
-        setFieldErrors(serverErrors)
+        setFieldErrors(mapped)
       } else {
         setFieldErrors({ general: 'Something went wrong. Please try again.' })
       }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const FieldError = ({ name }) =>
-    fieldErrors[name] ? (
-      <p className="text-red-500 text-xs flex items-center gap-1">
-        <span>⊙</span> {fieldErrors[name]}
-      </p>
-    ) : null
-
   return (
     <>
-      <Header 
-        pageTitle="Signatory" 
+      <Header
+        pageTitle="Signatory"
         notifTo={notifRoute}
         userName={userName}
         unreadCount={unreadCount}
@@ -162,7 +160,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                 <span>Office ID: {isEdit ? signatoryData?.Office_id : '-----'}</span>
               </div>
 
-              {/* Personal Information */}
+              {/* Personal information */}
               <div className="mb-3">
                 <p className="text-xs font-semibold tracking-widest mb-2">PERSONAL INFORMATION</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
@@ -173,7 +171,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                         name="fname" value={formData.fname} onChange={handleChange} placeholder="e.g. Maria"
                         className={`rounded text-sm bg-white ${fieldErrors.fname ? 'border-red-500' : 'border-gray-300'}`}
                       />
-                      <FieldError name="fname" />
+                      <FieldError name="fname" fieldErrors={fieldErrors} />
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[250px]">
                       <FieldLabel className="text-sm font-medium">Middle Initial</FieldLabel>
@@ -185,7 +183,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                         name="lname" value={formData.lname} onChange={handleChange} placeholder="e.g. Santos"
                         className={`rounded text-sm bg-white ${fieldErrors.lname ? 'border-red-500' : 'border-gray-300'}`}
                       />
-                      <FieldError name="lname" />
+                      <FieldError name="lname" fieldErrors={fieldErrors} />
                     </Field>
                   </div>
                   <Field className="flex gap-1.5 flex-col w-[320px]">
@@ -194,12 +192,12 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                       name="email" value={formData.email} onChange={handleChange} type="email" placeholder="e.g. msantos@nfa.gov.ph"
                       className={`rounded text-sm bg-white ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                     />
-                    <FieldError name="email" />
+                    <FieldError name="email" fieldErrors={fieldErrors} />
                   </Field>
                 </div>
               </div>
 
-              {/* Department & Assignment */}
+              {/* Department & assignment */}
               <div className="mb-3">
                 <p className="text-xs font-semibold tracking-widest mb-2">DEPARTMENT & ASSIGNMENT</p>
                 <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm">
@@ -210,16 +208,16 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                     </Field>
                     <Field className="flex gap-1.5 flex-col w-[200px]">
                       <FieldLabel className="text-sm font-medium">Office ID</FieldLabel>
-                      <Input name="Office_id" value={formData.Office_id} onChange={handleChange} placeholder="e.g. 645328" className={`rounded text-sm bg-white ${fieldErrors.Office_id ? 'border-red-500' : 'border-gray-300'} `} />
+                      <Input name="Office_id" value={formData.Office_id} onChange={handleChange} placeholder="e.g. 645328" className={`rounded text-sm bg-white ${fieldErrors.Office_id ? 'border-red-500' : 'border-gray-300'}`} />
                     </Field>
                   </div>
                 </div>
               </div>
 
-              {/* Login Credentials + E-Signature side by side */}
+              {/* Login credentials + e-signature side by side */}
               <div className="mb-3 flex gap-3">
 
-                {/* Login Credentials */}
+                {/* Login credentials */}
                 <div className="flex-1">
                   <p className="text-xs font-semibold tracking-widest mb-2">LOGIN CREDENTIALS</p>
                   <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm h-[calc(100%-24px)]">
@@ -229,12 +227,12 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                         name="username" value={formData.username} onChange={handleChange} placeholder="e.g. MSantos"
                         className={`rounded text-sm bg-white ${fieldErrors.username ? 'border-red-500' : 'border-gray-300'}`}
                       />
-                      <FieldError name="username" />
+                      <FieldError name="username" fieldErrors={fieldErrors} />
                     </Field>
                   </div>
                 </div>
 
-                {/* E-Signature */}
+                {/* E-signature */}
                 <div className="flex-1">
                   <p className="text-xs font-semibold tracking-widest mb-2">E-SIGNATURE</p>
                   <div className="bg-white border border-gray-200 rounded-lg px-5 py-4 shadow-sm h-[calc(100%-24px)]">
@@ -258,11 +256,7 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                           {signaturePreview ? 'Change' : 'Upload'}
                           <input type="file" accept="image/*" onChange={handleSignatureChange} className="hidden" />
                         </label>
-                        {fieldErrors.e_signature && (
-                        <p className="text-red-500 text-xs flex items-center gap-1">
-                          <span>⊙</span> {fieldErrors.e_signature}
-                        </p>
-                        )}
+                        <FieldError name="e_signature" fieldErrors={fieldErrors} />
                       </div>
                     </div>
                   </div>
@@ -270,14 +264,14 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
 
               </div>
 
-              {/* general server error */}
+              {/* General server error */}
               {fieldErrors.general && (
                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                   <span>⊙</span> {fieldErrors.general}
                 </p>
               )}
 
-              {/* Buttons */}
+              {/* Action buttons */}
               <div className="mt-4 flex justify-end gap-4">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -301,8 +295,12 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
                   </AlertDialogContent>
                 </AlertDialog>
 
-                <Button className="px-4 py-5 bg-[#2D317F] text-white" type="submit">
-                  {isEdit ? 'Save Changes' : 'Add Signatory'}
+                <Button
+                  className="px-4 py-5 bg-[#2D317F] text-white disabled:opacity-50"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving…' : (isEdit ? 'Save Changes' : 'Add Signatory')}
                 </Button>
               </div>
 
@@ -311,23 +309,8 @@ export default function SignatoryForm({ mode = 'add', role = null, signatoryData
         </form>
       </div>
 
-      {/* Toasts */}
-      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
-        {toasts.map(toast => (
-          <div key={toast.id} className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
-            style={{ borderLeft: `4px solid ${toast.color}` }}>
-            <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
-              <FaCheck size={16} color="white" />
-            </div>
-            <div>
-              <p className="font-bold text-sm" style={{ color: toast.color }}>
-                {toast.color === '#BB2325' ? 'Error!' : 'Success!'}
-              </p>
-              <p className="text-gray-500 text-xs">{toast.message}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Toast notifications */}
+      <Toast toasts={toasts} />
     </>
   )
 }

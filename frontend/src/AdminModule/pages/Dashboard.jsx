@@ -1,20 +1,24 @@
-// filter components
-import { WeeklyFilter } from '../../components/filters/WeeklyFilter'
-import { MonthlyFilter } from '../../components/filters/MonthlyFilter'
+// react
+import { useState, useEffect, useRef } from 'react';
+import Header from '@/components/Header'
 
 // react icons
 import { FaRegCalendarAlt } from "react-icons/fa";
 
-// react
-import { useState, useEffect } from 'react';
-import * as React from "react"
-import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header'
+// api
+import api from '@/api/axios'
+
+// utils
+import { getActivityColor } from '@/utils/activityUtils'
 
 // notif
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { getNotifRoute } from '@/utils/getNotifRoute';
+import { getNotifRoute } from '@/utils/Import & Export/getNotifRoute';
 import { useUnreadCount } from '@/hooks/useUnreadCount'
+
+// filter components
+import { WeeklyFilter } from '../../components/filters/WeeklyFilter'
+import { MonthlyFilter } from '../../components/filters/MonthlyFilter'
 
 // shadcn components
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -26,9 +30,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 // charts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
 import { ChartContainer, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-
-// api
-import api from '@/api/axios'
 
 const months = ["January","February","March","April","May","June",
                  "July","August","September","October","November","December"]
@@ -42,6 +43,8 @@ const pieChartConfig = {
   Pending:  { label: "Pending",  color: "#AE9C0F" },
   Rejected: { label: "Rejected", color: "#BB2325" },
 }
+
+const knownCereals = ['PD1350', 'WD1G50']
 
 function StatCard({ label, value, accentColor, textColor, loading }) {
   return (
@@ -64,16 +67,7 @@ function StatCard({ label, value, accentColor, textColor, loading }) {
   )
 }
 
-function formatActivityTime(dateStr, timeStr) {
-  if (!dateStr) return ''
-  const today = new Date().toISOString().split('T')[0]
-  const d = new Date(`${today}T${timeStr}Z`)
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-  return `${dateStr} ${time}`
-}
-
 export default function Dashboard() {
-  const navigate = useNavigate()
   const user        = useCurrentUser()
   const notifRoute  = getNotifRoute(user)
   const userName    = user ? `${user.fname} ${user.lname}` : 'User'
@@ -85,20 +79,33 @@ export default function Dashboard() {
   const [barData,     setBarData]     = useState([])
   const [activities,  setActivities]  = useState([])
   const [dataLoading, setDataLoading] = useState(true)
-  
-  const knownCereals = ['PD1350', 'WD1G50']
 
-  // filter state
-  const [cerealType,          setCerealType]          = useState("All Cereal Type")
-  const [rangeDate,           setRangeDate]           = useState("Weekly")
-  const [showCalendarFilter,  setShowCalendarFilter]  = useState(false)
-  const [filterParams, setFilterParams] = useState(null)
-  const [pendingWeek, setPendingWeek]     = useState({ year: new Date().getFullYear(), month: new Date().getMonth(), week: 1 })
-  const [pendingMonth, setPendingMonth]   = useState({ year: new Date().getFullYear(), month: "January" })
+  // pie chart UI state
   const [activeIndex, setActiveIndex] = useState(null)
 
-  const weekDropdownRef  = React.useRef(null)
-  const monthDropdownRef = React.useRef(null)
+  // filter state
+  const [filterState, setFilterState] = useState({
+    cerealType:         "All Cereal Type",
+    rangeDate:          "Weekly",
+    showCalendarFilter: false,
+    filterParams:       null,
+    pendingWeek:        { year: new Date().getFullYear(), month: new Date().getMonth(), week: 1 },
+    pendingMonth:       { year: new Date().getFullYear(), month: "January" },
+  })
+
+  const setFilter = (patch) => setFilterState(prev => ({ ...prev, ...patch }))
+
+  const {
+    cerealType,
+    rangeDate,
+    showCalendarFilter,
+    filterParams,
+    pendingWeek,
+    pendingMonth,
+  } = filterState
+
+  const weekDropdownRef  = useRef(null)
+  const monthDropdownRef = useRef(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,7 +118,7 @@ export default function Dashboard() {
           if (filterParams.week !== undefined) {
             params.week = filterParams.week
           }
-       }
+        }
 
         const [wsrRes, wsiRes, auditRes] = await Promise.all([
           api.get('/reports/wsr-reports/', { params }),
@@ -132,11 +139,6 @@ export default function Dashboard() {
           { name: 'Pending',  value: pending,  color: '#AE9C0F' },
           { name: 'Rejected', value: rejected, color: '#BB2325' },
         ])
-
-        const cerealTypes = [...new Set([
-          ...wsrRes.data.map(r => r.stockbook_cereal),
-          ...wsiRes.data.map(r => r.stockbook_cereal),
-        ].filter(Boolean))]
 
         const bar = knownCereals.map(cereal => ({
           warehouse: cereal,
@@ -166,29 +168,15 @@ export default function Dashboard() {
 
   const total = pieData.reduce((sum, d) => sum + d.value, 0)
 
-  const getActivityColor = (action) => {
-    if (!action) return 'bg-gray-400'
-    const a = action.toLowerCase()
-    if (a.includes('approved'))  return 'bg-green-500'
-    if (a.includes('rejected'))  return 'bg-red-500'
-    if (a.includes('deleted'))   return 'bg-red-400'
-    if (a.includes('exported') || a.includes('imported')) return 'bg-[#1a2f6f]'
-    if (a.includes('created'))   return 'bg-blue-500'
-    if (a.includes('submitted')) return 'bg-yellow-500'
-    return 'bg-gray-400'
+  const handleWeekNavPrev = () => {
+    const p = pendingWeek
+    if (p.month === 0) setFilter({ pendingWeek: { ...p, month: 11, year: p.year - 1 } })
+    else               setFilter({ pendingWeek: { ...p, month: p.month - 1 } })
   }
-
-  const handlePrevMonth = () => {
-    setPendingWeek(p => {
-      if (p.month === 0) return { ...p, month: 11, year: p.year - 1 }
-      return { ...p, month: p.month - 1 }
-    })
-  }
-  const handleNextMonth = () => {
-    setPendingWeek(p => {
-      if (p.month === 11) return { ...p, month: 0, year: p.year + 1 }
-      return { ...p, month: p.month + 1 }
-    })
+  const handleWeekNavNext = () => {
+    const p = pendingWeek
+    if (p.month === 11) setFilter({ pendingWeek: { ...p, month: 0, year: p.year + 1 } })
+    else                setFilter({ pendingWeek: { ...p, month: p.month + 1 } })
   }
 
   return (
@@ -222,9 +210,9 @@ export default function Dashboard() {
               <div className="absolute -top-2 right-4 w-4 h-4 bg-[#2D317F] rotate-45" />
               <div className="h-8 bg-[#2D317F] rounded-t-lg flex items-center justify-between px-4">
                 <p className="text-white font-medium text-sm xl:text-base">Date</p>
-                {filterParams &&(
+                {filterParams && (
                   <button
-                    onClick={() => { setFilterParams(null); setShowCalendarFilter(false) }}
+                    onClick={() => setFilter({ filterParams: null, showCalendarFilter: false })}
                     className="text-xs text-red-400 underline hover:text-red-100"
                   >
                     Reset
@@ -236,7 +224,10 @@ export default function Dashboard() {
                 <FieldGroup>
                   <Field>
                     <FieldLabel className="text-[#2D317F] font-medium">Range</FieldLabel>
-                    <Select value={rangeDate} onValueChange={(v) => { setRangeDate(v); setShowCalendarFilter(false) }}>
+                    <Select
+                      value={rangeDate}
+                      onValueChange={(v) => setFilter({ rangeDate: v, showCalendarFilter: false })}
+                    >
                       <SelectTrigger className="w-full bg-white border-gray-300">
                         <SelectValue placeholder="Select range" />
                       </SelectTrigger>
@@ -250,8 +241,11 @@ export default function Dashboard() {
                     <Field>
                       <FieldLabel className="text-[#2D317F] font-medium">Week</FieldLabel>
                       <div ref={weekDropdownRef} className="relative">
-                        <button type="button" onClick={() => setShowCalendarFilter(p => !p)}
-                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none">
+                        <button
+                          type="button"
+                          onClick={() => setFilter({ showCalendarFilter: !showCalendarFilter })}
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none"
+                        >
                           <span>Week {filterParams?.week ?? pendingWeek.week}</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -264,8 +258,11 @@ export default function Dashboard() {
                     <Field>
                       <FieldLabel className="text-[#2D317F] font-medium">Month</FieldLabel>
                       <div ref={monthDropdownRef} className="relative">
-                        <button type="button" onClick={() => setShowCalendarFilter(p => !p)}
-                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none">
+                        <button
+                          type="button"
+                          onClick={() => setFilter({ showCalendarFilter: !showCalendarFilter })}
+                          className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:outline-none"
+                        >
                           <span>{filterParams?.month ? months[filterParams.month - 1] : pendingMonth.month}</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -280,26 +277,29 @@ export default function Dashboard() {
                 <div className="absolute left-1/2 -right-175 top-30 -translate-x-1/2 mt-2 z-50">
                   {rangeDate === "Weekly" ? (
                     <WeeklyFilter
-                      selectedWeek={pendingWeek.week} year={pendingWeek.year} month={pendingWeek.month}
-                      onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth}
-                      onMonthChange={(m) => setPendingWeek(p => ({ ...p, month: m }))}
-                      onYearChange={(y)  => setPendingWeek(p => ({ ...p, year: y }))}
-                      onWeekSelect={(week) => {
-                        setFilterParams({ year: pendingWeek.year, month: pendingWeek.month + 1, week })
-                        setPendingWeek(p => ({ ...p, week }))
-                        setShowCalendarFilter(false)
-                      }}
+                      selectedWeek={pendingWeek.week}
+                      year={pendingWeek.year}
+                      month={pendingWeek.month}
+                      onPrevMonth={handleWeekNavPrev}
+                      onNextMonth={handleWeekNavNext}
+                      onMonthChange={(m) => setFilter({ pendingWeek: { ...pendingWeek, month: m } })}
+                      onYearChange={(y)  => setFilter({ pendingWeek: { ...pendingWeek, year: y } })}
+                      onWeekSelect={(week) => setFilter({
+                        filterParams:       { year: pendingWeek.year, month: pendingWeek.month + 1, week },
+                        pendingWeek:        { ...pendingWeek, week },
+                        showCalendarFilter: false,
+                      })}
                     />
                   ) : (
                     <MonthlyFilter
                       selectedMonth={pendingMonth.month}
                       year={pendingMonth.year}
-                      onYearChange={(y) => setPendingMonth(p => ({ ...p, year: y }))}
-                      onMonthChange={(month) => {
-                        setFilterParams({ year: pendingMonth.year, month: months.indexOf(month) + 1 })
-                        setPendingMonth(p => ({ ...p, month }))
-                        setShowCalendarFilter(false)
-                      }}
+                      onYearChange={(y) => setFilter({ pendingMonth: { ...pendingMonth, year: y } })}
+                      onMonthChange={(month) => setFilter({
+                        filterParams:       { year: pendingMonth.year, month: months.indexOf(month) + 1 },
+                        pendingMonth:       { ...pendingMonth, month },
+                        showCalendarFilter: false,
+                      })}
                     />
                   )}
                 </div>
@@ -309,7 +309,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat cards */}
-        <div className='grid grid-cols-2 xl:grid-cols-4 gap-2 xl:gap-3 shrink-0 '>
+        <div className='grid grid-cols-2 xl:grid-cols-4 gap-2 xl:gap-3 shrink-0'>
           <StatCard label="Total Reports"  value={stats.total}    accentColor="#2D317F" textColor="#2D317F" loading={dataLoading} />
           <StatCard label="Approved"       value={stats.approved} accentColor="#418447"                    loading={dataLoading} />
           <StatCard label="Pending Review" value={stats.pending}  accentColor="#AE9C0F"                    loading={dataLoading} />
@@ -323,7 +323,7 @@ export default function Dashboard() {
           <div className='bg-[#E1EBFF] rounded-lg flex-[2] p-3 xl:p-4 min-w-0 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)]'>
             <div className='flex justify-between items-center border-b border-b-[#ADCEFF] pb-3 mb-2'>
               <p className='font-bold text-sm xl:text-base text-[#2D317F]'>Report Overview</p>
-              <Select value={cerealType} onValueChange={setCerealType}>
+              <Select value={cerealType} onValueChange={(v) => setFilter({ cerealType: v })}>
                 <SelectTrigger className='border bg-transparent border-[#0B3B66] px-2 xl:px-3 text-[#0B3B66] text-xs xl:text-sm max-w-[130px] xl:max-w-[170px]'>
                   {cerealType}
                 </SelectTrigger>

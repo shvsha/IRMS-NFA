@@ -12,11 +12,11 @@ import api from "@/api/axios";
 
 // for notif
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getNotifRoute } from "@/utils/getNotifRoute";
+import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 // excel
-import { exportStockbookToExcel } from '@/utils/exportToExcel'
+import { exportStockbookToExcel } from '@/utils/Import & Export/exportToExcel'
 
 export default function ViewReport() {
   // for notif
