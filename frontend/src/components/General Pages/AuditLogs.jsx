@@ -1,6 +1,6 @@
 // components
-import { DailyFilter } from './filters/DailyFilter'
-import Header from './Header'
+import { DailyFilter } from '../filters/DailyFilter'
+import Header from '../Header'
 
 // icons
 import { FaRegCalendarAlt, FaSearch, FaBars } from "react-icons/fa";
@@ -10,7 +10,7 @@ import { useState, useEffect, useMemo } from 'react'
 
 // for notif
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { getNotifRoute } from '@/utils/getNotifRoute';
+import { getNotifRoute } from '@/utils/Import & Export/getNotifRoute';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 
 // shadcn

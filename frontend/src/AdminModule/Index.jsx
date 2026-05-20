@@ -9,10 +9,10 @@ import ReportEvaluation from "./pages/ReportEvaluation"
 import ReportHistory from "./pages/ReportHistory"
 
 // general pages
-import ReportSummarization from "@/components/ReportSummarization"
-import Notifications from "@/components/Notifications"
-import AuditLogs from "@/components/AuditLogs"
-import PileLayout from "@/components/PileLayout"
+import ReportSummarization from "@/components/General Pages/ReportSummarization"
+import Notifications from "@/components/General Pages/Notifications"
+import AuditLogs from "@/components/General Pages/AuditLogs"
+import PileLayout from "@/components/General Pages/PileLayout"
 
 // Reports
 import ReceiptReport from '@/components/Reports/ReceiptReport'

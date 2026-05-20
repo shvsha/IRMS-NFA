@@ -23,11 +23,11 @@ import api from "@/api/axios";
 
 // for notif
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getNotifRoute } from "@/utils/getNotifRoute";
+import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 // export
-import { exportStockbookToExcel } from "@/utils/exportToExcel";
+import { exportStockbookToExcel } from "@/utils/Import & Export/exportToExcel";
 
 //  pure helpers (outside component)
 const getTransactionType = (txn) => {
@@ -443,7 +443,7 @@ export default function CreateReport() {
     e.target.value = ''
 
     try {
-      const { parseStockbookExcel } = await import('@/utils/importToExcel')
+      const { parseStockbookExcel } = await import('@/utils/Import & Export/importToExcel')
       const imported = await parseStockbookExcel(file)
 
       await saveTransaction(transactions, currentIndex)

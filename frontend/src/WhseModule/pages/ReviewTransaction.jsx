@@ -13,7 +13,7 @@ import { IoSend } from "react-icons/io5"
 
 // for notif
 import { useUnreadCount } from "@/hooks/useUnreadCount";
-import { getNotifRoute } from "@/utils/getNotifRoute";
+import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // api
