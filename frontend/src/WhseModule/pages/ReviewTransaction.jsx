@@ -257,7 +257,7 @@ export default function ReviewTransaction() {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
-                                X
+                                Delete
                               </button>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">
@@ -284,7 +284,7 @@ export default function ReviewTransaction() {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <button className="text-[15px] px-3 py-1 border border-[#BB2325] text-[#BB2325] rounded cursor-pointer hover:bg-[#BB2325] hover:text-white transition-colors">
-                                X
+                                Delete
                               </button>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="pt-0 px-0 bg-[#E6EEF6] pb-0 gap-0 !max-w-[320px] overflow-hidden rounded-[10px] border-none">

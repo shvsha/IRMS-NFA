@@ -497,26 +497,25 @@ export default function ReportEvaluation() {
             </Select>
 
             <Select value={selectedCerealType} onValueChange={handleCerealChange}>
-              <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-42 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
+              <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-40 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem className='p-2 text-[#2D317F]' value="All Cereal Type">All Cereal Type</SelectItem>
-                {uniqueCerealTypes.map(ct => (
-                  <SelectItem key={ct} className='p-2 text-[#2D317F]' value={ct}>{ct}</SelectItem>
-                ))}
+                <SelectItem value="Mixed Cereal">Mixed Cereal</SelectItem>
+                <SelectItem value="WD1G50">Palay</SelectItem>
+                <SelectItem value="PD1350">Rice</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={selectedWarehouse} onValueChange={handleWarehouseChange}>
-              <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-45 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
+              <SelectTrigger className="bg-white shadow-[0_6px_4px_-4px_rgba(0,0,0,0.2)] inline-flex items-center justify-between gap-2.5 border-[#2d317f] rounded-md py-5.5 px-3.5 text-[#2D317F] font-medium text-sm w-41 min-w-0 cursor-pointer whitespace-nowrap transition-colors duration-200">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem className='p-2 text-[#2D317F]' value="All Warehouses">All Warehouses</SelectItem>
-                {uniqueWarehouses.map(wh => (
-                  <SelectItem key={wh} className='p-2 text-[#2D317F]' value={wh}>{wh}</SelectItem>
-                ))}
+                <SelectItem value="All Warehouses">All Warehouses</SelectItem>
+                <SelectItem value="010501A">Warehouse 1</SelectItem>
+                <SelectItem value="010502A">Warehouse 2</SelectItem>
               </SelectContent>
             </Select>
           </div>
