@@ -205,24 +205,24 @@ function ApproveModal({ open, onClose, notif }) {
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-        <div className="h-[30px] bg-[#3E7A43]" />
+      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 !max-w-[300px] overflow-hidden rounded-[10px] border-none">
+        <div className="h-[20px] bg-[#3E7A43]" />
         <div className="flex justify-center mt-6">
-          <div className="bg-[#3E7A43] w-[100px] h-[100px] rounded-full flex justify-center items-center">
-            <FaCheck size={50} color="white" />
+          <div className="bg-[#3E7A43] px-3 py-3 rounded-full flex justify-center items-center">
+            <FaCheck size={30} color="white" />
           </div>
         </div>
-        <div className="text-center px-6 mt-4">
-          <p className="text-[#3E7A43] text-[25px] font-bold leading-tight">
+        <div className="text-center px-10 mt-4">
+          <p className="text-[#3E7A43] text-[20px] font-bold leading-tight">
             {isFullyApproved ? 'Fully Approved!' : 'Stage Approved!'}
           </p>
-          <p className="text-[#3E7A43] text-[15px] mt-2">
+          <p className="text-[#3E7A43] text-[12px] mt-2">
             {getStageMessage(notif)}
           </p>
         </div>
         <AlertDialogFooter className="!flex !items-center !justify-center pb-9 mt-4 bg-[#E6EEF6] border-0">
           <button
-            className="text-white bg-[#3E7A43] px-[30px] py-[7px] rounded-[9px] cursor-pointer hover:opacity-80 -mt-5"
+            className="text-white text-[15px] bg-[#3E7A43] px-4 py-1 rounded-md cursor-pointer hover:opacity-80 -mt-5"
             onClick={onClose}
           >
             Done
@@ -238,33 +238,33 @@ function RejectModal({ open, onClose, onEdit, notif }) {
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 max-w-[90vw] md:max-w-[600px] xl:max-w-[650px] overflow-hidden rounded-[10px] border-none">
-        <div className="h-[30px] bg-[#BB2325]" />
+      <AlertDialogContent className="bg-[#E6EEF6] p-0 gap-0 !max-w-[300px] overflow-hidden rounded-[10px] border-none">
+        <div className="h-[20px] bg-[#BB2325]" />
         <div className="flex justify-center mt-6">
-          <div className="w-[100px] h-[100px] rounded-full flex justify-center items-center">
-            <TbXboxX size={70} color="#BB2325" />
+          <div className="bg-[#BB2325] px-3 py-3 rounded-full flex justify-center items-center">
+            <TbXboxX size={33} color="white" />
           </div>
         </div>
-        <div className="text-center px-6 mt-2">
-          <p className="text-[#BB2325] text-[25px] font-bold leading-tight">Report Rejected</p>
+        <div className="text-center px-5 mt-2">
+          <p className="text-[#BB2325] text-[20px] font-bold leading-tight">Report Rejected</p>
           {notif?.reason_text && notif.reason_text !== '-' && (
-            <p className="mx-[10px] text-justify text-sm leading-relaxed mt-2 text-gray-700">
+            <p className="mx-[10px] text-justify text-[14px] leading-relaxed mt-2 text-gray-700">
               <span className="font-semibold">Reason: </span>{notif.reason_text}
             </p>
           )}
-          <p className="text-sm text-gray-500 mt-3">
+          <p className="text-[12px] text-gray-500 mt-3">
             Please review your report and make the necessary corrections.
           </p>
         </div>
-        <AlertDialogFooter className="justify-center gap-3 pb-10 mt-4 sm:justify-center border-0 bg-[#E6EEF6]">
+        <AlertDialogFooter className="justify-center gap-3 pb-10 sm:justify-center border-0 bg-[#E6EEF6]">
           <button
-            className="text-[#5B5B5B] bg-[#D9D9D9] px-6 py-2 rounded-[9px] cursor-pointer"
+            className="text-[#5B5B5B] text-[14px] bg-[#D9D9D9] px-4 py-1 rounded-md cursor-pointer"
             onClick={onClose}
           >
             Close
           </button>
           <button
-            className="bg-[#BB2325] text-white px-6 py-2 rounded-[9px] cursor-pointer"
+            className="bg-[#BB2325] text-[14px] text-white px-4 py-1 rounded-md cursor-pointer"
             onClick={onEdit}
           >
             Edit Report

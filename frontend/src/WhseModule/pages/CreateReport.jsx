@@ -581,9 +581,9 @@ export default function CreateReport() {
                     <FieldLabel className="text-sm font-semibold text-[#2D317F]">Plate #</FieldLabel>
                     <Input
                       value={currentTransaction.plateNo}
-                      onChange={(e) => setField('plateNo', e.target.value.slice(0, 6))}
-                      maxLength={6}
-                      placeholder="ABC123"
+                      onChange={(e) => setField('plateNo', e.target.value.slice(0, 7))}
+                      maxLength={7}
+                      placeholder="ABC1234"
                       readOnly={txnLocked}
                       className={`border-0 rounded h-7 ${txnLocked ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'bg-[#E6EEF6]'}`} />
                   </Field>
