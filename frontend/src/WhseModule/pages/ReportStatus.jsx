@@ -18,7 +18,6 @@ import { exportWSRToExcel, exportWSIToExcel } from '@/utils/Import & Export/expo
 // shadcn components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { TableCell, TableRow } from "@/components/ui/table"
 
 // api
 import api from "@/api/axios";

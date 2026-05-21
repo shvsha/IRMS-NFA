@@ -16,6 +16,10 @@ import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { getNotifRoute } from "@/utils/Import & Export/getNotifRoute";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
+// toast
+import { useToast } from "@/hooks/useToast";
+import { Toast } from "@/components/Toast";
+
 // api
 import api from "@/api/axios";
 
@@ -83,7 +87,7 @@ export default function ReviewTransaction() {
   const [submitting,        setSubmitting]        = useState(false);
   const [deletingIndex,     setDeletingIndex]     = useState(null);
   
-  const [toasts, setToasts] = useState([])
+  const { toasts, addToast } = useToast()
 
   useEffect(() => {
     const fetchId = reportId !== "—" ? reportId : id;
@@ -124,7 +128,7 @@ export default function ReviewTransaction() {
       }
       setLocalTransactions(prev => prev.filter((_, i) => i !== indexToDelete));
     } catch (err) {
-      addToast('Failed to delete transaction. Please try again.', '#BB2325')
+      addToast('Failed to delete transaction. Please try again.', 'error')
     } finally {
       setDeletingIndex(null);
     }
@@ -143,7 +147,7 @@ export default function ReviewTransaction() {
       const message = typeof errData === 'object' && errData !== null
         ? Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
         : errData || 'Failed to submit report.';
-      addToast(message, '#BB2325')
+      addToast(message, 'error')
     } finally {
       setSubmitting(false);
     }
@@ -168,12 +172,6 @@ export default function ReviewTransaction() {
       },
     });
   };
-
-  const addToast = (message, color) => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
-  }
 
   if (loading) {
     return (
@@ -423,25 +421,7 @@ export default function ReviewTransaction() {
       </div>
 
       {/* toast */}
-      <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
-            style={{ borderLeft: `4px solid ${toast.color}` }}
-          >
-            <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
-              <FaCheck size={16} color="white" />
-            </div>
-            <div>
-              <p className="font-bold text-sm" style={{ color: toast.color }}>
-                {toast.color === '#BB2325' ? 'Error!' : 'Success!'}
-              </p>
-              <p className="text-gray-500 text-xs">{toast.message}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <Toast toasts={toasts} />
     </>
   );
 }
