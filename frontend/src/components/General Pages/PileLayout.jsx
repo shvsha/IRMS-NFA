@@ -209,7 +209,7 @@ function PileCard({ pileNo, pile, onClick }) {
     <div
       onClick={pile ? onClick : undefined}
       className={`
-        border-[1.5px] rounded-lg overflow-hidden flex flex-col min-h-[130px]
+        border-[1.5px] rounded-lg overflow-hidden flex flex-col h-full
         shadow-sm transition-all duration-150
         ${statusStyles[status]}
         ${pile ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md' : 'cursor-default'}
@@ -356,13 +356,17 @@ export default function PileLayout() {
   const [error,        setError]        = useState(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const fetchData = async () => {
       setLoading(true)
       setError(null)
       try {
         const monthIndex = MONTHS_LIST.indexOf(selectedMonth) + 1
 
-        const summaryRes = await api.get('/reports/summary/')
+        const summaryRes = await api.get('/reports/summary/', {
+          signal: controller.signal
+        })
         const allSummaries = summaryRes.data
 
         const matchedSummaries = allSummaries.filter(s => {
@@ -385,14 +389,19 @@ export default function PileLayout() {
         }
 
         const txnPromises = [...stockbookIds].map(id =>
-          api.get(`/reports/transactions/?stockbook=${id}`).then(r => r.data)
+          api.get(`/reports/transactions/?stockbook=${id}`, {
+            signal: controller.signal
+          }).then(r => r.data)
         )
         const txnArrays = await Promise.all(txnPromises)
 
         const sbPromises = [...stockbookIds].map(id =>
-          api.get(`/reports/stocks/upd/${id}/`).then(r => ({ id, data: r.data }))
+          api.get(`/reports/stocks/upd/${id}/`, {
+            signal: controller.signal
+          }).then(r => ({ id, data: r.data }))
         )
         const sbDetails = await Promise.all(sbPromises)
+
         const sbCerealMap = {}
         for (const { id, data } of sbDetails) {
           sbCerealMap[id] = data.CerealType
@@ -405,6 +414,7 @@ export default function PileLayout() {
 
         setTransactions(allTxns)
       } catch (err) {
+        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') return
         console.error('Failed to fetch pile data:', err)
         setError('Failed to load pile data.')
       } finally {
@@ -413,6 +423,8 @@ export default function PileLayout() {
     }
 
     fetchData()
+
+    return () => controller.abort()
   }, [selectedMonth, monthlyYear])
 
   const availableCerealTypes = useMemo(() => {
@@ -424,44 +436,12 @@ export default function PileLayout() {
     if (cerealType !== 'ALL' && !availableCerealTypes.includes(cerealType)) {
       setCerealType('ALL')
     }
-  }, [availableCerealTypes])
+  }, [availableCerealTypes, cerealType])
 
   const pileMap = useMemo(
     () => buildPileMapFromTransactions(transactions, cerealType),
     [transactions, cerealType]
   )
-
-  const handleExportPDF = async () => {
-    const element = pileLayoutRef.current
-    if (!element) return
-
-    const imgData = await toPng(element, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-    })
-
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth  = pageWidth - 20
-
-    // Get natural image dimensions
-    const img = new Image()
-    img.src = imgData
-    await new Promise(res => { img.onload = res })
-    const imgHeight = (img.height * imgWidth) / img.width
-
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(11)
-    pdf.text('NATIONAL FOOD AUTHORITY', pageWidth / 2, 10, { align: 'center' })
-    pdf.setFontSize(9)
-    pdf.text('WAREHOUSE STOCK PILING LAY-OUT OF SAN JUAN GID 1-A WAREHOUSE', pageWidth / 2, 15, { align: 'center' })
-    pdf.text(`AS OF ${selectedMonth.toUpperCase()} ${monthlyYear}`, pageWidth / 2, 20, { align: 'center' })
-
-    pdf.addImage(imgData, 'PNG', 10, 25, imgWidth, Math.min(imgHeight, pageHeight - 30))
-    pdf.save(`PILE-LAYOUT-${selectedMonth}-${monthlyYear}.pdf`)
-  }
 
   return (
     <>
@@ -545,7 +525,7 @@ export default function PileLayout() {
         </div>
 
         {/* Map area */}
-        <div ref={pileLayoutRef} className="flex-1 px-3 pb-4 flex flex-col gap-3 overflow-auto">
+        <div className="flex-1 px-3 pb-4 flex flex-col gap-3 overflow-auto">
           <div ref={pileLayoutRef} className="bg-white rounded-lg border border-black/10 shadow-[0_6px_4px_-4px_rgba(0,0,0,0.1)] flex flex-col flex-1 p-4">
 
             {loading ? (
@@ -556,28 +536,16 @@ export default function PileLayout() {
             ) : error ? (
               <div className="flex items-center justify-center flex-1 text-gray-400 text-sm">{error}</div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 flex-1">
-                <div className="flex flex-col gap-3">
-                  {LEFT_COL.map(n => (
-                    <PileCard
-                      key={n}
-                      pileNo={n}
-                      pile={pileMap[n] || null}
-                      onClick={() => setSelectedPile(pileMap[n])}
-                    />
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3">
-                  {RIGHT_COL.map(n => (
-                    <PileCard
-                      key={n}
-                      pileNo={n}
-                      pile={pileMap[n] || null}
-                      onClick={() => setSelectedPile(pileMap[n])}
-                    />
-                  ))}
-                </div>
-              </div>
+            <div className="grid grid-cols-2 grid-rows-3 gap-3 flex-1">
+              {[1, 2, 3, 4, 5, 6].map(n => (
+                <PileCard
+                  key={n}
+                  pileNo={n}
+                  pile={pileMap[n] || null}
+                  onClick={() => setSelectedPile(pileMap[n])}
+                />
+              ))}
+            </div>
             )}
           </div>
 

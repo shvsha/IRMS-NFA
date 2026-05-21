@@ -502,9 +502,9 @@ export default function ReportEvaluation() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem className='p-2 text-[#2D317F]' value="All Cereal Type">All Cereal Type</SelectItem>
-                <SelectItem value="Mixed Cereal">Mixed Cereal</SelectItem>
-                <SelectItem value="WD1G50">Palay</SelectItem>
-                <SelectItem value="PD1350">Rice</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="Mixed Cereal">Mixed Cereal</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="WD1G50">Palay</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="PD1350">Rice</SelectItem>
               </SelectContent>
             </Select>
 
@@ -513,9 +513,9 @@ export default function ReportEvaluation() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Warehouses">All Warehouses</SelectItem>
-                <SelectItem value="010501A">Warehouse 1</SelectItem>
-                <SelectItem value="010502A">Warehouse 2</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="All Warehouses">All Warehouses</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="010501A">Warehouse 1</SelectItem>
+                <SelectItem className='p-2 text-[#2D317F]' value="010502A">Warehouse 2</SelectItem>
               </SelectContent>
             </Select>
           </div>
