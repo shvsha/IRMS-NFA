@@ -16,7 +16,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 // react icons
 import { CiExport, CiImport } from "react-icons/ci";
 import { FaExclamation } from "react-icons/fa";
-import { FaCheck } from "react-icons/fa6"
+
+import { useToast } from "@/hooks/useToast";
+import { Toast } from "@/components/Toast";
 
 // api
 import api from "@/api/axios";
@@ -205,13 +207,8 @@ export default function CreateReport() {
   const [transactions, setTransactions] = useState([{ ...emptyTransaction }]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving,       setSaving]       = useState(false);
-  const [toasts, setToasts] = useState([])
 
-  const addToast = (message, color) => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
-  }
+  const { toasts, addToast } = useToast()
 
   const currentRejectedType = useMemo(() => {
     if (initialRejectedType) return initialRejectedType;
@@ -301,7 +298,7 @@ export default function CreateReport() {
       const message = typeof errData === 'object' && errData !== null
         ? Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
         : errData || 'Failed to save transaction.';
-      addToast(message, '#BB2325');
+      addToast(message, 'error');
       return snapshot;
     } finally {
       setSaving(false);
@@ -460,9 +457,9 @@ export default function CreateReport() {
         id: reportId,
         count: imported.length 
       })
-      addToast(`Successfully imported ${imported.length} transaction(s).`, '#1D8104')
+      addToast(`Successfully imported ${imported.length} transaction(s).`, 'success')
     } catch (err) {
-      addToast(err.message || 'Import failed.', '#BB2325')
+      addToast(err.message || 'Import failed.', 'error')
     }
   }
 
@@ -898,26 +895,8 @@ export default function CreateReport() {
         onChange={handleImport}
       />
 
-    {/* toasts */}
-    <div className="fixed top-6 right-6 z-50 flex flex-col gap-2">
-      {toasts.map(toast => (
-        <div
-          key={toast.id}
-          className="flex items-center gap-3 bg-white rounded-lg shadow-2xl px-5 py-4 min-w-[300px]"
-          style={{ borderLeft: `4px solid ${toast.color}` }}
-        >
-          <div className="rounded-full p-1.5 flex-shrink-0" style={{ backgroundColor: toast.color }}>
-            <FaCheck size={16} color="white" />
-          </div>
-          <div>
-            <p className="font-bold text-sm" style={{ color: toast.color }}>
-              {toast.color === '#BB2325' ? 'Error!' : 'Success!'}
-            </p>
-            <p className="text-gray-500 text-xs">{toast.message}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+      {/* Toast notifications */}
+      <Toast toasts={toasts} />
     </>
   );
 }

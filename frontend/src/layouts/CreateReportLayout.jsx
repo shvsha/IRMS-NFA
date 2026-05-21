@@ -16,7 +16,7 @@ export default function CreateReportLayout() {
   return (
     <div className="flex flex-col h-screen">
       <NavBarWhse />
-      <div className="flex-1 overflow-y-auto ">
+      <div className="flex-1 overflow-hidden ">
         <Outlet />
       </div>
     </div>
