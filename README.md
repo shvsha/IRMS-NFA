@@ -138,7 +138,7 @@ To fully utilize the system, you need to create the following users **after** lo
 ```
 RMS-Research/
 ├── backend/
-│   ├── myenv/              # Virtual environment (not pushed to GitHub)
+│   ├── myenv/
 │   ├── RMSProject/
 │   │   ├── api/
 │   │   ├── audit/
@@ -146,12 +146,12 @@ RMS-Research/
 │   │   ├── notification/
 │   │   ├── reports/
 │   │   ├── users/
-│   │   ├── db.sqlite3      # Local database (not pushed to GitHub)
+│   │   ├── db.sqlite3 
 │   │   └── manage.py
 │   └── requirements.txt
 └── frontend/
     ├── src/
-    ├── node_modules/       # Not pushed to GitHub
+    ├── node_modules/
     └── package.json
 ```
 
